@@ -39,6 +39,5 @@
     "vitest": "^4.1.6",
     "zod": "^4.4.3",
     "zustand": "^5.0.13"
-  },
-  "packageManager": "pnpm@10.17.1"
+  }
 }
