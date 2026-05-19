@@ -109,11 +109,17 @@ export async function fetchExecutiveLiveData(
       };
     }
 
+    type ProfileRow = { id: string; full_name: string | null };
+    type AuditRow = { user_id: string | null; action: string; table_name: string; created_at: string };
+
+    const profileData = (profileRes.data as ProfileRow[] | null) ?? [];
+    const auditData = (auditRes.data as AuditRow[] | null) ?? [];
+
     const userById = new Map(
-      (profileRes.data ?? []).map((p) => [p.id, p.full_name ?? "Usuario"]) 
+      profileData.map((p) => [p.id, p.full_name ?? "Usuario"])
     );
 
-    const mapped = (auditRes.data ?? []).map((row) =>
+    const mapped = auditData.map((row) =>
       mapRealtimeAuditToActivity({
         action: row.action,
         table_name: row.table_name,
