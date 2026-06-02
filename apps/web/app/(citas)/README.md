@@ -1,74 +1,25 @@
-# 📅 MÓDULO: CITAS - Squad 3
+# Modulo de citas con tutor
 
-## 👥 Responsable
-**Squad 3 Citas** (4 personas)
-- Líder: [Nombre del líder]
+## Equipo responsable
+Equipo 3
+- Karim
+- Rivera
+- Fernando Buendia
+- Eduardo
 
-## 📋 Descripción
-Sistema de agendamiento de citas académicas. Estudiantes y profesores pueden:
-- Agendar citas
-- Ver calendario
-- Recibir recordatorios (vía Squad 4)
-- Reportes de citas
+## Objetivo
+Permitir a alumnos y tutores agendar, gestionar y dar seguimiento a sesiones de tutoria.
 
-## 📁 Estructura de Carpetas
+## Funciones del modulo
+- Agenda y calendario de citas.
+- Creacion, cancelacion y reprogramacion.
+- Validacion de disponibilidad y colisiones.
+- Historial de citas por usuario.
 
-```
-(citas)/
-├── page.tsx                    → Página principal de citas
-├── layout.tsx                  → Layout para citas
-├── components/
-│   ├── CitasForm.tsx          → Formulario para agendar
-│   ├── CitasCalendar.tsx      → Calendario
-│   ├── CitasList.tsx          → Lista de citas
-│   └── CitasDetail.tsx        → Detalle de cita
-├── hooks/
-│   └── useCitas.ts            → Hook para lógica de citas
-└── types/
-    └── citas.ts               → Tipos TypeScript
-```
+## Dependencias
+- Bloqueo principal: Equipo 2 (autenticacion y permisos).
+- Integracion recomendada: Equipo 4 (recordatorios y avisos por correo).
 
-## 🗄️ Base de Datos
-**Tabla:** `appointments` (se crea en Squad 2 - BD Push)
-
-Campos:
-- id (UUID)
-- student_id (FK → profiles)
-- teacher_id (FK → profiles)
-- fecha_inicio (timestamp)
-- fecha_fin (timestamp)
-- razon (text)
-- estado (enum: pending, confirmed, cancelled)
-- created_at (timestamp)
-
-## 🔗 Dependencias
-- **Squad 2:** Autenticación (debe estar lista)
-- **Squad 4:** Sistema de notificaciones (para recordatorios)
-- **Packages:** @plataforma/types, @plataforma/ui, @plataforma/sdk
-
-## 📝 Tareas Principales (Sprint 0)
-- [ ] Crear tabla `appointments` en BD
-- [ ] Crear página principal de citas
-- [ ] Crear formulario de agendamiento
-- [ ] Implementar calendario
-- [ ] Conectar con Squad 4 para notificaciones
-- [ ] Tests unitarios
-- [ ] Validar con Squad 2 (auth)
-
-## 🚀 Comencemos
-```bash
-# Cuando la BD esté lista (después de Squad 2 push)
-cd apps/web
-pnpm dev
-
-# Squad 3 programa aquí:
-# /app/(citas)/
-```
-
-## ❓ Preguntas
-Contacta a: Jassiel (Slack: #squad-3-citas)
-
----
-**Creado:** 17 Mayo 2026
-**Estado:** 🟡 Esperando Squad 2 BD
+## Carpeta de trabajo
+- `apps/web/app/(citas)/`
 

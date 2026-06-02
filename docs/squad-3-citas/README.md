@@ -1,23 +1,31 @@
-# Squad 3 - Citas Académicas
+# Equipo 3 - Programación de citas con tutor
 
-**Responsables:** Karim, Rivera, Fernan, Eduardo
+## Integrantes
+- Karim
+- Rivera
+- Fernando Buendia
+- Eduardo
 
-## 🎯 Objetivos MVP Fase 1
+## Misión del módulo
+Desarrollar el sistema que permite a alumnos y tutores agendar, gestionar y dar seguimiento a sesiones de tutoría.
 
-- ✅ Tabla de citas con validaciones
-- ✅ Disponibilidad de docentes
-- ✅ Componente Calendar interactivo
-- ✅ Lógica de validación de colisiones de horarios
-- ✅ Integración con Squad 4 para notificaciones
+## Alcance funcional
+- Agenda y calendario de tutorías.
+- Reserva, cancelación y reprogramación de citas.
+- Validación de disponibilidad y conflictos de horario.
+- Historial de sesiones por alumno y tutor.
 
-## 📋 Tareas Sprint 2
+## Entregables mínimos
+- Pantalla de calendario y listado de citas.
+- Formulario de agendamiento con validaciones.
+- Vista de detalle de cita.
+- Reglas de colisión de horario documentadas.
 
-- [ ] Karim: Crear tablas `appointments` y `teacher_availability`
-- [ ] Rivera: Implementar componente Calendar con React Big Calendar
-- [ ] Fernan: Lógica de booking con validación de colisiones
-- [ ] Eduardo: Listar citas del usuario
+## Dependencias
+- Bloqueo principal: Equipo 2 (autenticación y control de acceso).
+- Integración recomendada: Equipo 4 (recordatorios y confirmaciones por correo).
 
-## 🔗 Dependencias
-
-⚠️ **ESPERA A SQUAD 2** - Necesita autenticación funcionando
+## Rutas y carpetas propietarias
+- `apps/web/app/(citas)/`
+- `docs/squad-3-citas/`
 

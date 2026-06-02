@@ -1,22 +1,37 @@
-# Squad 1 - Justificaciones
+# Equipo 1 - Justificación de faltas
 
-**Responsables:** Joel, Alfonso, Aaron
+## Integrantes
+- Joel
+- Alfonso
+- Aaron Trejo
+- Tania
+- Karla
 
-## 🎯 Objetivos MVP Fase 1
+## Misión del módulo
+Construir el flujo completo de justificación de faltas para estudiantes:
+- Registro de faltas.
+- Conversión de retardos a faltas.
+- Formulario de solicitud de justificación.
+- Carga de evidencias médicas y oficiales.
 
-- ✅ Tabla de justificaciones con archivos
-- ✅ Upload seguro de PDF/Imágenes
-- ✅ Workflow de aprobación (BPM)
-- ✅ Auditoría inmutable de aprobaciones
-- ✅ Integración con notificaciones (Squad 4)
+## Alcance funcional
+- Crear y editar solicitudes de justificación.
+- Adjuntar evidencias (PDF/JPG/PNG) con validaciones de tipo y tamaño.
+- Consultar estatus de cada solicitud (borrador, enviada, en revisión, aprobada, rechazada).
+- Registrar trazabilidad del proceso de revisión.
 
-## 📋 Tareas Sprint 3
+## Entregables mínimos
+- Pantalla principal de justificaciones.
+- Formulario de solicitud.
+- Componente de carga de evidencias.
+- Listado e historial de solicitudes.
+- Documentación técnica de reglas de validación.
 
-- [ ] Joel: Crear tablas `justifications` y `justification_files`
-- [ ] Alfonso: Implementar componente FileUploadZone
-- [ ] Aaron: Workflow de aprobación con notificaciones
+## Dependencias
+- Bloqueo principal: Equipo 2 (autenticación, perfiles y control de acceso).
+- Integración recomendada: Equipo 4 (notificaciones de cambios de estatus).
 
-## 🔗 Dependencias
-
-⚠️ **ESPERA A SQUAD 2** - Necesita autenticación
+## Rutas y carpetas propietarias
+- `apps/web/app/(justificaciones)/`
+- `docs/squad-1-justificaciones/`
 

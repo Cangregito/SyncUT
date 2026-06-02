@@ -1,32 +1,36 @@
-# Squad 4 - Notificaciones y Email
+# Equipo 4 - Notificación por correo
 
-**Responsables:** Fernando, Vidales, Ari, Roman
+## Integrantes
+- Fernando
+- Vidales
+- Ari
+- Roman
 
-## 🎯 Objetivos MVP Fase 1
+## Misión del módulo
+Diseñar y construir el motor centralizado de mensajería asíncrona para automatizar envíos de correos electrónicos y alertas institucionales.
 
-- ✅ Sistema de eventos para notificaciones
-- ✅ Plantillas de email con React Email
-- ✅ Integración con Resend API
-- ✅ Cola asíncrona con Edge Functions
-- ✅ Dashboard de notificaciones en UI
+## Alcance funcional
+- Envío de correo transaccional y notificaciones operativas.
+- Gestión de plantillas de correo.
+- Cola de procesamiento asíncrono de mensajes.
+- Registro de estado de entrega y errores.
 
-## 📋 Tareas Sprint 2
+## Entregables mínimos
+- Servicio de notificaciones por correo.
+- Plantillas base (bienvenida, aviso de cita, cambio de estatus).
+- Centro de notificaciones en aplicación.
+- Registro de eventos de envío.
 
-- [ ] Fernando: Inicializar cliente Resend
-- [ ] Vidales: Crear plantillas (welcome, password-reset, etc.)
-- [ ] Ari: Setup de cola de eventos
-- [ ] Roman: Componente UI NotificationCenter
+## Dependencias
+- Bloqueo principal: Equipo 2 (autenticación y contexto de usuario).
+- Integración principal: Equipos 1, 3, 5 y 6 como productores de eventos.
 
-## 📧 Variables de Entorno
+## Rutas y carpetas propietarias
+- `apps/web/app/(notificaciones)/`
+- `packages/shared/`
+- `supabase/migrations/`
+- `docs/squad-4-notificaciones/`
 
-```env
-# Obtener de: https://resend.com/api-keys
-NEXT_PUBLIC_RESEND_API_KEY=re_xxxxxxxxxxxx
-```
-
-## 🔗 Dependencias Bloqueantes
-
-⚠️ **ESPERA A SQUAD 2**
-- Squad 2 debe completar autenticación PRIMERO
-- Tabla de eventos necesita estar en BD (Squad 2 responsable)
+## Variables de entorno
+Usar variables en `.env.local` sin exponer llaves reales en documentación.
 
