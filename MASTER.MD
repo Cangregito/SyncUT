@@ -1189,3 +1189,6 @@ Antes de empezar, responde estas preguntas críticas:
 ---
 
 **🚀 PRÓXIMO PASO:** Confirma la información anterior y estamos listos para iniciar Sprint 0. ¿Alguna pregunta o ajuste antes de comenzar?
+
+
+Zatarain es el mas raro
