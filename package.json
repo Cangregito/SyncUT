@@ -16,7 +16,8 @@
     "typecheck": "turbo run typecheck",
     "format": "prettier --write \"**/*.{ts,tsx,json,md}\"",
     "db:push": "supabase db push",
-    "db:gen": "supabase gen types typescript --linked > packages/types/src/database.types.ts"
+    "db:gen": "supabase gen types typescript --linked > packages/types/src/database.types.ts",
+    "db:test": "node --env-file=.env.local scripts/test-db.js"
   },
   "devDependencies": {
     "@hookform/resolvers": "^5.2.2",
