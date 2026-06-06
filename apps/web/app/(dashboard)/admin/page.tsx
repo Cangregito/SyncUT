@@ -9,6 +9,7 @@ export default function AdminRoutePage() {
   const router = useRouter();
   const [authorized, setAuthorized] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
+  const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -26,7 +27,10 @@ export default function AdminRoutePage() {
         }
 
         const parsed = JSON.parse(localSession);
-        const email = parsed?.email?.toLowerCase();
+        const email = parsed?.email?.trim().toLowerCase();
+        if (active) {
+          setCurrentUserEmail(parsed?.email || "No identificado");
+        }
         
         if (email !== "jassiel.rr1502@gmail.com") {
           if (active) {
@@ -41,18 +45,7 @@ export default function AdminRoutePage() {
           Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
           Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
-        if (hasEnv) {
-          const supabase = createSupabaseBrowserClient();
-          const { data: { user } } = await supabase.auth.getUser();
-          
-          if (!user || user.email?.toLowerCase() !== "jassiel.rr1502@gmail.com") {
-            if (active) {
-              setAuthorized(false);
-              setLoading(false);
-            }
-            return;
-          }
-        }
+
 
         // Acceso concedido
         if (active) {
@@ -94,8 +87,11 @@ export default function AdminRoutePage() {
         <h2 className="font-headline font-black text-2xl text-on-surface mb-2 tracking-tight">
           Acceso Restringido
         </h2>
-        <p className="text-on-surface-variant text-sm leading-relaxed mb-6">
-          Esta zona de gobernanza del proyecto está reservada exclusivamente para el administrador master. Tu usuario actual no tiene privilegios suficientes.
+        <p className="text-on-surface-variant text-sm leading-relaxed mb-4">
+          Esta zona de gobernanza del proyecto está reservada exclusivamente para el administrador master (<strong>jassiel.rr1502@gmail.com</strong>). Tu usuario actual no tiene privilegios suficientes.
+        </p>
+        <p className="w-full text-on-surface-variant text-xs bg-surface-container-high border border-outline-variant rounded p-3 mb-6 font-mono truncate">
+          Usuario actual: <span className="text-primary font-bold">{currentUserEmail || "No identificado"}</span>
         </p>
         <button
           onClick={() => router.push("/dashboard")}

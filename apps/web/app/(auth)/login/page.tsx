@@ -26,12 +26,14 @@ export default function LoginPage() {
       return;
     }
 
+    const cleanUsername = username.trim();
+
     // Save session in local storage for mockup flow
     window.localStorage.setItem(
       "syncut_beta_session",
       JSON.stringify({
-        email: username,
-        role: username.toLowerCase() === "jassiel.rr1502@gmail.com" || username.includes("admin") ? "admin" : "student",
+        email: cleanUsername,
+        role: cleanUsername.toLowerCase() === "jassiel.rr1502@gmail.com" || cleanUsername.toLowerCase().includes("admin") ? "admin" : "student",
         loggedAt: new Date().toISOString(),
       })
     );

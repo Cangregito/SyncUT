@@ -43,7 +43,7 @@ export default function DashboardLayout({
     }
   }, []);
 
-  const isMasterAdmin = sessionEmail?.toLowerCase() === "jassiel.rr1502@gmail.com";
+  const isMasterAdmin = sessionEmail?.trim().toLowerCase() === "jassiel.rr1502@gmail.com";
 
   function handleLogout() {
     window.localStorage.removeItem("syncut_beta_session");
