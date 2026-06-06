@@ -18,6 +18,7 @@ const navigationLinks: NavigationItem[] = [
   { href: "/notificaciones", label: "Notificaciones", icon: "notifications", squad: "Squad 4" },
   { href: "/incidencias", label: "Reportes Incidencias", icon: "rule", squad: "Squad 5" },
   { href: "/chatbot", label: "Asistente Chatbot", icon: "chat", squad: "Squad 6" },
+  { href: "/admin", label: "Panel Gobernanza", icon: "monitoring", squad: "Admin Master" },
 ];
 
 export default function DashboardLayout({
@@ -42,6 +43,8 @@ export default function DashboardLayout({
     }
   }, []);
 
+  const isMasterAdmin = sessionEmail?.toLowerCase() === "jassiel.rr1502@gmail.com";
+
   function handleLogout() {
     window.localStorage.removeItem("syncut_beta_session");
     router.push("/login");
@@ -64,35 +67,37 @@ export default function DashboardLayout({
 
         {/* Navigation Links */}
         <div className="flex-1 px-3 space-y-1">
-          {navigationLinks.map((item) => {
-            const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex items-center justify-between p-3 rounded text-sm font-medium transition-all duration-150 active:scale-98 ${
-                  isActive
-                    ? "text-primary bg-surface-container-highest border-r-2 border-primary"
-                    : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <span
-                    className="material-symbols-outlined text-[20px]"
-                    style={{ fontVariationSettings: isActive ? "'FILL' 1" : undefined }}
-                  >
-                    {item.icon}
-                  </span>
-                  <span>{item.label}</span>
-                </div>
-                {item.squad && (
-                  <span className="text-[9px] bg-outline-variant/50 text-on-surface-variant px-1.5 py-0.5 rounded font-mono">
-                    {item.squad}
-                  </span>
-                )}
-              </Link>
-            );
-          })}
+          {navigationLinks
+            .filter((item) => item.href !== "/admin" || isMasterAdmin)
+            .map((item) => {
+              const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`flex items-center justify-between p-3 rounded text-sm font-medium transition-all duration-150 active:scale-98 ${
+                    isActive
+                      ? "text-primary bg-surface-container-highest border-r-2 border-primary"
+                      : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span
+                      className="material-symbols-outlined text-[20px]"
+                      style={{ fontVariationSettings: isActive ? "'FILL' 1" : undefined }}
+                    >
+                      {item.icon}
+                    </span>
+                    <span>{item.label}</span>
+                  </div>
+                  {item.squad && (
+                    <span className="text-[9px] bg-outline-variant/50 text-on-surface-variant px-1.5 py-0.5 rounded font-mono">
+                      {item.squad}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
         </div>
 
         {/* Footer Links */}
@@ -148,31 +153,33 @@ export default function DashboardLayout({
 
             {/* Links */}
             <div className="flex-1 space-y-1">
-              {navigationLinks.map((item) => {
-                const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center justify-between p-3 rounded text-sm font-medium transition-all ${
-                      isActive
-                        ? "text-primary bg-surface-container-highest border-r-2 border-primary"
-                        : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <span
-                        className="material-symbols-outlined text-[20px]"
-                        style={{ fontVariationSettings: isActive ? "'FILL' 1" : undefined }}
-                      >
-                        {item.icon}
-                      </span>
-                      <span>{item.label}</span>
-                    </div>
-                  </Link>
-                );
-              })}
+              {navigationLinks
+                .filter((item) => item.href !== "/admin" || isMasterAdmin)
+                .map((item) => {
+                  const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`flex items-center justify-between p-3 rounded text-sm font-medium transition-all ${
+                        isActive
+                          ? "text-primary bg-surface-container-highest border-r-2 border-primary"
+                          : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span
+                          className="material-symbols-outlined text-[20px]"
+                          style={{ fontVariationSettings: isActive ? "'FILL' 1" : undefined }}
+                        >
+                          {item.icon}
+                        </span>
+                        <span>{item.label}</span>
+                      </div>
+                    </Link>
+                  );
+                })}
             </div>
 
             {/* Footer */}
