@@ -31,7 +31,7 @@ export default function LoginPage() {
       "syncut_beta_session",
       JSON.stringify({
         email: username,
-        role: username.includes("admin") ? "admin" : "student",
+        role: username.toLowerCase() === "jassiel.rr1502@gmail.com" || username.includes("admin") ? "admin" : "student",
         loggedAt: new Date().toISOString(),
       })
     );
