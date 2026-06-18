@@ -31,23 +31,49 @@ function getApiKeys() {
   const keys = JSON.parse(result.stdout).keys;
   return {
     publishable: keys.find((key) => key.type === "publishable")?.api_key,
-    secret: keys.find((key) => key.name === "service_role")?.api_key,
   };
 }
 
 const url = getEnvValue("NEXT_PUBLIC_SUPABASE_URL");
-const { publishable, secret } = getApiKeys();
+const { publishable } = getApiKeys();
+const secret = getEnvValue("SUPABASE_SECRET_KEY");
 
-if (!url || !publishable || !secret) {
-  throw new Error("Falta URL, publishable key o secret key para la prueba.");
+if (!url || !publishable) {
+  throw new Error("Falta URL o publishable key para la prueba.");
 }
 
 const password = `SyncUT-${randomUUID()}-Aa1`;
 const email = `security-test-${randomUUID()}@example.invalid`;
-const admin = createClient(url, secret, {
+const publicClient = createClient(url, publishable, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
-const publicClient = createClient(url, publishable, {
+
+const { error: anonymousProfilesError } = await publicClient
+  .from("profiles")
+  .select("id")
+  .limit(1);
+
+if (!anonymousProfilesError) {
+  throw new Error("El rol anónimo todavía puede consultar profiles.");
+}
+
+const { error: anonymousRpcError } = await publicClient.rpc("is_admin");
+
+if (!anonymousRpcError) {
+  throw new Error("El rol anónimo todavía puede ejecutar is_admin.");
+}
+
+console.log("✅ Usuario anónimo no puede consultar profiles.");
+console.log("✅ Usuario anónimo no puede ejecutar RPC internos.");
+
+if (!secret) {
+  console.log(
+    "ℹ️ Prueba administrativa omitida: configura SUPABASE_SECRET_KEY localmente para ejecutarla."
+  );
+  process.exit(0);
+}
+
+const admin = createClient(url, secret, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
 

@@ -16,20 +16,15 @@ el navegador y permitir omitir RLS.
 - El rol `anon` perdió acceso a `profiles` y a los RPC internos.
 - Se probaron registro con mínimo privilegio y bloqueo de autoelevación.
 
-## Acción manual obligatoria
+## Revocación completada
 
-La clave legacy `service_role` debe considerarse comprometida aunque ya no esté
-configurada en el frontend. En Supabase Dashboard:
+El 18 de junio de 2026 se completaron estas acciones en Supabase Dashboard:
 
-1. Abrir el proyecto SyncUT.
-2. Ir a **Settings → API Keys**.
-3. Migrar cualquier uso legítimo del `service_role` legacy a la clave
-   `sb_secret_...`.
-4. Deshabilitar las Legacy API Keys.
-5. Verificar nuevamente Auth, Edge Functions y cualquier integración backend.
-
-La desactivación no está disponible en Supabase CLI 2.107.0 y no debe
-automatizarse mediante endpoints no documentados.
+1. Se deshabilitaron las Legacy API Keys.
+2. Se revocó la clave de firma JWT Legacy HS256.
+3. Se comprobó que la antigua `service_role` falla como API key y como JWT.
+4. Se eliminó `SUPABASE_SERVICE_ROLE_KEY` de Vercel.
+5. Se conservaron únicamente despliegues construidos después de la corrección.
 
 ## Verificación
 
