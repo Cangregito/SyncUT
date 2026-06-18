@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SyncUT - Appointments History</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary": "#a78bfa",
+                        "on-secondary-fixed-variant": "#3f3f46",
+                        "on-secondary-container": "#a1a1aa",
+                        "on-primary": "#0a0012",
+                        "on-tertiary-fixed": "#003318",
+                        "on-surface-variant": "#a1a1aa",
+                        "background": "#09090b",
+                        "tertiary-fixed": "#bbf7d0",
+                        "surface-variant": "#18181b",
+                        "primary-fixed": "#ede9fe",
+                        "on-error": "#1a0000",
+                        "on-tertiary-fixed-variant": "#047857",
+                        "surface-tint": "#a78bfa",
+                        "on-tertiary-container": "#bbf7d0",
+                        "on-secondary": "#09090b",
+                        "inverse-surface": "#fafafa",
+                        "inverse-on-surface": "#09090b",
+                        "error-container": "#3b1111",
+                        "on-background": "#fafafa",
+                        "inverse-primary": "#5b21b6",
+                        "on-primary-fixed": "#2e1065",
+                        "surface-container-highest": "#1e1e22",
+                        "surface-container": "#121215",
+                        "tertiary": "#34d399",
+                        "secondary": "#71717a",
+                        "surface-container-low": "#0f0f12",
+                        "primary-fixed-dim": "#c4b5fd",
+                        "on-surface": "#fafafa",
+                        "secondary-fixed-dim": "#71717a",
+                        "secondary-fixed": "#a1a1aa",
+                        "tertiary-container": "#065f46",
+                        "surface-dim": "#0c0c0f",
+                        "on-secondary-fixed": "#18181b",
+                        "outline-variant": "#27272a",
+                        "error": "#ef4444",
+                        "on-primary-container": "#ede9fe",
+                        "surface-bright": "#18181b",
+                        "surface": "#0c0c0f",
+                        "on-primary-fixed-variant": "#5b21b6",
+                        "on-tertiary": "#001a12",
+                        "tertiary-fixed-dim": "#6ee7b7",
+                        "primary-container": "#7c3aed",
+                        "surface-container-lowest": "#09090b",
+                        "outline": "#52525b",
+                        "secondary-container": "#27272a",
+                        "on-error-container": "#fca5a5",
+                        "surface-container-high": "#18181b"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Geist", "sans-serif"],
+                        "display": ["Geist", "sans-serif"],
+                        "body": ["Geist", "sans-serif"],
+                        "label": ["Geist", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Geist', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .icon-fill { font-variation-settings: 'FILL' 1; }
+        
+        /* Custom Scrollbar for dark theme */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #09090b; }
+        ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
+    </style>
+</head>
+<body class="bg-background text-on-background antialiased flex h-screen overflow-hidden selection:bg-primary/30 selection:text-primary-fixed">
+<!-- SideNavBar -->
+<aside class="hidden md:flex flex-col bg-surface-container dark:bg-surface-container border-r border-outline-variant h-full w-64 p-4 gap-2 flex-shrink-0 z-40">
+<!-- Header -->
+<div class="flex items-center gap-3 px-3 py-4 mb-4">
+<div class="h-8 w-8 rounded bg-primary flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-on-primary icon-fill text-lg">sync</span>
+</div>
+<div class="flex flex-col">
+<span class="text-lg font-headline font-bold text-primary tracking-tight leading-tight">Appointments</span>
+<span class="text-xs text-on-surface-variant font-label">Institutional Sync</span>
+</div>
+</div>
+<!-- Navigation -->
+<nav class="flex flex-col gap-1 flex-1">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-all font-body text-sm focus-within:ring-2 focus-within:ring-primary outline-none" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="home">home</span>
+<span>Appointments Home</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-all font-body text-sm focus-within:ring-2 focus-within:ring-primary outline-none" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="event_available">event_available</span>
+<span>Schedule</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-all font-body text-sm focus-within:ring-2 focus-within:ring-primary outline-none" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="calendar_month">calendar_month</span>
+<span>Calendar</span>
+</a>
+<!-- Active State -->
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary-container text-on-primary-container font-semibold font-body text-sm focus-within:ring-2 focus-within:ring-primary outline-none" href="#">
+<span class="material-symbols-outlined text-[20px] icon-fill" data-icon="history">history</span>
+<span>History</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-all font-body text-sm focus-within:ring-2 focus-within:ring-primary outline-none mt-auto" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="settings">settings</span>
+<span>Settings</span>
+</a>
+</nav>
+</aside>
+<!-- Main Content Area -->
+<div class="flex flex-col flex-1 h-full w-full overflow-hidden">
+<!-- TopNavBar -->
+<header class="flex justify-between items-center w-full px-4 h-16 z-50 bg-surface dark:bg-surface border-b border-outline-variant flex-shrink-0">
+<!-- Left: Mobile Menu & Product Name -->
+<div class="flex items-center gap-4">
+<button class="md:hidden text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors p-2 rounded-lg cursor-pointer active:opacity-80">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<span class="text-xl font-headline font-bold tracking-tight text-on-surface hidden md:block">SyncUT</span>
+<!-- Search Bar (on_left) -->
+<div class="hidden sm:flex relative ml-4 md:ml-8 w-64 lg:w-80 group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px] group-focus-within:text-primary transition-colors">search</span>
+<input class="w-full bg-surface-container dark:bg-surface-container border border-outline-variant rounded-lg pl-10 pr-4 py-1.5 text-sm font-body text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all" placeholder="Search folio or name..." type="text"/>
+</div>
+</div>
+<!-- Right: Actions & Profile -->
+<div class="flex items-center gap-2 sm:gap-4">
+<button class="text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors p-2 rounded-full cursor-pointer active:opacity-80 relative">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="absolute top-1.5 right-1.5 w-2 h-2 bg-primary rounded-full border border-surface"></span>
+</button>
+<div class="h-8 w-8 rounded-full overflow-hidden border border-outline-variant cursor-pointer active:opacity-80 ml-2">
+<img alt="User profile" class="w-full h-full object-cover" data-alt="A professional headshot of a young male professional in a dimly lit, high-contrast studio environment. The lighting emphasizes a modern, developer-focused aesthetic with deep blacks and subtle cool gray tones matching the Obsidian UI theme. He looks directly at the camera with a confident, neutral expression." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCxgNdZbPTMvBomYidTmwKD7xaoSuOmgIjFRgO9qoJz0VB2P2XJSCJILAeOvHvReZkvXy4jWMdwzMOp9JOL46cAzBQEGjtxlZm3_AqTW12EZ-ODO6uNw9tTmDFXVGPMuxmZEIBNW7SO2fJXaC0elAmYq5EjjE3PNtUlIBkj9xtdR-i7_DNQCK7ahymaFAniL2xn8Li-MKbaiZ-HLOl4tF5n2pa6AkRLMP6WJ7bKnkfx8jnZyHN7tymCn3L8Zy3kImZ1GbizZZvi-sHm"/>
+</div>
+</div>
+</header>
+<!-- Main Scrollable Canvas -->
+<main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+<div class="max-w-7xl mx-auto flex flex-col gap-6">
+<!-- Page Header -->
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+<div>
+<h1 class="text-2xl font-headline font-bold text-on-background tracking-tight">Appointment History</h1>
+<p class="text-sm font-body text-on-surface-variant mt-1">Review past and upcoming institutional schedules.</p>
+</div>
+<div class="flex gap-3">
+<button class="px-4 py-2 bg-surface-container border border-outline-variant text-on-surface text-sm font-medium rounded-lg hover:bg-surface-container-high transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">download</span>
+                            Export
+                        </button>
+<button class="px-4 py-2 bg-primary text-on-primary text-sm font-medium rounded-lg hover:bg-primary-container transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                            New Walk-in
+                        </button>
+</div>
+</div>
+<!-- Filters Bar -->
+<div class="bg-surface-container border border-outline-variant rounded-lg p-4 flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+<div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+<!-- Date Range Fake Dropdown -->
+<div class="relative group">
+<button class="flex items-center gap-2 px-3 py-2 bg-surface border border-outline-variant rounded-lg text-sm font-medium text-on-surface hover:bg-surface-container-high transition-colors w-full sm:w-auto justify-between">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">calendar_today</span>
+                                Last 30 Days
+                                <span class="material-symbols-outlined text-[18px] text-on-surface-variant">arrow_drop_down</span>
+</button>
+</div>
+<!-- Status Filter -->
+<div class="relative group">
+<button class="flex items-center gap-2 px-3 py-2 bg-surface border border-outline-variant rounded-lg text-sm font-medium text-on-surface hover:bg-surface-container-high transition-colors w-full sm:w-auto justify-between">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">filter_list</span>
+                                All Statuses
+                                <span class="material-symbols-outlined text-[18px] text-on-surface-variant">arrow_drop_down</span>
+</button>
+</div>
+</div>
+<!-- Mobile Search Backup (visible only if TopNav search is hidden, though here it's just extra functionality) -->
+<div class="relative w-full lg:w-72 sm:hidden">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+<input class="w-full bg-surface border border-outline-variant rounded-lg pl-10 pr-4 py-2 text-sm font-body text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all" placeholder="Search folio or name..." type="text"/>
+</div>
+</div>
+<!-- Data Table -->
+<div class="bg-surface-container border border-outline-variant rounded-lg overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-dim border-b border-outline-variant text-xs font-semibold text-on-surface-variant uppercase tracking-wider">
+<th class="px-6 py-4 whitespace-nowrap">Folio</th>
+<th class="px-6 py-4 whitespace-nowrap">Date &amp; Time</th>
+<th class="px-6 py-4 whitespace-nowrap">Teacher</th>
+<th class="px-6 py-4 whitespace-nowrap">Student</th>
+<th class="px-6 py-4 whitespace-nowrap">Status</th>
+<th class="px-6 py-4 whitespace-nowrap text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="text-sm divide-y divide-outline-variant font-body">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container-high transition-colors group">
+<td class="px-6 py-4 whitespace-nowrap text-on-surface font-mono text-xs">#F-8201</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="flex flex-col">
+<span class="text-on-surface font-medium">Oct 24, 2023</span>
+<span class="text-on-surface-variant text-xs">09:00 AM - 10:30 AM</span>
+</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="flex items-center gap-3">
+<img alt="Teacher" class="w-8 h-8 rounded-full border border-outline-variant object-cover" data-alt="A portrait of a female academic professional with a warm but serious expression. The background is a pure, deep black matching the Obsidian theme, casting soft, focused lighting on her face. Her attire suggests a high-end institutional setting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAl685v8jLfg0xUzc3e5GV1htLsXRPtA1IJfEKkOnxJz6pQ-WSeOyDeIpJNgZWftWFXqmLGxKlXzd3jTGY_6WRA0SR892qNrrn0qLeDbd3SSZEwLei6dooKB5SkRRDb_vwfEpq3XloHVC8EGoA7WkUbYbsuRbo5pO4WShwSl8rZYKmwfn1iZ5dynVhkzhTWCGKrO-4-KDIeY74JPCFQ96aJoSMQKa8xQtJM4aY8g-93gdzRrAVoOdhenKJEkYBLRem0L0U6lepJAPvl"/>
+<span class="text-on-surface">Dr. Sarah Jenkins</span>
+</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<span class="text-on-surface">Michael R.</span>
+<span class="block text-on-surface-variant text-xs">Comp Sci 101</span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-tertiary/10 text-tertiary border border-tertiary/20">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary mr-1.5"></span>
+                                            Confirmed
+                                        </span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap text-right">
+<button class="text-on-surface-variant hover:text-primary transition-colors p-1 rounded opacity-0 group-hover:opacity-100 focus:opacity-100">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-container-high transition-colors group">
+<td class="px-6 py-4 whitespace-nowrap text-on-surface font-mono text-xs">#F-8199</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="flex flex-col">
+<span class="text-on-surface font-medium">Oct 23, 2023</span>
+<span class="text-on-surface-variant text-xs">02:15 PM - 03:00 PM</span>
+</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-bright border border-outline-variant flex items-center justify-center text-xs font-bold text-on-surface-variant">
+                                                AP
+                                            </div>
+<span class="text-on-surface">Prof. Alan Turing</span>
+</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<span class="text-on-surface">Elena G.</span>
+<span class="block text-on-surface-variant text-xs">Adv. Algorithms</span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-error/10 text-error border border-error/20">
+<span class="w-1.5 h-1.5 rounded-full bg-error mr-1.5"></span>
+                                            Canceled
+                                        </span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap text-right">
+<button class="text-on-surface-variant hover:text-primary transition-colors p-1 rounded opacity-0 group-hover:opacity-100 focus:opacity-100">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-container-high transition-colors group">
+<td class="px-6 py-4 whitespace-nowrap text-on-surface font-mono text-xs">#F-8194</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="flex flex-col">
+<span class="text-on-surface font-medium">Oct 22, 2023</span>
+<span class="text-on-surface-variant text-xs">11:00 AM - 12:00 PM</span>
+</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="flex items-center gap-3">
+<img alt="Teacher" class="w-8 h-8 rounded-full border border-outline-variant object-cover" data-alt="A portrait photo of a male educator looking thoughtful. The image utilizes a stark, high-contrast dark theme with absolute black backgrounds to perfectly align with the Obsidian UI. He wears dark clothing, blending seamlessly into the environment while maintaining sharp focus on his facial features." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA9uHCOSTm0ZYzzTN8y2bjTk1-1PqH6ilmvGeXqZK92wxgzijbNam20CClDzIkmGqLvE3X4wlcKvlnTn32_uwzFnbFEogCUXJeuJpFXhHbJcZZiUn5_tdSYYJPNQYAuFMempMxutY9GVX8VvwJ6bPpgFe2VtdKfPMw2nt5LZ15l1dc3V_MDZ0M1a7QBJsOyIO70QtHdkNZSPf66pZqsDxwnajTObEJjOUP9PCsVxJ85gdLkTiQslz_phZIBPBqwZRpQuxASJTTn-Kmy"/>
+<span class="text-on-surface">David Chen</span>
+</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<span class="text-on-surface">Marcus T.</span>
+<span class="block text-on-surface-variant text-xs">Physics 202</span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+<span class="w-1.5 h-1.5 rounded-full bg-primary mr-1.5"></span>
+                                            Rescheduled
+                                        </span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap text-right">
+<button class="text-on-surface-variant hover:text-primary transition-colors p-1 rounded opacity-0 group-hover:opacity-100 focus:opacity-100">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-surface-container-high transition-colors group">
+<td class="px-6 py-4 whitespace-nowrap text-on-surface font-mono text-xs">#F-8188</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="flex flex-col">
+<span class="text-on-surface font-medium">Oct 20, 2023</span>
+<span class="text-on-surface-variant text-xs">04:00 PM - 05:00 PM</span>
+</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-bright border border-outline-variant flex items-center justify-center text-xs font-bold text-on-surface-variant">
+                                                LW
+                                            </div>
+<span class="text-on-surface">Laura Wells</span>
+</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<span class="text-on-surface">Sophia L.</span>
+<span class="block text-on-surface-variant text-xs">Thesis Review</span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-tertiary/10 text-tertiary border border-tertiary/20">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary mr-1.5"></span>
+                                            Confirmed
+                                        </span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap text-right">
+<button class="text-on-surface-variant hover:text-primary transition-colors p-1 rounded opacity-0 group-hover:opacity-100 focus:opacity-100">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination (Static representation) -->
+<div class="bg-surface-dim border-t border-outline-variant px-6 py-3 flex items-center justify-between">
+<span class="text-xs text-on-surface-variant font-medium">Showing 1 to 4 of 124 results</span>
+<div class="flex gap-1">
+<button class="w-8 h-8 flex items-center justify-center rounded border border-outline-variant text-on-surface-variant hover:bg-surface-container hover:text-on-surface disabled:opacity-50" disabled="">
+<span class="material-symbols-outlined text-[18px]">chevron_left</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded bg-primary-container text-on-primary-container font-medium text-sm">1</button>
+<button class="w-8 h-8 flex items-center justify-center rounded border border-outline-variant text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-medium text-sm">2</button>
+<button class="w-8 h-8 flex items-center justify-center rounded border border-outline-variant text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-medium text-sm">3</button>
+<span class="w-8 h-8 flex items-center justify-center text-on-surface-variant">...</span>
+<button class="w-8 h-8 flex items-center justify-center rounded border border-outline-variant text-on-surface-variant hover:bg-surface-container hover:text-on-surface">
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

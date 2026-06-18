@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Login - SyncUT</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed": "#bbf7d0",
+                        "primary-fixed": "#ede9fe",
+                        "surface-container-high": "#18181b",
+                        "tertiary-fixed-dim": "#6ee7b7",
+                        "tertiary-container": "#065f46",
+                        "error-container": "#3b1111",
+                        "on-secondary-fixed-variant": "#3f3f46",
+                        "on-tertiary": "#001a12",
+                        "on-surface": "#fafafa",
+                        "outline-variant": "#27272a",
+                        "surface": "#0c0c0f",
+                        "on-secondary": "#09090b",
+                        "outline": "#52525b",
+                        "surface-dim": "#0c0c0f",
+                        "secondary-fixed-dim": "#71717a",
+                        "on-primary-container": "#ede9fe",
+                        "error": "#ef4444",
+                        "primary-fixed-dim": "#c4b5fd",
+                        "on-tertiary-container": "#bbf7d0",
+                        "surface-container-low": "#0f0f12",
+                        "secondary-fixed": "#a1a1aa",
+                        "primary-container": "#7c3aed",
+                        "on-primary-fixed": "#2e1065",
+                        "surface-tint": "#a78bfa",
+                        "on-background": "#fafafa",
+                        "surface-container-lowest": "#09090b",
+                        "secondary": "#71717a",
+                        "on-surface-variant": "#a1a1aa",
+                        "primary": "#a78bfa",
+                        "surface-bright": "#18181b",
+                        "secondary-container": "#27272a",
+                        "on-tertiary-fixed-variant": "#047857",
+                        "background": "#09090b",
+                        "surface-container": "#121215",
+                        "surface-variant": "#18181b",
+                        "inverse-primary": "#5b21b6",
+                        "inverse-on-surface": "#09090b",
+                        "inverse-surface": "#fafafa",
+                        "on-tertiary-fixed": "#003318",
+                        "on-secondary-container": "#a1a1aa",
+                        "tertiary": "#34d399",
+                        "on-primary-fixed-variant": "#5b21b6",
+                        "surface-container-highest": "#1e1e22",
+                        "on-primary": "#0a0012",
+                        "on-error": "#1a0000",
+                        "on-secondary-fixed": "#18181b",
+                        "on-error-container": "#fca5a5"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Geist", "sans-serif"],
+                        "display": ["Geist", "sans-serif"],
+                        "body": ["Geist", "sans-serif"],
+                        "label": ["Geist", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Geist', sans-serif; }
+    </style>
+</head>
+<body class="bg-background text-on-surface min-h-screen flex items-center justify-center p-4 antialiased selection:bg-primary/30 selection:text-primary-fixed">
+<div class="w-full max-w-[400px]">
+<div class="flex flex-col items-center justify-center mb-8 gap-2">
+<div class="h-12 w-12 bg-surface-container border border-outline-variant rounded-lg flex items-center justify-center shadow-[0_0_15px_rgba(167,139,250,0.1)]">
+<span class="material-symbols-outlined text-primary text-3xl" style="font-variation-settings: 'FILL' 1;">security</span>
+</div>
+<h1 class="font-headline font-black text-2xl tracking-tighter text-on-surface mt-2">SyncUT</h1>
+<p class="text-on-surface-variant text-sm tracking-wide">SECURE ACCESS PORTAL</p>
+</div>
+<div class="bg-surface-container border border-outline-variant rounded-lg p-6 sm:p-8">
+<form action="#" class="space-y-5" method="POST">
+<div>
+<label class="block text-sm font-medium text-on-surface-variant mb-1.5" for="username">Username or Email</label>
+<div class="relative">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-outline text-[20px]">person</span>
+</div>
+<input class="block w-full pl-10 bg-surface border border-outline-variant rounded text-on-surface text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background transition-all py-2.5 placeholder:text-outline" id="username" name="username" placeholder="admin@syncut.io" type="text" value="admin@syncut.io"/>
+</div>
+</div>
+<div>
+<div class="flex items-center justify-between mb-1.5">
+<label class="block text-sm font-medium text-on-surface-variant" for="password">Password</label>
+<a class="text-xs text-primary hover:text-primary-fixed transition-colors font-medium focus:outline-none focus:underline focus:underline-offset-2" href="#">Forgot password?</a>
+</div>
+<div class="relative">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-error text-[20px]">lock</span>
+</div>
+<input class="block w-full pl-10 bg-surface border border-error rounded text-on-surface text-sm focus:outline-none focus:border-error focus:ring-2 focus:ring-error focus:ring-offset-2 focus:ring-offset-background transition-all py-2.5 pr-10" id="password" name="password" type="password" value="hunter2"/>
+<div class="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer text-outline hover:text-on-surface-variant transition-colors">
+<span class="material-symbols-outlined text-[20px]">visibility_off</span>
+</div>
+</div>
+<div class="flex items-center gap-1.5 mt-2 text-error">
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">error</span>
+<p class="text-xs font-medium">Incorrect password. Please try again.</p>
+</div>
+</div>
+<div class="flex items-center pt-1 pb-3">
+<input class="h-4 w-4 rounded bg-surface border-outline-variant text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background cursor-pointer" id="remember-me" name="remember-me" type="checkbox"/>
+<label class="ml-2 block text-sm text-on-surface-variant cursor-pointer hover:text-on-surface transition-colors select-none" for="remember-me">
+                        Remember me on this device
+                    </label>
+</div>
+<button class="w-full flex justify-center items-center gap-2 py-2.5 px-4 border border-transparent rounded text-sm font-bold text-on-primary bg-primary hover:bg-surface-tint focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background active:scale-[0.98] transition-all duration-150" type="submit">
+                    Sign In
+                    <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</form>
+</div>
+<div class="mt-8 text-center text-xs text-outline flex items-center justify-center gap-4">
+<a class="hover:text-on-surface-variant transition-colors" href="#">Help</a>
+<span class="h-3 w-px bg-outline-variant"></span>
+<a class="hover:text-on-surface-variant transition-colors" href="#">Privacy</a>
+<span class="h-3 w-px bg-outline-variant"></span>
+<a class="hover:text-on-surface-variant transition-colors" href="#">Terms</a>
+</div>
+</div>
+</body></html>

@@ -9,14 +9,15 @@
   },
   "type": "module",
   "scripts": {
-    "dev": "turbo run dev",
-    "build": "turbo run build",
+    "dev": "node scripts/generate-git-stats.js && turbo run dev",
+    "build": "node scripts/generate-git-stats.js && turbo run build",
     "test": "turbo run test",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "format": "prettier --write \"**/*.{ts,tsx,json,md}\"",
     "db:push": "supabase db push",
-    "db:gen": "supabase gen types typescript --linked > packages/types/database.types.ts"
+    "db:gen": "supabase gen types typescript --linked > packages/types/src/database.types.ts",
+    "db:test": "node --env-file=.env.local scripts/test-db.js"
   },
   "devDependencies": {
     "@hookform/resolvers": "^5.2.2",

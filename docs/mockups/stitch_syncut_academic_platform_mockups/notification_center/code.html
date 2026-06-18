@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SyncUT Notification Center</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-background": "#fafafa",
+                    "on-primary-fixed": "#2e1065",
+                    "tertiary-container": "#065f46",
+                    "on-primary-fixed-variant": "#5b21b6",
+                    "surface-bright": "#18181b",
+                    "on-secondary": "#09090b",
+                    "surface-container-highest": "#1e1e22",
+                    "surface-container": "#121215",
+                    "secondary": "#71717a",
+                    "outline": "#52525b",
+                    "on-error": "#1a0000",
+                    "on-primary": "#0a0012",
+                    "surface-tint": "#a78bfa",
+                    "tertiary-fixed": "#bbf7d0",
+                    "on-surface-variant": "#a1a1aa",
+                    "on-secondary-fixed": "#18181b",
+                    "inverse-surface": "#fafafa",
+                    "surface-container-lowest": "#09090b",
+                    "background": "#09090b",
+                    "outline-variant": "#27272a",
+                    "inverse-on-surface": "#09090b",
+                    "secondary-fixed-dim": "#71717a",
+                    "on-secondary-container": "#a1a1aa",
+                    "primary-fixed-dim": "#c4b5fd",
+                    "error-container": "#3b1111",
+                    "on-tertiary-fixed-variant": "#047857",
+                    "on-tertiary-fixed": "#003318",
+                    "surface-dim": "#0c0c0f",
+                    "inverse-primary": "#5b21b6",
+                    "on-primary-container": "#ede9fe",
+                    "surface-container-high": "#18181b",
+                    "on-tertiary": "#001a12",
+                    "on-secondary-fixed-variant": "#3f3f46",
+                    "primary": "#a78bfa",
+                    "on-error-container": "#fca5a5",
+                    "surface": "#0c0c0f",
+                    "on-surface": "#fafafa",
+                    "primary-container": "#7c3aed",
+                    "on-tertiary-container": "#bbf7d0",
+                    "secondary-container": "#27272a",
+                    "surface-variant": "#18181b",
+                    "error": "#ef4444",
+                    "tertiary-fixed-dim": "#6ee7b7",
+                    "tertiary": "#34d399",
+                    "surface-container-low": "#0f0f12",
+                    "secondary-fixed": "#a1a1aa",
+                    "primary-fixed": "#ede9fe"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Geist", "sans-serif"],
+                    "display": ["Geist", "sans-serif"],
+                    "body": ["Geist", "sans-serif"],
+                    "label": ["Geist", "sans-serif"]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        body { font-family: 'Geist', sans-serif; }
+    </style>
+</head>
+<body class="bg-background text-on-surface min-h-screen flex flex-col md:flex-row antialiased selection:bg-primary/30">
+<!-- Desktop SideNav -->
+<nav class="hidden md:flex flex-col h-screen fixed left-0 top-0 z-40 py-6 bg-surface-dim dark:bg-surface-dim text-primary dark:text-primary font-body text-sm font-medium tracking-normal docked left-0 h-full w-64 border-r border-outline-variant dark:border-outline-variant flat no shadows">
+<div class="px-6 mb-8 flex items-center space-x-3">
+<span class="material-symbols-outlined text-3xl">school</span>
+<div>
+<h1 class="text-lg font-headline font-black text-on-surface tracking-tighter">SyncUT</h1>
+<p class="text-xs text-on-surface-variant font-normal">Academic Portal</p>
+</div>
+</div>
+<div class="px-4 mb-6">
+<button class="w-full bg-primary text-on-primary py-2 px-4 rounded font-semibold flex items-center justify-center space-x-2 hover:bg-primary-fixed transition-colors duration-150 Focus: ring-2 ring-primary ring-offset-2 ring-offset-background">
+<span class="material-symbols-outlined text-sm">add</span>
+<span>New Alert</span>
+</button>
+</div>
+<ul class="flex-1 px-4 space-y-1">
+<li>
+<a class="flex items-center space-x-3 px-3 py-2 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors duration-150" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Dashboard</span>
+</a>
+</li>
+<li>
+<a class="flex items-center space-x-3 px-3 py-2 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors duration-150" href="#">
+<span class="material-symbols-outlined">school</span>
+<span>Courses</span>
+</a>
+</li>
+<li>
+<a class="flex items-center space-x-3 px-3 py-2 rounded bg-surface-container-highest text-primary border-r-4 border-primary transition-colors duration-150" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">notifications</span>
+<span>Notifications</span>
+</a>
+</li>
+<li>
+<a class="flex items-center space-x-3 px-3 py-2 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors duration-150" href="#">
+<span class="material-symbols-outlined">calendar_today</span>
+<span>Calendar</span>
+</a>
+</li>
+<li>
+<a class="flex items-center space-x-3 px-3 py-2 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors duration-150" href="#">
+<span class="material-symbols-outlined">badge</span>
+<span>Directory</span>
+</a>
+</li>
+</ul>
+<div class="px-4 mt-auto space-y-1">
+<a class="flex items-center space-x-3 px-3 py-2 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors duration-150" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span>Preferences</span>
+</a>
+<a class="flex items-center space-x-3 px-3 py-2 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors duration-150" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span>Sign Out</span>
+</a>
+</div>
+</nav>
+<!-- Mobile TopNav -->
+<header class="md:hidden flex justify-between items-center w-full px-6 py-3 z-50 bg-background dark:bg-background text-primary dark:text-primary font-body text-on-surface antialiased tracking-tight docked full-width top-0 border-b border-outline-variant dark:border-outline-variant flat no shadows fixed">
+<div class="text-xl font-headline font-bold tracking-tighter text-on-surface">SyncUT</div>
+<div class="flex space-x-4">
+<button class="text-on-surface-variant hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined">help</span>
+</button>
+<button class="text-on-surface-variant hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined">account_circle</span>
+</button>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 md:ml-64 pt-16 md:pt-0 p-4 md:p-8 flex flex-col h-screen overflow-hidden">
+<!-- Header & Top Actions -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 flex-shrink-0">
+<div>
+<h2 class="text-3xl font-headline font-semibold tracking-tight text-on-surface">Notification Center</h2>
+<p class="text-sm text-on-surface-variant mt-1">Review and manage your alerts</p>
+</div>
+<div class="flex space-x-3 w-full md:w-auto">
+<button class="flex items-center space-x-2 px-4 py-2 bg-surface-container border border-outline-variant rounded text-sm text-on-surface hover:bg-surface-container-high transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background">
+<span class="material-symbols-outlined text-[18px]">done_all</span>
+<span>Mark all read</span>
+</button>
+</div>
+</div>
+<!-- Layout Grid -->
+<div class="flex flex-col lg:flex-row gap-6 flex-1 overflow-hidden">
+<!-- Filter Sidebar -->
+<aside class="w-full lg:w-64 flex-shrink-0 flex flex-col gap-6 overflow-y-auto pr-2 pb-4">
+<!-- Quick Filters -->
+<div class="bg-surface-container rounded-lg border border-outline-variant p-4">
+<h3 class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-3">Status</h3>
+<div class="space-y-1">
+<button class="w-full flex items-center justify-between px-3 py-2 rounded bg-surface-container-highest text-on-surface text-sm transition-colors border border-outline-variant">
+<span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-primary"></span> Unread</span>
+<span class="text-xs text-on-surface-variant bg-surface px-2 py-0.5 rounded">12</span>
+</button>
+<button class="w-full flex items-center justify-between px-3 py-2 rounded text-on-surface-variant hover:bg-surface-container-high text-sm transition-colors">
+<span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-transparent border border-outline"></span> All</span>
+<span class="text-xs text-on-surface-variant">148</span>
+</button>
+<button class="w-full flex items-center justify-between px-3 py-2 rounded text-on-surface-variant hover:bg-surface-container-high text-sm transition-colors">
+<span class="flex items-center gap-2"><span class="material-symbols-outlined text-[14px]">archive</span> Archived</span>
+</button>
+</div>
+</div>
+<!-- Type Filters -->
+<div class="bg-surface-container rounded-lg border border-outline-variant p-4">
+<h3 class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-3">Type</h3>
+<div class="space-y-2">
+<label class="flex items-center gap-3 cursor-pointer group">
+<div class="relative flex items-center">
+<input checked="" class="peer sr-only" type="checkbox"/>
+<div class="w-4 h-4 border border-outline rounded bg-surface-container-lowest peer-checked:bg-primary peer-checked:border-primary transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined text-[12px] text-on-primary opacity-0 peer-checked:opacity-100 transition-opacity">check</span>
+</div>
+</div>
+<span class="text-sm text-on-surface group-hover:text-primary transition-colors">Academic</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<div class="relative flex items-center">
+<input checked="" class="peer sr-only" type="checkbox"/>
+<div class="w-4 h-4 border border-outline rounded bg-surface-container-lowest peer-checked:bg-primary peer-checked:border-primary transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined text-[12px] text-on-primary opacity-0 peer-checked:opacity-100 transition-opacity">check</span>
+</div>
+</div>
+<span class="text-sm text-on-surface group-hover:text-primary transition-colors">Security</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<div class="relative flex items-center">
+<input class="peer sr-only" type="checkbox"/>
+<div class="w-4 h-4 border border-outline rounded bg-surface-container-lowest peer-checked:bg-primary peer-checked:border-primary transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined text-[12px] text-on-primary opacity-0 peer-checked:opacity-100 transition-opacity">check</span>
+</div>
+</div>
+<span class="text-sm text-on-surface-variant group-hover:text-on-surface transition-colors">Administrative</span>
+</label>
+</div>
+</div>
+<!-- Date Range -->
+<div class="bg-surface-container rounded-lg border border-outline-variant p-4">
+<h3 class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-3">Date Range</h3>
+<select class="w-full bg-surface-container-lowest border border-outline-variant rounded px-3 py-2 text-sm text-on-surface focus:ring-1 focus:ring-primary focus:border-primary outline-none">
+<option>Last 7 Days</option>
+<option>Last 30 Days</option>
+<option>This Semester</option>
+<option>Custom Range...</option>
+</select>
+</div>
+</aside>
+<!-- Notifications List -->
+<div class="flex-1 bg-surface-container rounded-lg border border-outline-variant flex flex-col overflow-hidden relative">
+<!-- List Header (Search/Sort) -->
+<div class="px-4 py-3 border-b border-outline-variant flex justify-between items-center bg-surface-container/50 backdrop-blur-sm sticky top-0 z-10">
+<div class="relative w-full max-w-xs">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">search</span>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-full pl-9 pr-4 py-1.5 text-sm text-on-surface focus:ring-1 focus:ring-primary focus:border-primary outline-none placeholder:text-outline" placeholder="Search notifications..." type="text"/>
+</div>
+<div class="hidden sm:flex items-center gap-2 text-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px]">sort</span>
+<span>Newest First</span>
+</div>
+</div>
+<!-- Scrollable List -->
+<div class="flex-1 overflow-y-auto">
+<!-- Item 1: Unread Security -->
+<div class="group border-b border-outline-variant p-4 hover:bg-surface-container-high transition-colors cursor-pointer relative bg-surface-container-lowest/30">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-tertiary rounded-r"></div>
+<div class="flex gap-4">
+<div class="w-10 h-10 rounded-full bg-tertiary-container/20 border border-tertiary/30 flex items-center justify-center flex-shrink-0 text-tertiary">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">security</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start mb-1">
+<div class="flex items-center gap-2">
+<h4 class="text-sm font-semibold text-on-surface truncate">New Login Detected</h4>
+<span class="px-2 py-0.5 rounded text-[10px] font-medium bg-tertiary-container/30 text-tertiary border border-tertiary/20 uppercase tracking-wide">Security</span>
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+</div>
+<span class="text-xs text-on-surface-variant whitespace-nowrap ml-2">10 mins ago</span>
+</div>
+<p class="text-sm text-on-surface-variant truncate pr-12">A new login was detected from IP 192.168.1.45 (Austin, TX). If this wasn't you, please secure your account immediately.</p>
+</div>
+</div>
+<!-- Quick Actions (Hover) -->
+<div class="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex bg-surface-container-high rounded border border-outline-variant shadow-lg">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors tooltip-trigger" title="Mark Read"><span class="material-symbols-outlined text-[18px]">mark_email_read</span></button>
+<div class="w-px bg-outline-variant my-1"></div>
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors tooltip-trigger" title="Archive"><span class="material-symbols-outlined text-[18px]">archive</span></button>
+</div>
+</div>
+<!-- Item 2: Unread Academic -->
+<div class="group border-b border-outline-variant p-4 hover:bg-surface-container-high transition-colors cursor-pointer relative bg-surface-container-lowest/30">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r"></div>
+<div class="flex gap-4">
+<div class="w-10 h-10 rounded-full bg-primary-container/20 border border-primary/30 flex items-center justify-center flex-shrink-0 text-primary">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">assignment</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start mb-1">
+<div class="flex items-center gap-2">
+<h4 class="text-sm font-semibold text-on-surface truncate">Grade Posted: CS439</h4>
+<span class="px-2 py-0.5 rounded text-[10px] font-medium bg-primary-container/30 text-primary-fixed-dim border border-primary/20 uppercase tracking-wide">Academic</span>
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+</div>
+<span class="text-xs text-on-surface-variant whitespace-nowrap ml-2">2 hours ago</span>
+</div>
+<p class="text-sm text-on-surface-variant truncate pr-12">Prof. Norman has posted grades for Midterm 2. Class average was 78%.</p>
+</div>
+</div>
+<!-- Quick Actions -->
+<div class="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex bg-surface-container-high rounded border border-outline-variant shadow-lg">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined text-[18px]">mark_email_read</span></button>
+<div class="w-px bg-outline-variant my-1"></div>
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined text-[18px]">archive</span></button>
+</div>
+</div>
+<!-- Item 3: Read Academic -->
+<div class="group border-b border-outline-variant p-4 hover:bg-surface-container-high transition-colors cursor-pointer relative">
+<div class="flex gap-4 opacity-70">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest border border-outline-variant flex items-center justify-center flex-shrink-0 text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]">campaign</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start mb-1">
+<div class="flex items-center gap-2">
+<h4 class="text-sm font-medium text-on-surface-variant truncate">Syllabus Update: M408D</h4>
+<span class="px-2 py-0.5 rounded text-[10px] font-medium bg-surface-container-highest text-on-surface-variant border border-outline-variant uppercase tracking-wide">Academic</span>
+</div>
+<span class="text-xs text-outline whitespace-nowrap ml-2">Yesterday</span>
+</div>
+<p class="text-sm text-outline truncate pr-12">The reading schedule for week 4 has been adjusted. Please review the updated PDF on canvas.</p>
+</div>
+</div>
+<!-- Quick Actions -->
+<div class="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex bg-surface-container-high rounded border border-outline-variant shadow-lg">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors" title="Archive"><span class="material-symbols-outlined text-[18px]">archive</span></button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

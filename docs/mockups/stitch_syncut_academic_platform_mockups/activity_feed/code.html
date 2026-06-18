@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SyncUT Portal - Activity Feed</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "tertiary-container": "#065f46",
+                        "tertiary": "#34d399",
+                        "surface-variant": "#18181b",
+                        "on-surface-variant": "#a1a1aa",
+                        "error-container": "#3b1111",
+                        "surface-container-low": "#0f0f12",
+                        "on-secondary-container": "#a1a1aa",
+                        "on-error": "#1a0000",
+                        "surface-container-lowest": "#09090b",
+                        "on-tertiary-fixed-variant": "#047857",
+                        "surface-container-high": "#18181b",
+                        "tertiary-fixed": "#bbf7d0",
+                        "surface-dim": "#0c0c0f",
+                        "outline": "#52525b",
+                        "on-tertiary-container": "#bbf7d0",
+                        "on-surface": "#fafafa",
+                        "on-primary-fixed-variant": "#5b21b6",
+                        "secondary": "#71717a",
+                        "surface-container-highest": "#1e1e22",
+                        "primary": "#a78bfa",
+                        "secondary-fixed": "#a1a1aa",
+                        "primary-container": "#7c3aed",
+                        "inverse-surface": "#fafafa",
+                        "surface-tint": "#a78bfa",
+                        "inverse-primary": "#5b21b6",
+                        "on-secondary-fixed-variant": "#3f3f46",
+                        "surface-container": "#121215",
+                        "primary-fixed-dim": "#c4b5fd",
+                        "on-tertiary": "#001a12",
+                        "on-error-container": "#fca5a5",
+                        "inverse-on-surface": "#09090b",
+                        "outline-variant": "#27272a",
+                        "tertiary-fixed-dim": "#6ee7b7",
+                        "on-tertiary-fixed": "#003318",
+                        "background": "#09090b",
+                        "on-background": "#fafafa",
+                        "secondary-container": "#27272a",
+                        "surface-bright": "#18181b",
+                        "on-primary-container": "#ede9fe",
+                        "surface": "#0c0c0f",
+                        "on-secondary-fixed": "#18181b",
+                        "on-primary-fixed": "#2e1065",
+                        "on-secondary": "#09090b",
+                        "primary-fixed": "#ede9fe",
+                        "on-primary": "#0a0012",
+                        "secondary-fixed-dim": "#71717a",
+                        "error": "#ef4444"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    fontFamily: {
+                        "headline": ["Geist", "sans-serif"],
+                        "display": ["Geist", "sans-serif"],
+                        "body": ["Geist", "sans-serif"],
+                        "label": ["Geist", "sans-serif"]
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Geist', sans-serif; }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body min-h-screen">
+<!-- TopAppBar (Visible on Desktop & Mobile) -->
+<header class="bg-surface dark:bg-surface font-body text-on-surface tracking-tight docked full-width top-0 border-b border-outline-variant flat no shadows fixed top-0 w-full z-50 flex justify-between items-center px-6 h-16">
+<div class="flex items-center gap-4">
+<!-- Mobile Menu Toggle (Visible on sm, hidden on md+) -->
+<button class="md:hidden text-on-surface hover:text-primary transition-colors cursor-pointer active:opacity-80">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<span class="text-xl font-headline font-bold text-primary dark:text-primary tracking-tighter">SyncUT Portal</span>
+</div>
+<div class="flex items-center gap-4">
+<!-- Actions -->
+<button class="text-on-surface-variant font-medium hover:text-on-surface transition-colors duration-200 cursor-pointer active:opacity-80">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-on-surface-variant font-medium hover:text-on-surface transition-colors duration-200 cursor-pointer active:opacity-80">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<!-- Avatar -->
+<div class="w-8 h-8 rounded-full bg-surface-container-high border border-outline-variant overflow-hidden cursor-pointer">
+<img alt="Staff profile avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC8JOyP-tI5Clrc2Rxqlxhb8ARw0w6gmWypAd0wWUzstFLwgNsQGAJh71htXu2ghgoaZ7zvcuH0d_wTeOr-8UnBywWlMmyLr2R6L-00p9Dyp6lDjUBNGvJQP1KNpdVvR41uXgMUEhaz6R6exM5BxtXZySYo5ooywu145INnMVGVz1c-oiZmp5SrO1Oyh0X0EgT9S04um3DaaoRXPZXe9_cMVP03c4yfxXppKJMT27Jca4leLFnxFko6jyOblGxjTNb-j4mIHLDOL7f_"/>
+</div>
+</div>
+</header>
+<!-- Main Layout Container -->
+<div class="flex h-screen pt-16">
+<!-- SideNavBar (Hidden on Mobile, Visible on Desktop) -->
+<nav class="hidden md:flex bg-surface-container dark:bg-surface-container font-body text-sm docked h-full left-0 w-64 border-r border-outline-variant flat no shadows fixed left-0 top-0 h-full flex flex-col py-4 mt-16 z-40">
+<div class="px-6 pb-6 border-b border-outline-variant mb-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-primary-container flex items-center justify-center">
+<span class="text-primary font-bold">SU</span>
+</div>
+<div>
+<h2 class="text-lg font-headline font-black text-on-surface">SyncUT</h2>
+<p class="text-xs text-on-surface-variant">Academic Portal</p>
+</div>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto px-3 space-y-1">
+<a class="text-primary bg-surface-container-highest border-r-2 border-primary p-3 flex items-center gap-3 active:scale-95 transition-transform hover:text-on-surface transition-all duration-150 rounded-l" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+                    Dashboard
+                </a>
+<a class="text-on-surface-variant p-3 flex items-center gap-3 hover:bg-surface-container-high active:scale-95 transition-transform hover:text-on-surface transition-all duration-150 rounded-l" href="#">
+<span class="material-symbols-outlined">apps</span>
+                    Modules
+                </a>
+<a class="text-on-surface-variant p-3 flex items-center gap-3 hover:bg-surface-container-high active:scale-95 transition-transform hover:text-on-surface transition-all duration-150 rounded-l" href="#">
+<span class="material-symbols-outlined">group</span>
+                    Students
+                </a>
+<a class="text-on-surface-variant p-3 flex items-center gap-3 hover:bg-surface-container-high active:scale-95 transition-transform hover:text-on-surface transition-all duration-150 rounded-l" href="#">
+<span class="material-symbols-outlined">school</span>
+                    Faculty
+                </a>
+<a class="text-on-surface-variant p-3 flex items-center gap-3 hover:bg-surface-container-high active:scale-95 transition-transform hover:text-on-surface transition-all duration-150 rounded-l" href="#">
+<span class="material-symbols-outlined">analytics</span>
+                    Reports
+                </a>
+</div>
+<div class="px-6 py-4">
+<button class="w-full bg-primary text-on-primary py-2 px-4 rounded font-medium hover:bg-surface-tint active:scale-95 transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">add</span> New Record
+                 </button>
+</div>
+<div class="mt-auto border-t border-outline-variant pt-4 px-3 space-y-1">
+<a class="text-on-surface-variant p-3 flex items-center gap-3 hover:bg-surface-container-high active:scale-95 transition-transform hover:text-on-surface transition-all duration-150 rounded-l" href="#">
+<span class="material-symbols-outlined">help_center</span>
+                    Support
+                </a>
+<a class="text-on-surface-variant p-3 flex items-center gap-3 hover:bg-surface-container-high active:scale-95 transition-transform hover:text-on-surface transition-all duration-150 rounded-l" href="#">
+<span class="material-symbols-outlined">logout</span>
+                    Logout
+                </a>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="flex-1 md:ml-64 bg-background overflow-y-auto">
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<!-- Page Header -->
+<div class="mb-8 border-b border-outline-variant pb-6">
+<h1 class="text-2xl font-headline font-bold text-on-surface tracking-tight mb-2">Activity Feed</h1>
+<p class="text-on-surface-variant font-body">Recent system events and user actions across the portal.</p>
+</div>
+<!-- Timeline Container -->
+<div class="relative pl-4 sm:pl-8 border-l border-outline-variant ml-4 sm:ml-8 space-y-8">
+<!-- Event Item 1: Success/Check -->
+<div class="relative group">
+<!-- Icon Badge -->
+<div class="absolute -left-8 sm:-left-12 mt-1 w-8 h-8 rounded-full bg-tertiary-container border border-outline-variant flex items-center justify-center shadow-[0_0_10px_rgba(52,211,153,0.1)] group-hover:scale-110 transition-transform z-10">
+<span class="material-symbols-outlined text-tertiary text-sm" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<!-- Content Card -->
+<div class="bg-surface-container rounded-lg p-5 border border-outline-variant hover:bg-surface-container-high transition-colors relative">
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-headline font-medium text-on-surface tracking-tight">Grade Published</h3>
+<span class="text-xs font-mono text-on-surface-variant">10 mins ago</span>
+</div>
+<p class="text-sm text-secondary mb-3">Folio #JST-2023-089 updated successfully.</p>
+<div class="flex items-center gap-2">
+<img alt="Alex Vance profile avatar" class="w-5 h-5 rounded-full border border-outline-variant" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAsFmiUIkdpY_iBed6zxk5NNdGy4nVH6Tgb53FG4sqWJ1Ikub7Pn_IJ3mJsYfvBSDamNnG9HjbYyyzr1oIzK6swWFVOl88VWdpn9UaWnBug-d8QtFQGP9s1nJ_Q7BTvXXZasD0SATk2ViXY4HbwwBHPWOlIRv0AcuV1-lOd2iCsbh1hyShe3k_nkHCYrgEmfGmV-X7c1lsRklmkzOe1GIg2GafsKZBeRRrAhJwG1W2dtSPSiT9n8kn-wxL_Aip825vWgU3tTZJXkcsP"/>
+<span class="text-xs text-on-surface-variant">Alex Vance</span>
+</div>
+</div>
+</div>
+<!-- Event Item 2: Alert/Warning -->
+<div class="relative group">
+<div class="absolute -left-8 sm:-left-12 mt-1 w-8 h-8 rounded-full bg-surface-container-high border border-outline-variant flex items-center justify-center z-10">
+<span class="material-symbols-outlined text-primary text-sm">notifications</span>
+</div>
+<div class="bg-surface-container rounded-lg p-5 border border-outline-variant hover:bg-surface-container-high transition-colors">
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-headline font-medium text-on-surface tracking-tight">System Maintenance Alert</h3>
+<span class="text-xs font-mono text-on-surface-variant">2 hours ago</span>
+</div>
+<p class="text-sm text-secondary mb-3">Scheduled downtime for database optimization on Saturday 2AM UTC.</p>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-on-surface-variant text-sm">robot</span>
+<span class="text-xs text-on-surface-variant">System Auto-Post</span>
+</div>
+</div>
+</div>
+<!-- Event Item 3: Document/File -->
+<div class="relative group">
+<div class="absolute -left-8 sm:-left-12 mt-1 w-8 h-8 rounded-full bg-surface-container-high border border-outline-variant flex items-center justify-center z-10">
+<span class="material-symbols-outlined text-on-surface-variant text-sm">description</span>
+</div>
+<div class="bg-surface-container rounded-lg p-5 border border-outline-variant hover:bg-surface-container-high transition-colors">
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-headline font-medium text-on-surface tracking-tight">Syllabus Uploaded</h3>
+<span class="text-xs font-mono text-on-surface-variant">Yesterday</span>
+</div>
+<p class="text-sm text-secondary mb-3">New syllabus attached to Module CS-401 for upcoming semester.</p>
+<div class="flex items-center gap-2">
+<img alt="Dr. Sarah Chen profile avatar" class="w-5 h-5 rounded-full border border-outline-variant" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCKTup8SHipH6TJlPWjo6SCJa9rU_8apSHktGCArF6LIkzbTNpKt_1_2A7lyJp5GFWkM9w_l4npEbGN6mmDhBSnZtkHrDtpxd0M7EvKnCU44WwuYsp5QxSTxO9NKkEBCo6YG0mMS4iV-SaPwivk6tdX0eovhPtrQXv7O3cLc5YRnqiRiOV4OrHrzNJgi1zpg4PGjde4Te8pIF4Mn4ZzU-wacZBKYWEmPwfj6AL71p6aZGD18QoET5ht0J3QGCnuM9v92IRAZYjmyImY"/>
+<span class="text-xs text-on-surface-variant">Dr. Sarah Chen</span>
+</div>
+</div>
+</div>
+<!-- Event Item 4: Error -->
+<div class="relative group">
+<div class="absolute -left-8 sm:-left-12 mt-1 w-8 h-8 rounded-full bg-error-container border border-error/20 flex items-center justify-center z-10">
+<span class="material-symbols-outlined text-error text-sm">error</span>
+</div>
+<div class="bg-surface-container rounded-lg p-5 border border-outline-variant hover:bg-surface-container-high transition-colors">
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-headline font-medium text-error tracking-tight">Sync Failure</h3>
+<span class="text-xs font-mono text-on-surface-variant">Yesterday</span>
+</div>
+<p class="text-sm text-secondary mb-3">API integration failed to connect with the central registrar database.</p>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-on-surface-variant text-sm">robot</span>
+<span class="text-xs text-on-surface-variant">System Monitor</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Load More -->
+<div class="mt-8 text-center">
+<button class="px-6 py-2 rounded-full border border-outline-variant text-sm text-on-surface-variant hover:text-primary hover:border-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background">
+                        Load Older Activity
+                    </button>
+</div>
+</div>
+</main>
+</div>
+</body></html>

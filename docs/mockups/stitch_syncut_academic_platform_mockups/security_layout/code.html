@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Access Restricted - Security</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary-fixed": "#bbf7d0",
+                    "primary-fixed": "#ede9fe",
+                    "surface-container-high": "#18181b",
+                    "tertiary-fixed-dim": "#6ee7b7",
+                    "tertiary-container": "#065f46",
+                    "error-container": "#3b1111",
+                    "on-secondary-fixed-variant": "#3f3f46",
+                    "on-tertiary": "#001a12",
+                    "on-surface": "#fafafa",
+                    "outline-variant": "#27272a",
+                    "surface": "#0c0c0f",
+                    "on-secondary": "#09090b",
+                    "outline": "#52525b",
+                    "surface-dim": "#0c0c0f",
+                    "secondary-fixed-dim": "#71717a",
+                    "on-primary-container": "#ede9fe",
+                    "error": "#ef4444",
+                    "primary-fixed-dim": "#c4b5fd",
+                    "on-tertiary-container": "#bbf7d0",
+                    "surface-container-low": "#0f0f12",
+                    "secondary-fixed": "#a1a1aa",
+                    "primary-container": "#7c3aed",
+                    "on-primary-fixed": "#2e1065",
+                    "surface-tint": "#a78bfa",
+                    "on-background": "#fafafa",
+                    "surface-container-lowest": "#09090b",
+                    "secondary": "#71717a",
+                    "on-surface-variant": "#a1a1aa",
+                    "primary": "#a78bfa",
+                    "surface-bright": "#18181b",
+                    "secondary-container": "#27272a",
+                    "on-tertiary-fixed-variant": "#047857",
+                    "background": "#09090b",
+                    "surface-container": "#121215",
+                    "surface-variant": "#18181b",
+                    "inverse-primary": "#5b21b6",
+                    "inverse-on-surface": "#09090b",
+                    "inverse-surface": "#fafafa",
+                    "on-tertiary-fixed": "#003318",
+                    "on-secondary-container": "#a1a1aa",
+                    "tertiary": "#34d399",
+                    "on-primary-fixed-variant": "#5b21b6",
+                    "surface-container-highest": "#1e1e22",
+                    "on-primary": "#0a0012",
+                    "on-error": "#1a0000",
+                    "on-secondary-fixed": "#18181b",
+                    "on-error-container": "#fca5a5"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Geist", "sans-serif"],
+                    "display": ["Geist", "sans-serif"],
+                    "body": ["Geist", "sans-serif"],
+                    "label": ["Geist", "sans-serif"]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        @import url('https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap');
+    </style>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+</head>
+<body class="bg-background text-on-surface font-body h-screen w-screen flex items-center justify-center p-4 antialiased selection:bg-primary-container selection:text-on-primary-container overflow-hidden">
+<div class="absolute inset-0 z-0 pointer-events-none" style="background: radial-gradient(circle at 50% 0%, rgba(239, 68, 68, 0.03) 0%, transparent 50%);"></div>
+<main class="relative z-10 w-full max-w-[420px] bg-surface-container border border-outline-variant rounded-xl p-8 md:p-10 flex flex-col items-center text-center shadow-2xl backdrop-blur-sm">
+<div class="mb-8 relative group">
+<div class="absolute inset-0 bg-error rounded-full blur-xl opacity-20 group-hover:opacity-30 transition-opacity duration-500"></div>
+<div class="relative h-24 w-24 bg-surface border border-outline-variant rounded-full flex items-center justify-center shadow-inner">
+<span class="material-symbols-outlined text-5xl text-error" data-icon="lock" data-weight="fill" style="font-variation-settings: 'FILL' 1;">lock</span>
+</div>
+</div>
+<div class="space-y-3 mb-10 w-full">
+<h1 class="font-headline font-semibold text-2xl tracking-tight text-on-surface">Access Restricted</h1>
+<p class="font-body text-on-surface-variant text-sm leading-relaxed max-w-[280px] mx-auto">
+                Active Session Required. Your previous connection has expired or lacks the necessary authorization for this perimeter.
+            </p>
+</div>
+<div class="w-full space-y-4">
+<button class="w-full bg-primary hover:bg-primary-fixed-dim text-on-primary font-body font-medium py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background active:scale-[0.98]">
+<span class="material-symbols-outlined text-lg" data-icon="login">login</span>
+                Return to Login
+            </button>
+<button class="w-full bg-transparent border border-outline-variant hover:bg-surface-container-high text-on-surface font-body font-medium py-3 px-4 rounded-lg transition-all duration-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background">
+                View Access Policies
+            </button>
+</div>
+<div class="mt-8 pt-6 border-t border-outline-variant w-full">
+<p class="text-xs text-on-surface-variant font-mono tracking-wider opacity-60">
+                ERR_AUTH_0x4A9F • SEC_MODULE_ID: 8829
+            </p>
+</div>
+</main>
+</body></html>
