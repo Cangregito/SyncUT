@@ -1,5 +1,5 @@
 {
-  "totalCommits": 60,
+  "totalCommits": 63,
   "totalPRs": 8,
   "mergedPRs": 8,
   "openPRs": 0,
@@ -64,7 +64,7 @@
   "commitsByWeek": [
     {
       "week": "W-3",
-      "commits": 29
+      "commits": 19
     },
     {
       "week": "W-2",
@@ -76,10 +76,46 @@
     },
     {
       "week": "Actual",
-      "commits": 0
+      "commits": 3
     }
   ],
   "recentActivities": [
+    {
+      "user": "Marvin61-LOVIU",
+      "action": "validation",
+      "description": "x",
+      "module": "Dashboard Base",
+      "squad": "Externo",
+      "sprint": "Sprint 3",
+      "date": "13-jun",
+      "time": "19:16",
+      "status": "Completado",
+      "impact": "Medio"
+    },
+    {
+      "user": "Marvin61-LOVIU",
+      "action": "validation",
+      "description": "x",
+      "module": "Dashboard Base",
+      "squad": "Externo",
+      "sprint": "Sprint 3",
+      "date": "13-jun",
+      "time": "19:16",
+      "status": "Completado",
+      "impact": "Medio"
+    },
+    {
+      "user": "Marvin61-LOVIU",
+      "action": "validation",
+      "description": "x",
+      "module": "Dashboard Base",
+      "squad": "Externo",
+      "sprint": "Sprint 3",
+      "date": "13-jun",
+      "time": "19:16",
+      "status": "Completado",
+      "impact": "Medio"
+    },
     {
       "user": "Jassiel García",
       "action": "validation",
@@ -225,42 +261,6 @@
       "impact": "Alto"
     },
     {
-      "user": "Jassiel García",
-      "action": "merge",
-      "description": "Merge pull request #6 from Cangregito/feature/squad-5-incidents",
-      "module": "Incidencias",
-      "squad": "Admin Master",
-      "sprint": "Sprint 3",
-      "date": "03-jun",
-      "time": "18:32",
-      "status": "Completado",
-      "impact": "Alto"
-    },
-    {
-      "user": "Ángel Zataráin",
-      "action": "test",
-      "description": "develop-test",
-      "module": "Dashboard Base",
-      "squad": "Squad 2",
-      "sprint": "Sprint 3",
-      "date": "01-jun",
-      "time": "21:29",
-      "status": "Completado",
-      "impact": "Medio"
-    },
-    {
-      "user": "Osmara Araujo",
-      "action": "validation",
-      "description": "docs: define modulo 5 incidencias y reglas semaforo semanal",
-      "module": "Incidencias",
-      "squad": "Squad 5",
-      "sprint": "Sprint 3",
-      "date": "02-jun",
-      "time": "20:36",
-      "status": "Completado",
-      "impact": "Medio"
-    },
-    {
       "user": "Langostin",
       "action": "approval",
       "description": "Pull Request #8: prueba pull request (Estado: CLOSED)",
@@ -330,6 +330,16 @@
       "progress": 100,
       "weekly": "51 cambios",
       "prs": 3,
+      "status": "activo"
+    },
+    {
+      "name": "Marvin61-LOVIU",
+      "squad": "Externo",
+      "role": "Desarrollador",
+      "tasks": 3,
+      "progress": 64,
+      "weekly": "3 cambios",
+      "prs": 1,
       "status": "activo"
     },
     {
