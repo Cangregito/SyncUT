@@ -1,6 +1,20 @@
 import { execSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const outputPath = path.join(
+  repositoryRoot,
+  "apps/web/components/modules/executive-dashboard/git-stats.json"
+);
+const githubHeaders = {
+  Accept: "application/vnd.github+json",
+  "User-Agent": "SyncUT-App",
+  ...(process.env.GITHUB_TOKEN
+    ? { Authorization: `Bearer ${process.env.GITHUB_TOKEN}` }
+    : {}),
+};
 
 // Mapeo real de correos/nombres de git a integrantes y squads reales
 const MEMBER_MAPPING = [
@@ -105,25 +119,103 @@ function getSquadFromRefOrAuthor(ref, author) {
   return "Admin Master";
 }
 
-async function run() {
+function getLocalGitData() {
   try {
-    console.log("Generando estadísticas reales de Git y consultando GitHub API...");
-
-    // 1. Obtener commits locales reales
-    const rawLog = execSync('git log --pretty=format:"%an|%ae|%ad|%s" --date=iso-strict', {
+    const rawLog = execSync(
+      'git log HEAD --pretty=format:"%an|%ae|%ad|%s" --date=iso-strict',
+      {
+        cwd: repositoryRoot,
+        encoding: "utf-8",
+        maxBuffer: 1024 * 1024 * 10,
+        stdio: ["ignore", "pipe", "pipe"],
+      }
+    );
+    const headCommit = execSync("git rev-parse HEAD", {
+      cwd: repositoryRoot,
       encoding: "utf-8",
-      maxBuffer: 1024 * 1024 * 10,
-    });
+      stdio: ["ignore", "pipe", "pipe"],
+    }).trim();
 
     const commits = rawLog
       .trim()
       .split("\n")
       .filter(Boolean)
       .map((line) => {
-        const [name, email, dateStr, subject] = line.split("|");
-        const date = new Date(dateStr);
-        return { name, email, date, subject };
+        const [name, email, dateStr, ...subjectParts] = line.split("|");
+        return {
+          name,
+          email,
+          date: new Date(dateStr),
+          subject: subjectParts.join("|"),
+        };
       });
+
+    return { commits, headCommit };
+  } catch {
+    return null;
+  }
+}
+
+async function getGithubCommitData() {
+  const commits = [];
+  const sha = process.env.VERCEL_GIT_COMMIT_SHA;
+
+  for (let page = 1; page <= 10; page++) {
+    const params = new URLSearchParams({
+      per_page: "100",
+      page: String(page),
+      ...(sha ? { sha } : {}),
+    });
+    const response = await fetch(
+      `https://api.github.com/repos/Cangregito/SyncUT/commits?${params}`,
+      { headers: githubHeaders }
+    );
+    if (!response.ok) {
+      throw new Error(`GitHub commits API devolvió ${response.status}`);
+    }
+
+    const pageCommits = await response.json();
+    commits.push(
+      ...pageCommits.map((item) => ({
+        name: item.commit?.author?.name || item.author?.login || "Colaborador",
+        email: item.commit?.author?.email || "",
+        date: new Date(item.commit?.author?.date || item.commit?.committer?.date),
+        subject: (item.commit?.message || "").split("\n")[0],
+      }))
+    );
+
+    if (pageCommits.length < 100) {
+      return {
+        commits,
+        headCommit: sha || pageCommits[0]?.sha || "unknown",
+      };
+    }
+  }
+
+  return { commits, headCommit: sha || "unknown" };
+}
+
+async function run() {
+  try {
+    console.log("Generando estadísticas reales de Git y consultando GitHub API...");
+
+    // 1. Usar Git local cuando existe y la API de GitHub en builds sin carpeta .git.
+    let gitData = process.env.VERCEL ? null : getLocalGitData();
+    if (!gitData) {
+      console.log("Repositorio local no disponible; consultando commits desde GitHub API...");
+      try {
+        gitData = await getGithubCommitData();
+      } catch (error) {
+        if (fs.existsSync(outputPath)) {
+          console.warn(
+            `No fue posible actualizar commits (${error.message}); se conserva el JSON confirmado.`
+          );
+          return;
+        }
+        throw error;
+      }
+    }
+    const { commits, headCommit } = gitData;
 
     const totalCommits = commits.length;
 
@@ -157,6 +249,7 @@ async function run() {
 
     // 2. Consultar Pull Requests de GitHub API
     let pulls = [];
+    let githubAvailable = false;
     let prsBySquad = {
       "Squad 1": { total: 0, closed: 0, open: 0 },
       "Squad 2": { total: 0, closed: 0, open: 0 },
@@ -168,17 +261,17 @@ async function run() {
     };
 
     try {
-      const headers = { "User-Agent": "SyncUT-App" };
-      const pullsRes = await fetch("https://api.github.com/repos/Cangregito/SyncUT/pulls?state=all&per_page=100", { headers });
+      const pullsRes = await fetch("https://api.github.com/repos/Cangregito/SyncUT/pulls?state=all&per_page=100", { headers: githubHeaders });
       if (pullsRes.ok) {
         pulls = await pullsRes.json();
+        githubAvailable = true;
         console.log(`GitHub API: Se encontraron ${pulls.length} Pull Requests.`);
         
         pulls.forEach((pr) => {
           const sq = getSquadFromRefOrAuthor(pr.head?.ref, pr.user?.login);
           if (prsBySquad[sq]) {
             prsBySquad[sq].total++;
-            if (pr.state === "closed") prsBySquad[sq].closed++;
+            if (pr.merged_at) prsBySquad[sq].closed++;
             else prsBySquad[sq].open++;
           }
         });
@@ -244,7 +337,7 @@ async function run() {
         sprint: "Sprint 3",
         date: localDate,
         time: localTime,
-        status: pr.state === "closed" ? "Fucionado" : "Abierto",
+        status: pr.merged_at ? "Fusionado" : pr.state === "open" ? "Abierto" : "Cerrado",
         impact: "Alto",
       });
     });
@@ -273,10 +366,13 @@ async function run() {
 
     // Formatear salida para JSON
     const outputData = {
+      generatedAt: new Date().toISOString(),
+      headCommit,
+      githubAvailable,
       totalCommits,
-      totalPRs: pulls.length || 8,
-      mergedPRs: pulls.filter((p) => p.state === "closed").length || 8,
-      openPRs: pulls.filter((p) => p.state === "open").length || 0,
+      totalPRs: pulls.length,
+      mergedPRs: pulls.filter((p) => Boolean(p.merged_at)).length,
+      openPRs: pulls.filter((p) => p.state === "open").length,
       commitsBySquad: [
         { squad: "S1 (Justificaciones)", progreso: commitsBySquad["Squad 1"] },
         { squad: "S2 (Autenticación)", progreso: commitsBySquad["Squad 2"] },
@@ -284,6 +380,7 @@ async function run() {
         { squad: "S4 (Notificaciones)", progreso: commitsBySquad["Squad 4"] },
         { squad: "S5 (Incidencias)", progreso: commitsBySquad["Squad 5"] },
         { squad: "S6 (Chatbot)", progreso: commitsBySquad["Squad 6"] },
+        { squad: "Admin (Dashboard Gobernanza)", progreso: commitsBySquad["Admin Master"] },
       ],
       prsBySquad: [
         { squad: "S1 (Justificaciones)", total: prsBySquad["Squad 1"].total, closed: prsBySquad["Squad 1"].closed },
@@ -292,34 +389,38 @@ async function run() {
         { squad: "S4 (Notificaciones)", total: prsBySquad["Squad 4"].total, closed: prsBySquad["Squad 4"].closed },
         { squad: "S5 (Incidencias)", total: prsBySquad["Squad 5"].total, closed: prsBySquad["Squad 5"].closed },
         { squad: "S6 (Chatbot)", total: prsBySquad["Squad 6"].total, closed: prsBySquad["Squad 6"].closed },
+        { squad: "Admin (Dashboard Gobernanza)", total: prsBySquad["Admin Master"].total, closed: prsBySquad["Admin Master"].closed },
       ],
       commitsByWeek,
       recentActivities: recentActivities.slice(0, 25), // Mantener el feed conciso
       owners: Object.values(ownerStats)
         .sort((a, b) => b.commits - a.commits)
         .map((owner) => {
-          const matchingPrs = pulls.filter((p) => p.user?.login?.toLowerCase() === MEMBER_MAPPING.find(m => m.realName === owner.name)?.githubUsernames?.[0]?.toLowerCase());
+          const githubUsernames =
+            MEMBER_MAPPING.find((member) => member.realName === owner.name)?.githubUsernames ?? [];
+          const matchingPrs = pulls.filter((p) =>
+            githubUsernames.some(
+              (username) => p.user?.login?.toLowerCase() === username.toLowerCase()
+            )
+          );
           return {
             name: owner.name,
             squad: owner.squad,
             role: owner.role,
             tasks: owner.commits, // Tareas es la cantidad real de commits aportados
-            progress: owner.squad === "Admin Master" ? 100 : Math.min(40 + owner.commits * 8, 100),
+            progress: Math.min(owner.commits * 10, 100),
             weekly: `${owner.commits} cambios`,
-            prs: matchingPrs.length || Math.ceil(owner.commits / 3),
+            prs: matchingPrs.length,
             status: "activo",
           };
         }),
     };
 
-    const outputPath = path.join(
-      process.cwd(),
-      "apps/web/components/modules/executive-dashboard/git-stats.json"
-    );
     fs.writeFileSync(outputPath, JSON.stringify(outputData, null, 2), "utf-8");
     console.log(`Estadísticas unificadas de Git y GitHub API generadas en ${outputPath}`);
   } catch (error) {
     console.error("Error al compilar estadísticas:", error);
+    process.exitCode = 1;
   }
 }
 

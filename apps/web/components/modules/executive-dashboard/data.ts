@@ -12,14 +12,14 @@ export const executiveHeader = {
 };
 
 export const kpis: KpiItem[] = [
-  { label: "Avance global", value: "78%", trend: "+8.4%", tone: "success", icon: "Gauge", micro: "18 tareas cerradas esta semana" },
-  { label: "Tareas completadas", value: "128", trend: "+26", tone: "success", icon: "CheckCircle2", micro: "Sprints 1 y 2 en producción" },
-  { label: "Tareas pendientes", value: "42", trend: "-12", tone: "info", icon: "ListTodo", micro: "28 en ejecución, 14 en backlog" },
+  { label: "Avance global", value: "78%", trend: "+8.4%", tone: "success", icon: "Gauge", micro: "Promedio del roadmap de módulos" },
+  { label: "Commits totales", value: "0", trend: "Git", tone: "success", icon: "CheckCircle2", micro: "Historial de la rama desplegada" },
+  { label: "PRs abiertos", value: "0", trend: "GitHub", tone: "info", icon: "ListTodo", micro: "Pull requests pendientes" },
   { label: "Bloqueos activos", value: "1", trend: "-4", tone: "warning", icon: "ShieldAlert", micro: "1 de integración externa" },
-  { label: "Squads trabajando", value: "6", trend: "0", tone: "info", icon: "Users", micro: "28 integrantes totales" },
+  { label: "Squads con actividad", value: "6", trend: "Git", tone: "info", icon: "Users", micro: "Squads con commits registrados" },
   { label: "Uptime sistema", value: "99.98%", trend: "+0.05%", tone: "success", icon: "Activity", micro: "Producción estable" },
   { label: "Commits semana", value: "30", trend: "+8", tone: "info", icon: "GitCommitHorizontal", micro: "Consolidación de ramas" },
-  { label: "PRs aprobados", value: "12", trend: "+3", tone: "success", icon: "GitPullRequestArrow", micro: "Revisiones al día" },
+  { label: "PRs fusionados", value: "0", trend: "GitHub", tone: "success", icon: "GitPullRequestArrow", micro: "Pull requests con merge confirmado" },
   { label: "Módulos terminados", value: "4/7", trend: "+2", tone: "info", icon: "PackageCheck", micro: "Autenticación, Justificaciones, Dashboard, Notificaciones" },
 ];
 

@@ -77,6 +77,9 @@ importers:
       '@plataforma/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
+      '@plataforma/types':
+        specifier: workspace:*
+        version: link:../../packages/types
       '@plataforma/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -150,6 +153,9 @@ importers:
       typescript:
         specifier: ^5
         version: 5.9.3
+      vitest:
+        specifier: ^4.1.6
+        version: 4.1.6(@types/node@20.19.41)(vite@8.0.13(@types/node@20.19.41)(esbuild@0.28.0)(jiti@2.7.0))
 
   packages/config: {}
 
