@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
+import { createSupabaseBrowserClient } from "@plataforma/sdk/client";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -14,8 +15,9 @@ export default function SignupPage() {
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  function handleSignup(event: FormEvent<HTMLFormElement>) {
+  async function handleSignup(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setErrorMsg("");
     setSuccessMsg("");
@@ -37,24 +39,43 @@ export default function SignupPage() {
       return;
     }
 
-    try {
-      const raw = window.localStorage.getItem("syncut_beta_users");
-      const users = raw ? JSON.parse(raw) : [];
+    setIsSubmitting(true);
 
-      if (users.some((entry: { email: string }) => entry.email === email)) {
-        setErrorMsg("Este correo electrónico ya se encuentra registrado.");
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const { data, error } = await supabase.auth.signUp({
+        email: email.trim(),
+        password,
+        options: {
+          data: {
+            full_name: fullName.trim(),
+          },
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+
+      if (error) {
+        setErrorMsg(error.message);
         return;
       }
 
-      users.push({ fullName, email, password });
-      window.localStorage.setItem("syncut_beta_users", JSON.stringify(users));
+      if (data.session) {
+        router.replace("/dashboard");
+        router.refresh();
+        return;
+      }
 
-      setSuccessMsg("¡Cuenta creada con éxito! Redireccionando al login...");
-      setTimeout(() => {
-        router.push("/login");
-      }, 1500);
-    } catch {
-      setErrorMsg("Ocurrió un error al registrar la cuenta.");
+      setSuccessMsg(
+        "Cuenta creada. Revisa tu correo para confirmar el registro."
+      );
+    } catch (error) {
+      setErrorMsg(
+        error instanceof Error
+          ? error.message
+          : "Ocurrió un error al registrar la cuenta."
+      );
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -111,6 +132,7 @@ export default function SignupPage() {
                 id="email"
                 placeholder="nombre@universidad.edu.mx"
                 type="email"
+                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
@@ -131,6 +153,7 @@ export default function SignupPage() {
                 id="password"
                 placeholder="••••••••"
                 type={showPassword ? "text" : "password"}
+                autoComplete="new-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
@@ -196,6 +219,7 @@ export default function SignupPage() {
                 id="confirm_password"
                 placeholder="••••••••"
                 type="password"
+                autoComplete="new-password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
               />
@@ -247,8 +271,9 @@ export default function SignupPage() {
           <button
             className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-on-primary bg-primary hover:bg-primary-fixed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-background focus:ring-primary transition-all active:scale-[0.98]"
             type="submit"
+            disabled={isSubmitting}
           >
-            Crear Cuenta
+            {isSubmitting ? "Creando cuenta..." : "Crear Cuenta"}
           </button>
         </form>
       </div>

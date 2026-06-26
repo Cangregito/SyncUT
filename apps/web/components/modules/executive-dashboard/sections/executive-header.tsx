@@ -1,9 +1,8 @@
 import { motion } from "framer-motion";
-import { ChevronRight, Download, Moon, Sun, Target } from "lucide-react";
+import { ChevronRight, Download, Target } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 interface ExecutiveHeaderProps {
   onExport: () => void;

@@ -17,7 +17,6 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
-  Legend,
   Line,
   LineChart,
   Pie,
@@ -175,44 +174,39 @@ export function ExecutiveDashboardPage() {
   }, []);
 
   const kpiItems = useMemo<KpiItem[]>(() => {
-    const progresses = modules.map((m) => {
-      const match = gitStats.commitsBySquad.find((s) =>
-        s.squad.toLowerCase().includes(m.name.substring(0, 5).toLowerCase())
-      );
-      return Math.min(100, Math.round(((match?.progreso || 0) / 10) * 100));
-    });
+    const progresses = modules.map((module) => module.progress);
     const avgProgress = Math.round(progresses.reduce((a, b) => a + b, 0) / progresses.length);
+    const currentWeekCommits =
+      gitStats.commitsByWeek.find((week) => week.week === "Actual")?.commits ?? 0;
 
     return kpis.map((kpi) => {
       if (kpi.label === "Avance global") {
         return {
           ...kpi,
-          value: `${Math.max(avgProgress, 35)}%`,
-          micro: `Promedio real de avance por commits`,
+          value: `${avgProgress}%`,
+          micro: "Promedio del roadmap declarado por módulo",
         };
       }
-      if (kpi.label === "Tareas completadas") {
+      if (kpi.label === "Commits totales") {
         return {
           ...kpi,
           value: String(gitStats.totalCommits),
-          micro: `${gitStats.mergedPRs} PRs cerrados/fusionados`,
+          micro: `Rama desplegada · ${gitStats.headCommit.slice(0, 7)}`,
         };
       }
-      if (kpi.label === "Tareas pendientes") {
+      if (kpi.label === "PRs abiertos") {
         return {
           ...kpi,
-          value: String(Math.max(45 - gitStats.totalCommits, 8)),
-          micro: "Basado en backlog estimado",
+          value: gitStats.githubAvailable ? String(gitStats.openPRs) : "N/D",
+          micro: gitStats.githubAvailable
+            ? "Pull requests pendientes en GitHub"
+            : "GitHub no estuvo disponible al generar",
         };
       }
       if (kpi.label === "Bloqueos activos") {
-        return {
-          ...kpi,
-          value: String(gitStats.openPRs),
-          micro: `${gitStats.openPRs} PRs abiertos en revisión`,
-        };
+        return kpi;
       }
-      if (kpi.label === "Squads trabajando") {
+      if (kpi.label === "Squads con actividad") {
         const workingSquads = gitStats.commitsBySquad.filter((s) => s.progreso > 0).length;
         return {
           ...kpi,
@@ -223,15 +217,15 @@ export function ExecutiveDashboardPage() {
       if (kpi.label === "Commits semana") {
         return {
           ...kpi,
-          value: String(gitStats.totalCommits),
-          micro: "Leído directamente de Git",
+          value: String(currentWeekCommits),
+          micro: "Últimos 7 días, leído directamente de Git",
         };
       }
-      if (kpi.label === "PRs aprobados") {
+      if (kpi.label === "PRs fusionados") {
         return {
           ...kpi,
-          value: String(gitStats.mergedPRs),
-          micro: "Filtro: Pull Requests cerrados",
+          value: gitStats.githubAvailable ? String(gitStats.mergedPRs) : "N/D",
+          micro: "Pull requests con fecha de merge confirmada",
         };
       }
       if (kpi.label === "Módulos terminados") {
@@ -462,7 +456,7 @@ export function ExecutiveDashboardPage() {
                 s.squad.toLowerCase().includes(module.name.substring(0, 5).toLowerCase())
               );
               const commitCount = squadCommitsObj?.progreso || 0;
-              const calculatedProgress = Math.min(100, Math.round((commitCount / 10) * 100));
+              const roadmapProgress = module.progress;
 
               const squadPrsObj = gitStats.prsBySquad.find((s) =>
                 s.squad.toLowerCase().includes(module.name.substring(0, 5).toLowerCase())
@@ -489,10 +483,10 @@ export function ExecutiveDashboardPage() {
                     </div>
                     <div className="mt-3">
                       <div className="mb-1 flex justify-between text-xs text-on-surface-variant font-medium">
-                        <span>Progreso (Git commits)</span>
-                        <span className="text-on-surface font-semibold">{calculatedProgress}%</span>
+                        <span>Avance del roadmap</span>
+                        <span className="text-on-surface font-semibold">{roadmapProgress}%</span>
                       </div>
-                      <Progress value={calculatedProgress} indicatorClassName="bg-primary" />
+                      <Progress value={roadmapProgress} indicatorClassName="bg-primary" />
                     </div>
                   </summary>
 
