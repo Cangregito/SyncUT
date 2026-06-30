@@ -14,6 +14,162 @@ export type Database = {
   }
   public: {
     Tables: {
+      appointment_attendance: {
+        Row: {
+          appointment_id: string
+          id: string
+          notes: string | null
+          recorded_at: string
+          recorded_by: string
+          status: Database["public"]["Enums"]["appointment_attendance_status"]
+          updated_at: string
+        }
+        Insert: {
+          appointment_id: string
+          id?: string
+          notes?: string | null
+          recorded_at?: string
+          recorded_by: string
+          status: Database["public"]["Enums"]["appointment_attendance_status"]
+          updated_at?: string
+        }
+        Update: {
+          appointment_id?: string
+          id?: string
+          notes?: string | null
+          recorded_at?: string
+          recorded_by?: string
+          status?: Database["public"]["Enums"]["appointment_attendance_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_attendance_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: true
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_attendance_recorded_by_fkey"
+            columns: ["recorded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      appointment_audit_events: {
+        Row: {
+          actor_id: string | null
+          appointment_id: string
+          created_at: string | null
+          event_type: string
+          from_status: Database["public"]["Enums"]["appointment_status"] | null
+          id: string
+          note: string | null
+          to_status: Database["public"]["Enums"]["appointment_status"] | null
+        }
+        Insert: {
+          actor_id?: string | null
+          appointment_id: string
+          created_at?: string | null
+          event_type: string
+          from_status?: Database["public"]["Enums"]["appointment_status"] | null
+          id?: string
+          note?: string | null
+          to_status?: Database["public"]["Enums"]["appointment_status"] | null
+        }
+        Update: {
+          actor_id?: string | null
+          appointment_id?: string
+          created_at?: string | null
+          event_type?: string
+          from_status?: Database["public"]["Enums"]["appointment_status"] | null
+          id?: string
+          note?: string | null
+          to_status?: Database["public"]["Enums"]["appointment_status"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_audit_events_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_audit_events_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      appointments: {
+        Row: {
+          created_at: string | null
+          ends_at: string
+          id: string
+          location: string | null
+          meeting_url: string | null
+          modality: Database["public"]["Enums"]["appointment_modality"]
+          reason: string
+          scheduled_date: string
+          starts_at: string
+          status: Database["public"]["Enums"]["appointment_status"]
+          student_id: string
+          tutor_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          ends_at: string
+          id?: string
+          location?: string | null
+          meeting_url?: string | null
+          modality?: Database["public"]["Enums"]["appointment_modality"]
+          reason: string
+          scheduled_date: string
+          starts_at: string
+          status?: Database["public"]["Enums"]["appointment_status"]
+          student_id: string
+          tutor_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          ends_at?: string
+          id?: string
+          location?: string | null
+          meeting_url?: string | null
+          modality?: Database["public"]["Enums"]["appointment_modality"]
+          reason?: string
+          scheduled_date?: string
+          starts_at?: string
+          status?: Database["public"]["Enums"]["appointment_status"]
+          student_id?: string
+          tutor_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       attendance_records: {
         Row: {
           created_at: string | null
@@ -99,6 +255,269 @@ export type Database = {
           },
         ]
       }
+      chatbot_conversations: {
+        Row: {
+          channel: string
+          confidence_score: number | null
+          created_at: string
+          current_topic: string | null
+          ended_at: string | null
+          external_user_ref: string | null
+          id: string
+          language: string
+          last_message_at: string | null
+          message_count: number
+          metadata: Json | null
+          resolution_type: string | null
+          started_at: string
+          status: string
+          updated_at: string
+          user_display_name: string | null
+        }
+        Insert: {
+          channel?: string
+          confidence_score?: number | null
+          created_at?: string
+          current_topic?: string | null
+          ended_at?: string | null
+          external_user_ref?: string | null
+          id?: string
+          language?: string
+          last_message_at?: string | null
+          message_count?: number
+          metadata?: Json | null
+          resolution_type?: string | null
+          started_at?: string
+          status?: string
+          updated_at?: string
+          user_display_name?: string | null
+        }
+        Update: {
+          channel?: string
+          confidence_score?: number | null
+          created_at?: string
+          current_topic?: string | null
+          ended_at?: string | null
+          external_user_ref?: string | null
+          id?: string
+          language?: string
+          last_message_at?: string | null
+          message_count?: number
+          metadata?: Json | null
+          resolution_type?: string | null
+          started_at?: string
+          status?: string
+          updated_at?: string
+          user_display_name?: string | null
+        }
+        Relationships: []
+      }
+      chatbot_faq_entries: {
+        Row: {
+          answer: string
+          category: string
+          created_at: string
+          id: string
+          keywords: string[] | null
+          priority: number
+          question: string
+          requires_handoff: boolean
+          source: string | null
+          status: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          answer: string
+          category: string
+          created_at?: string
+          id?: string
+          keywords?: string[] | null
+          priority?: number
+          question: string
+          requires_handoff?: boolean
+          source?: string | null
+          status?: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          answer?: string
+          category?: string
+          created_at?: string
+          id?: string
+          keywords?: string[] | null
+          priority?: number
+          question?: string
+          requires_handoff?: boolean
+          source?: string | null
+          status?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: []
+      }
+      chatbot_feedback: {
+        Row: {
+          comment: string | null
+          conversation_id: string
+          created_at: string
+          id: string
+          rating: number
+          resolved: boolean
+          submitted_at: string
+          submitted_by_ref: string | null
+        }
+        Insert: {
+          comment?: string | null
+          conversation_id: string
+          created_at?: string
+          id?: string
+          rating: number
+          resolved: boolean
+          submitted_at?: string
+          submitted_by_ref?: string | null
+        }
+        Update: {
+          comment?: string | null
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          rating?: number
+          resolved?: boolean
+          submitted_at?: string
+          submitted_by_ref?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chatbot_feedback_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "chatbot_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chatbot_handoffs: {
+        Row: {
+          assigned_agent_ref: string | null
+          conversation_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          priority: string
+          reason: string
+          requested_at: string
+          resolved_at: string | null
+          status: string
+          trigger_message_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          assigned_agent_ref?: string | null
+          conversation_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          priority?: string
+          reason: string
+          requested_at?: string
+          resolved_at?: string | null
+          status?: string
+          trigger_message_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          assigned_agent_ref?: string | null
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          priority?: string
+          reason?: string
+          requested_at?: string
+          resolved_at?: string | null
+          status?: string
+          trigger_message_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chatbot_handoffs_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "chatbot_conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chatbot_handoffs_trigger_message_id_fkey"
+            columns: ["trigger_message_id"]
+            isOneToOne: false
+            referencedRelation: "chatbot_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chatbot_messages: {
+        Row: {
+          confidence_score: number | null
+          content: string
+          conversation_id: string
+          created_at: string
+          faq_entry_id: string | null
+          id: string
+          intent_detected: string | null
+          is_escalation_trigger: boolean
+          message_type: string
+          payload: Json | null
+          sender_ref: string | null
+          sender_type: string
+        }
+        Insert: {
+          confidence_score?: number | null
+          content: string
+          conversation_id: string
+          created_at?: string
+          faq_entry_id?: string | null
+          id?: string
+          intent_detected?: string | null
+          is_escalation_trigger?: boolean
+          message_type?: string
+          payload?: Json | null
+          sender_ref?: string | null
+          sender_type: string
+        }
+        Update: {
+          confidence_score?: number | null
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          faq_entry_id?: string | null
+          id?: string
+          intent_detected?: string | null
+          is_escalation_trigger?: boolean
+          message_type?: string
+          payload?: Json | null
+          sender_ref?: string | null
+          sender_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chatbot_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "chatbot_conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chatbot_messages_faq_entry_id_fkey"
+            columns: ["faq_entry_id"]
+            isOneToOne: false
+            referencedRelation: "chatbot_faq_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_queue: {
         Row: {
           attempts: number
@@ -147,6 +566,239 @@ export type Database = {
         }
         Relationships: []
       }
+      incident_audit_events: {
+        Row: {
+          actor_id: string | null
+          assigned_to: string | null
+          created_at: string | null
+          event_type: string
+          from_priority: Database["public"]["Enums"]["incident_priority"] | null
+          from_status: Database["public"]["Enums"]["incident_status"] | null
+          id: string
+          incident_id: string
+          note: string | null
+          to_priority: Database["public"]["Enums"]["incident_priority"] | null
+          to_status: Database["public"]["Enums"]["incident_status"] | null
+        }
+        Insert: {
+          actor_id?: string | null
+          assigned_to?: string | null
+          created_at?: string | null
+          event_type: string
+          from_priority?:
+            | Database["public"]["Enums"]["incident_priority"]
+            | null
+          from_status?: Database["public"]["Enums"]["incident_status"] | null
+          id?: string
+          incident_id: string
+          note?: string | null
+          to_priority?: Database["public"]["Enums"]["incident_priority"] | null
+          to_status?: Database["public"]["Enums"]["incident_status"] | null
+        }
+        Update: {
+          actor_id?: string | null
+          assigned_to?: string | null
+          created_at?: string | null
+          event_type?: string
+          from_priority?:
+            | Database["public"]["Enums"]["incident_priority"]
+            | null
+          from_status?: Database["public"]["Enums"]["incident_status"] | null
+          id?: string
+          incident_id?: string
+          note?: string | null
+          to_priority?: Database["public"]["Enums"]["incident_priority"] | null
+          to_status?: Database["public"]["Enums"]["incident_status"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incident_audit_events_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incident_audit_events_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incident_audit_events_incident_id_fkey"
+            columns: ["incident_id"]
+            isOneToOne: false
+            referencedRelation: "incidents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      incident_comments: {
+        Row: {
+          author_id: string
+          comment: string
+          created_at: string | null
+          id: string
+          incident_id: string
+        }
+        Insert: {
+          author_id: string
+          comment: string
+          created_at?: string | null
+          id?: string
+          incident_id: string
+        }
+        Update: {
+          author_id?: string
+          comment?: string
+          created_at?: string | null
+          id?: string
+          incident_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incident_comments_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incident_comments_incident_id_fkey"
+            columns: ["incident_id"]
+            isOneToOne: false
+            referencedRelation: "incidents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      incidents: {
+        Row: {
+          area: string
+          assigned_to: string | null
+          category: string
+          closed_at: string | null
+          created_at: string | null
+          description: string
+          first_response_at: string | null
+          id: string
+          priority: Database["public"]["Enums"]["incident_priority"]
+          reported_by: string
+          resolution_summary: string | null
+          resolved_at: string | null
+          sla_due_at: string | null
+          status: Database["public"]["Enums"]["incident_status"]
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          area: string
+          assigned_to?: string | null
+          category?: string
+          closed_at?: string | null
+          created_at?: string | null
+          description: string
+          first_response_at?: string | null
+          id?: string
+          priority?: Database["public"]["Enums"]["incident_priority"]
+          reported_by: string
+          resolution_summary?: string | null
+          resolved_at?: string | null
+          sla_due_at?: string | null
+          status?: Database["public"]["Enums"]["incident_status"]
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          area?: string
+          assigned_to?: string | null
+          category?: string
+          closed_at?: string | null
+          created_at?: string | null
+          description?: string
+          first_response_at?: string | null
+          id?: string
+          priority?: Database["public"]["Enums"]["incident_priority"]
+          reported_by?: string
+          resolution_summary?: string | null
+          resolved_at?: string | null
+          sla_due_at?: string | null
+          status?: Database["public"]["Enums"]["incident_status"]
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incidents_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incidents_reported_by_fkey"
+            columns: ["reported_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      justification_audit_events: {
+        Row: {
+          actor_id: string | null
+          created_at: string | null
+          event_type: string
+          from_status:
+            | Database["public"]["Enums"]["justification_status"]
+            | null
+          id: string
+          justification_id: string
+          note: string | null
+          to_status: Database["public"]["Enums"]["justification_status"] | null
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string | null
+          event_type: string
+          from_status?:
+            | Database["public"]["Enums"]["justification_status"]
+            | null
+          id?: string
+          justification_id: string
+          note?: string | null
+          to_status?: Database["public"]["Enums"]["justification_status"] | null
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string | null
+          event_type?: string
+          from_status?:
+            | Database["public"]["Enums"]["justification_status"]
+            | null
+          id?: string
+          justification_id?: string
+          note?: string | null
+          to_status?: Database["public"]["Enums"]["justification_status"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "justification_audit_events_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "justification_audit_events_justification_id_fkey"
+            columns: ["justification_id"]
+            isOneToOne: false
+            referencedRelation: "justifications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       justification_files: {
         Row: {
           content_type: string
@@ -190,13 +842,16 @@ export type Database = {
           category: Database["public"]["Enums"]["justification_category"]
           created_at: string | null
           description: string
+          due_date: string
           end_date: string
+          folio: string
           id: string
           review_notes: string | null
           reviewer_id: string | null
           start_date: string
           status: Database["public"]["Enums"]["justification_status"] | null
           student_id: string
+          submitted_at: string
           title: string
           updated_at: string | null
         }
@@ -204,13 +859,16 @@ export type Database = {
           category: Database["public"]["Enums"]["justification_category"]
           created_at?: string | null
           description: string
+          due_date: string
           end_date: string
+          folio: string
           id?: string
           review_notes?: string | null
           reviewer_id?: string | null
           start_date: string
           status?: Database["public"]["Enums"]["justification_status"] | null
           student_id: string
+          submitted_at?: string
           title: string
           updated_at?: string | null
         }
@@ -218,13 +876,16 @@ export type Database = {
           category?: Database["public"]["Enums"]["justification_category"]
           created_at?: string | null
           description?: string
+          due_date?: string
           end_date?: string
+          folio?: string
           id?: string
           review_notes?: string | null
           reviewer_id?: string | null
           start_date?: string
           status?: Database["public"]["Enums"]["justification_status"] | null
           student_id?: string
+          submitted_at?: string
           title?: string
           updated_at?: string | null
         }
@@ -582,6 +1243,98 @@ export type Database = {
           },
         ]
       }
+      tutor_availability: {
+        Row: {
+          active: boolean
+          created_at: string | null
+          day_of_week: number
+          ends_at: string
+          id: string
+          location: string | null
+          modality: Database["public"]["Enums"]["appointment_modality"]
+          starts_at: string
+          tutor_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string | null
+          day_of_week: number
+          ends_at: string
+          id?: string
+          location?: string | null
+          modality?: Database["public"]["Enums"]["appointment_modality"]
+          starts_at: string
+          tutor_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          active?: boolean
+          created_at?: string | null
+          day_of_week?: number
+          ends_at?: string
+          id?: string
+          location?: string | null
+          modality?: Database["public"]["Enums"]["appointment_modality"]
+          starts_at?: string
+          tutor_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tutor_availability_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tutoring_session_notes: {
+        Row: {
+          agreements: string | null
+          appointment_id: string
+          author_id: string
+          created_at: string | null
+          id: string
+          observations: string
+          recommendations: string | null
+        }
+        Insert: {
+          agreements?: string | null
+          appointment_id: string
+          author_id: string
+          created_at?: string | null
+          id?: string
+          observations: string
+          recommendations?: string | null
+        }
+        Update: {
+          agreements?: string | null
+          appointment_id?: string
+          author_id?: string
+          created_at?: string | null
+          id?: string
+          observations?: string
+          recommendations?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tutoring_session_notes_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: true
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tutoring_session_notes_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tutorship_assignments: {
         Row: {
           assigned_date: string | null
@@ -629,7 +1382,34 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      emit_notification: {
+        Args: {
+          p_body: string
+          p_event_type: string
+          p_metadata?: Json
+          p_title: string
+          p_triggered_by?: string
+          p_user_id: string
+        }
+        Returns: string
+      }
+      get_email_queue_summary: {
+        Args: never
+        Returns: {
+          last_error: string
+          oldest_scheduled_at: string
+          status: Database["public"]["Enums"]["email_status"]
+          total: number
+        }[]
+      }
       has_role: { Args: { allowed_roles: string[] }; Returns: boolean }
+      incident_sla_due_at: {
+        Args: {
+          p_created_at: string
+          p_priority: Database["public"]["Enums"]["incident_priority"]
+        }
+        Returns: string
+      }
       is_admin: { Args: never; Returns: boolean }
       set_user_role: {
         Args: { new_role: string; target_user_id: string }
@@ -637,8 +1417,18 @@ export type Database = {
       }
     }
     Enums: {
+      appointment_attendance_status: "attended" | "no_show" | "excused_absence"
+      appointment_modality: "presencial" | "virtual"
+      appointment_status:
+        | "pendiente"
+        | "confirmada"
+        | "cancelada"
+        | "completada"
+        | "no_asistio"
       attendance_status: "present" | "tardy" | "absent"
       email_status: "pending" | "processing" | "sent" | "failed" | "cancelled"
+      incident_priority: "alta" | "media" | "baja"
+      incident_status: "abierta" | "en_proceso" | "resuelta" | "cerrada"
       justification_category: "medical" | "official" | "personal"
       justification_status:
         | "pending"
@@ -772,8 +1562,19 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      appointment_attendance_status: ["attended", "no_show", "excused_absence"],
+      appointment_modality: ["presencial", "virtual"],
+      appointment_status: [
+        "pendiente",
+        "confirmada",
+        "cancelada",
+        "completada",
+        "no_asistio",
+      ],
       attendance_status: ["present", "tardy", "absent"],
       email_status: ["pending", "processing", "sent", "failed", "cancelled"],
+      incident_priority: ["alta", "media", "baja"],
+      incident_status: ["abierta", "en_proceso", "resuelta", "cerrada"],
       justification_category: ["medical", "official", "personal"],
       justification_status: [
         "pending",

@@ -49,7 +49,6 @@ import {
   executiveHeader,
   improvements,
   kpis,
-  modules,
   risks,
   roadmap,
   sprints,
@@ -59,7 +58,7 @@ import { fetchExecutiveLiveData, mapRealtimeAuditToActivity, toCsvReport } from 
 import { ActivityFeedSection } from "./sections/activity-feed";
 import { ExecutiveHeader } from "./sections/executive-header";
 import { KpiHero } from "./sections/kpi-hero";
-import type { ActivityItem, KpiItem, StatusTone } from "./types";
+import type { ActivityItem, KpiItem, LiveExecutiveData, StatusTone } from "./types";
 
 const statusToneClasses: Record<StatusTone, string> = {
   completed: "bg-emerald-500",
@@ -82,6 +81,23 @@ const teamStatusColor: Record<string, "success" | "warning" | "danger" | "info">
   pendiente: "info",
 };
 
+const emptyLiveStats: Omit<LiveExecutiveData, "activity"> = {
+  profileCount: 0,
+  auditCount: 0,
+  operationalProgress: 0,
+  openWorkCount: 0,
+  attentionCount: 0,
+  unreadNotifications: 0,
+  overdueIncidents: 0,
+  upcomingAppointments: 0,
+  pendingJustifications: 0,
+  activeConversations: 0,
+  openHandoffs: 0,
+  pendingEmails: 0,
+  moduleMetrics: [],
+  hasLiveSource: false,
+};
+
 export function ExecutiveDashboardPage() {
   const [search, setSearch] = useState("");
   const [squadFilter, setSquadFilter] = useState("Todos");
@@ -91,7 +107,7 @@ export function ExecutiveDashboardPage() {
   const [activityFeed, setActivityFeed] = useState<ActivityItem[]>(
     gitStats.recentActivities as ActivityItem[]
   );
-  const [liveStats, setLiveStats] = useState({ profileCount: 0, auditCount: 0, hasLiveSource: false });
+  const [liveStats, setLiveStats] = useState(emptyLiveStats);
   const [lastSyncLabel, setLastSyncLabel] = useState("--:--");
   const [notifications, setNotifications] = useState<string[]>([]);
 
@@ -112,6 +128,17 @@ export function ExecutiveDashboardPage() {
       setLiveStats({
         profileCount: live.profileCount,
         auditCount: live.auditCount,
+        operationalProgress: live.operationalProgress,
+        openWorkCount: live.openWorkCount,
+        attentionCount: live.attentionCount,
+        unreadNotifications: live.unreadNotifications,
+        overdueIncidents: live.overdueIncidents,
+        upcomingAppointments: live.upcomingAppointments,
+        pendingJustifications: live.pendingJustifications,
+        activeConversations: live.activeConversations,
+        openHandoffs: live.openHandoffs,
+        pendingEmails: live.pendingEmails,
+        moduleMetrics: live.moduleMetrics,
         hasLiveSource: live.hasLiveSource,
       });
       setLastSyncLabel(
@@ -174,8 +201,6 @@ export function ExecutiveDashboardPage() {
   }, []);
 
   const kpiItems = useMemo<KpiItem[]>(() => {
-    const progresses = modules.map((module) => module.progress);
-    const avgProgress = Math.round(progresses.reduce((a, b) => a + b, 0) / progresses.length);
     const currentWeekCommits =
       gitStats.commitsByWeek.find((week) => week.week === "Actual")?.commits ?? 0;
 
@@ -183,8 +208,8 @@ export function ExecutiveDashboardPage() {
       if (kpi.label === "Avance global") {
         return {
           ...kpi,
-          value: `${avgProgress}%`,
-          micro: "Promedio del roadmap declarado por módulo",
+          value: `${liveStats.operationalProgress}%`,
+          micro: "Módulos operativos sin pendientes críticos visibles",
         };
       }
       if (kpi.label === "Commits totales") {
@@ -204,14 +229,18 @@ export function ExecutiveDashboardPage() {
         };
       }
       if (kpi.label === "Bloqueos activos") {
-        return kpi;
+        return {
+          ...kpi,
+          value: String(liveStats.attentionCount),
+          micro: "Pendientes reales entre citas, trámites, incidencias y colas",
+        };
       }
       if (kpi.label === "Squads con actividad") {
         const workingSquads = gitStats.commitsBySquad.filter((s) => s.progreso > 0).length;
         return {
           ...kpi,
           value: String(workingSquads),
-          micro: `${liveStats.profileCount || 4} perfiles en BD`,
+          micro: `${liveStats.profileCount} perfiles en BD`,
         };
       }
       if (kpi.label === "Commits semana") {
@@ -229,16 +258,21 @@ export function ExecutiveDashboardPage() {
         };
       }
       if (kpi.label === "Módulos terminados") {
-        const completed = progresses.filter((p) => p >= 100).length;
+        const completed = liveStats.moduleMetrics.filter((metric) => metric.tone === "success").length;
         return {
           ...kpi,
-          value: `${completed}/7`,
-          micro: "Módulos con progreso al 100%",
+          value: `${completed}/${liveStats.moduleMetrics.length || 5}`,
+          micro: "Módulos sin pendientes de atención según Supabase",
         };
       }
       return kpi;
     });
-  }, [liveStats.profileCount]);
+  }, [
+    liveStats.attentionCount,
+    liveStats.moduleMetrics,
+    liveStats.operationalProgress,
+    liveStats.profileCount,
+  ]);
 
   const filteredActivity = useMemo(() => {
     return activityFeed.filter((item) => {
@@ -270,13 +304,13 @@ export function ExecutiveDashboardPage() {
     URL.revokeObjectURL(href);
   };
 
-  const healthScore = 84;
+  const healthScore = liveStats.operationalProgress;
 
   const healthRadarData = [
-    { name: "Arquitectura", score: 85 },
-    { name: "Calidad", score: 88 },
-    { name: "Delivery", score: 92 },
-    { name: "Riesgos", score: 80 },
+    { name: "Citas", score: liveStats.upcomingAppointments > 0 ? 100 : 60 },
+    { name: "Tramites", score: liveStats.pendingJustifications > 0 ? 60 : 100 },
+    { name: "Incidencias", score: liveStats.overdueIncidents > 0 ? 35 : 100 },
+    { name: "Comunicacion", score: liveStats.unreadNotifications + liveStats.pendingEmails > 0 ? 70 : 100 },
   ];
 
   return (
@@ -296,14 +330,14 @@ export function ExecutiveDashboardPage() {
             <CardTitle className="flex items-center gap-2 font-headline font-bold text-on-surface">
               <Sparkles className="h-4 w-4 text-primary" /> Salud general del proyecto
             </CardTitle>
-            <CardDescription className="text-on-surface-variant text-xs">Progreso principal de MVP y estabilidad operacional.</CardDescription>
+            <CardDescription className="text-on-surface-variant text-xs">Lectura operacional desde Supabase: carga abierta, SLA y colas activas.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between text-sm text-on-surface font-medium">
-              <span>Barra principal MVP Fase 1</span>
-              <span className="font-bold">78%</span>
+              <span>Salud operativa de módulos reales</span>
+              <span className="font-bold">{liveStats.operationalProgress}%</span>
             </div>
-            <Progress value={78} className="h-3" indicatorClassName="bg-primary" />
+            <Progress value={liveStats.operationalProgress} className="h-3" indicatorClassName="bg-primary" />
             <div className="grid gap-4 md:grid-cols-2">
               <div className="rounded-lg border border-outline-variant bg-surface-container-low p-4">
                 <p className="mb-2 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Progreso global</p>
@@ -312,8 +346,8 @@ export function ExecutiveDashboardPage() {
                     <PieChart>
                       <Pie
                         data={[
-                          { name: "Completado", value: 78 },
-                          { name: "Restante", value: 22 },
+                          { name: "Completado", value: liveStats.operationalProgress },
+                          { name: "Pendiente", value: 100 - liveStats.operationalProgress },
                         ]}
                         innerRadius={55}
                         outerRadius={80}
@@ -366,14 +400,23 @@ export function ExecutiveDashboardPage() {
             </Button>
             <div className="rounded-lg border border-outline-variant bg-surface-container-low p-3 text-sm">
               <p className="font-semibold text-on-surface mb-1">Alertas de auditoría reciente</p>
-              {notifications.length === 0 ? (
+              {notifications.length === 0 && liveStats.attentionCount === 0 ? (
                 <p className="text-xs text-on-surface-variant">
-                  Sistema operando con normalidad. Sin alertas críticas pendientes de revisión.
+                  Sin pendientes visibles en las tablas operativas consultadas.
                 </p>
               ) : (
                 <ul className="mt-1 space-y-1 text-xs text-on-surface-variant font-mono">
+                  {liveStats.overdueIncidents > 0 ? (
+                    <li>SLA vencido en incidencias: {liveStats.overdueIncidents}</li>
+                  ) : null}
+                  {liveStats.pendingJustifications > 0 ? (
+                    <li>Justificaciones por revisar: {liveStats.pendingJustifications}</li>
+                  ) : null}
+                  {liveStats.openHandoffs > 0 ? (
+                    <li>Escalaciones de chatbot abiertas: {liveStats.openHandoffs}</li>
+                  ) : null}
                   {notifications.map((alert) => (
-                    <li key={alert} className="truncate">• {alert}</li>
+                    <li key={alert} className="truncate">{alert}</li>
                   ))}
                 </ul>
               )}
@@ -451,19 +494,8 @@ export function ExecutiveDashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {modules.map((module) => {
-              const squadCommitsObj = gitStats.commitsBySquad.find((s) =>
-                s.squad.toLowerCase().includes(module.name.substring(0, 5).toLowerCase())
-              );
-              const commitCount = squadCommitsObj?.progreso || 0;
-              const roadmapProgress = module.progress;
-
-              const squadPrsObj = gitStats.prsBySquad.find((s) =>
-                s.squad.toLowerCase().includes(module.name.substring(0, 5).toLowerCase())
-              );
-              const prsTotal = squadPrsObj?.total || 0;
-              const prsClosed = squadPrsObj?.closed || 0;
-
+            {liveStats.moduleMetrics.map((module) => {
+              const roadmapProgress = module.tone === "success" ? 100 : module.tone === "info" ? 75 : 50;
               return (
                 <details
                   key={module.name}
@@ -477,13 +509,13 @@ export function ExecutiveDashboardPage() {
                           {module.description}
                         </p>
                       </div>
-                      <Badge variant={commitCount < 2 ? "danger" : commitCount < 6 ? "warning" : "success"}>
-                        {commitCount} commits
+                      <Badge variant={module.tone}>
+                        {module.statusLabel}
                       </Badge>
                     </div>
                     <div className="mt-3">
                       <div className="mb-1 flex justify-between text-xs text-on-surface-variant font-medium">
-                        <span>Avance del roadmap</span>
+                        <span>Estado operacional</span>
                         <span className="text-on-surface font-semibold">{roadmapProgress}%</span>
                       </div>
                       <Progress value={roadmapProgress} indicatorClassName="bg-primary" />
@@ -493,45 +525,28 @@ export function ExecutiveDashboardPage() {
                   <div className="mt-4 space-y-4 text-xs text-on-surface-variant border-t border-outline-variant pt-3">
                     <div>
                       <p className="mb-1 font-semibold text-on-surface">Información general</p>
-                      <p><span className="font-medium text-on-surface">Objetivo:</span> {module.objective}</p>
-                      <p><span className="font-medium text-on-surface">Impacto:</span> {module.impact}</p>
-                      <p><span className="font-medium text-on-surface">Prioridad MVP:</span> {module.mvpPriority}</p>
+                      <p><span className="font-medium text-on-surface">Fuente:</span> Supabase / tablas operativas</p>
+                      <p><span className="font-medium text-on-surface">Ruta:</span> {module.href}</p>
+                      <p><span className="font-medium text-on-surface">Estado:</span> {module.statusLabel}</p>
                     </div>
                     <div>
-                      <p className="mb-1 font-semibold text-on-surface">Métricas Reales (Git/GitHub)</p>
-                      <p><span className="font-medium text-on-surface">Commits:</span> {commitCount}</p>
-                      <p><span className="font-medium text-on-surface">PRs en GitHub:</span> {prsTotal} ({prsClosed} fusionados)</p>
-                      <p><span className="font-medium text-on-surface">Bugs reportados:</span> {module.bugs}</p>
+                      <p className="mb-1 font-semibold text-on-surface">Métricas reales de operación</p>
+                      <p><span className="font-medium text-on-surface">Total:</span> {module.total} {module.totalLabel}</p>
+                      <p><span className="font-medium text-on-surface">Pendientes de atención:</span> {module.attention}</p>
                     </div>
                     <div>
-                      <p className="mb-1 font-semibold text-on-surface">Responsables</p>
-                      <p><span className="font-medium text-on-surface">Lead:</span> {module.techLead}</p>
-                      <p><span className="font-medium text-on-surface">Squad:</span> {module.squad}</p>
-                      <p><span className="font-medium text-on-surface">Integrantes:</span> {module.assignees.join(", ")}</p>
+                      <p className="mb-1 font-semibold text-on-surface">Criterio del semáforo</p>
+                      <p>Verde cuando no hay pendientes visibles; amarillo cuando existen tareas abiertas, SLA vencido o colas sin procesar.</p>
                     </div>
-                  <div>
-                    <p className="mb-1 font-semibold text-on-surface">Roadmap del Módulo</p>
-                    <p className="leading-normal"><span className="font-medium text-on-surface">Siguientes pasos:</span> {module.nextSteps.join(" · ")}</p>
-                    <p className="leading-normal"><span className="font-medium text-on-surface">Entregables:</span> {module.deliverables.join(" · ")}</p>
-                    <p className="leading-normal"><span className="font-medium text-on-surface">Bloqueos:</span> {module.blockers.join(" · ")}</p>
-                  </div>
-                  <div>
-                    <p className="mb-2 font-semibold text-on-surface">Historial de Cambios</p>
-                    <div className="space-y-1.5">
-                      {module.history.map((h) => (
-                        <div key={`${h.by}-${h.date}-${h.type}`} className="rounded bg-surface-container/60 border border-outline-variant px-2.5 py-1.5">
-                          <p className="font-medium text-on-surface text-xs">{h.detail}</p>
-                          <p className="text-[10px] text-on-surface-variant mt-0.5">
-                            {h.by} · {h.date} · {h.type} · {h.approval}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
                 </div>
               </details>
             );
           })}
+            {liveStats.moduleMetrics.length === 0 ? (
+              <div className="rounded-lg border border-outline-variant bg-surface-container-low p-4 text-sm text-on-surface-variant md:col-span-2 xl:col-span-3">
+                No hay datos operativos legibles para el usuario actual. Revisa sesión, RLS o variables públicas de Supabase.
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       </section>
@@ -715,7 +730,7 @@ export function ExecutiveDashboardPage() {
           <p><span className="font-semibold text-on-surface">Última sincronización:</span> {lastSyncLabel}</p>
           <p><span className="font-semibold text-on-surface">Perfiles en Base de Datos:</span> {liveStats.profileCount} alumnos/docentes</p>
           <p><span className="font-semibold text-on-surface">Logs de Auditoría totales:</span> {liveStats.auditCount} eventos registrados</p>
-          <p><span className="font-semibold text-on-surface">Uptime:</span> 99.98%</p>
+          <p><span className="font-semibold text-on-surface">Pendientes operativos:</span> {liveStats.openWorkCount}</p>
           <p className="flex items-center gap-1">
             <Clock3 className="h-3.5 w-3.5 text-primary" /> <span className="font-semibold text-on-surface">Estado:</span> Estable
           </p>
