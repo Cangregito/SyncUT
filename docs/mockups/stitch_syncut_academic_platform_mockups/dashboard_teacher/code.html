@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SyncUT Portal - Teacher Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-container": "#065f46",
+                        "tertiary": "#34d399",
+                        "surface-variant": "#18181b",
+                        "on-surface-variant": "#a1a1aa",
+                        "error-container": "#3b1111",
+                        "surface-container-low": "#0f0f12",
+                        "on-secondary-container": "#a1a1aa",
+                        "on-error": "#1a0000",
+                        "surface-container-lowest": "#09090b",
+                        "on-tertiary-fixed-variant": "#047857",
+                        "surface-container-high": "#18181b",
+                        "tertiary-fixed": "#bbf7d0",
+                        "surface-dim": "#0c0c0f",
+                        "outline": "#52525b",
+                        "on-tertiary-container": "#bbf7d0",
+                        "on-surface": "#fafafa",
+                        "on-primary-fixed-variant": "#5b21b6",
+                        "secondary": "#71717a",
+                        "surface-container-highest": "#1e1e22",
+                        "primary": "#a78bfa",
+                        "secondary-fixed": "#a1a1aa",
+                        "primary-container": "#7c3aed",
+                        "inverse-surface": "#fafafa",
+                        "surface-tint": "#a78bfa",
+                        "inverse-primary": "#5b21b6",
+                        "on-secondary-fixed-variant": "#3f3f46",
+                        "surface-container": "#121215",
+                        "primary-fixed-dim": "#c4b5fd",
+                        "on-tertiary": "#001a12",
+                        "on-error-container": "#fca5a5",
+                        "inverse-on-surface": "#09090b",
+                        "outline-variant": "#27272a",
+                        "tertiary-fixed-dim": "#6ee7b7",
+                        "on-tertiary-fixed": "#003318",
+                        "background": "#09090b",
+                        "on-background": "#fafafa",
+                        "secondary-container": "#27272a",
+                        "surface-bright": "#18181b",
+                        "on-primary-container": "#ede9fe",
+                        "surface": "#0c0c0f",
+                        "on-secondary-fixed": "#18181b",
+                        "on-primary-fixed": "#2e1065",
+                        "on-secondary": "#09090b",
+                        "primary-fixed": "#ede9fe",
+                        "on-primary": "#0a0012",
+                        "secondary-fixed-dim": "#71717a",
+                        "error": "#ef4444"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Geist", "sans-serif"],
+                        "display": ["Geist", "sans-serif"],
+                        "body": ["Geist", "sans-serif"],
+                        "label": ["Geist", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Geist', sans-serif; }
+    </style>
+</head>
+<body class="bg-background text-on-surface min-h-screen font-body antialiased selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-surface fixed top-0 w-full z-50 flex justify-between items-center px-6 h-16 border-b border-outline-variant">
+<div class="flex items-center gap-4">
+<span class="text-xl font-headline font-bold text-primary dark:text-primary tracking-tighter">SyncUT Portal</span>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:text-on-surface transition-colors duration-200 cursor-pointer active:opacity-80">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-on-surface transition-colors duration-200 cursor-pointer active:opacity-80">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+<img alt="Staff profile avatar" class="w-8 h-8 rounded-full border border-outline-variant cursor-pointer object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDEgdf4G5yDkVeNxnBIHenvG7hp7by0VhrrKrTGPaU6MEulYGGiPlyAzPBLhA9UX86UHryZ7IsnIwF4Jg0h2YT5DyVD8suiUs3UVLjW9_rPmzCHuot7hMGvuq7yCvWoUKvvZg8wrEMolbo_ADfVQwcsaz-YCuSiadwPi6T9ZI0cYWzODXB4NXMUm2uEmfph1JnusklS4rlk7eXxFGi-kapZQxbmAhIurzO1elaS8gqzaW4YHbTbLIpMYAgQqOPIqOvr5jQbDZcw3-e6"/>
+</div>
+</header>
+<!-- SideNavBar & Main Content Wrapper -->
+<div class="flex pt-16 h-screen overflow-hidden">
+<!-- SideNavBar -->
+<nav class="hidden md:flex bg-surface-container dark:bg-surface-container h-full left-0 w-64 border-r border-outline-variant flex-col py-4 flex-shrink-0 z-40">
+<div class="px-6 mb-8 flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-primary-container flex items-center justify-center text-on-primary-container font-bold">
+<span class="material-symbols-outlined">school</span>
+</div>
+<div>
+<h2 class="text-lg font-headline font-black text-on-surface leading-tight">SyncUT</h2>
+<p class="text-xs text-on-surface-variant">Academic Portal</p>
+</div>
+</div>
+<div class="px-4 mb-6">
+<button class="w-full bg-primary hover:bg-primary-container text-on-primary font-medium py-2.5 rounded-lg flex items-center justify-center gap-2 transition-colors duration-150 shadow-sm">
+<span class="material-symbols-outlined text-sm">add</span>
+                    New Record
+                </button>
+</div>
+<div class="flex-1 overflow-y-auto px-3 space-y-1">
+<a class="text-primary bg-surface-container-highest border-r-2 border-primary p-3 flex items-center gap-3 rounded-l-md font-medium font-body text-sm hover:text-on-surface transition-all duration-150 active:scale-95" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+                    Dashboard
+                </a>
+<a class="text-on-surface-variant p-3 flex items-center gap-3 hover:bg-surface-container-high rounded-md font-body text-sm hover:text-on-surface transition-all duration-150 active:scale-95" href="#">
+<span class="material-symbols-outlined">apps</span>
+                    Modules
+                </a>
+<a class="text-on-surface-variant p-3 flex items-center gap-3 hover:bg-surface-container-high rounded-md font-body text-sm hover:text-on-surface transition-all duration-150 active:scale-95" href="#">
+<span class="material-symbols-outlined">group</span>
+                    Students
+                </a>
+<a class="text-on-surface-variant p-3 flex items-center gap-3 hover:bg-surface-container-high rounded-md font-body text-sm hover:text-on-surface transition-all duration-150 active:scale-95" href="#">
+<span class="material-symbols-outlined">school</span>
+                    Faculty
+                </a>
+<a class="text-on-surface-variant p-3 flex items-center gap-3 hover:bg-surface-container-high rounded-md font-body text-sm hover:text-on-surface transition-all duration-150 active:scale-95" href="#">
+<span class="material-symbols-outlined">analytics</span>
+                    Reports
+                </a>
+</div>
+<div class="mt-auto px-3 pt-4 border-t border-outline-variant space-y-1">
+<a class="text-on-surface-variant p-3 flex items-center gap-3 hover:bg-surface-container-high rounded-md font-body text-sm hover:text-on-surface transition-all duration-150 active:scale-95" href="#">
+<span class="material-symbols-outlined">help_center</span>
+                    Support
+                </a>
+<a class="text-on-surface-variant p-3 flex items-center gap-3 hover:bg-surface-container-high rounded-md font-body text-sm hover:text-on-surface transition-all duration-150 active:scale-95" href="#">
+<span class="material-symbols-outlined">logout</span>
+                    Logout
+                </a>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="flex-1 overflow-y-auto bg-background p-6 md:p-8">
+<div class="max-w-7xl mx-auto space-y-8">
+<!-- Header -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div>
+<h1 class="text-3xl font-headline font-bold text-on-surface tracking-tight mb-1">Morning, Professor</h1>
+<p class="text-on-surface-variant text-sm">Here is your operational overview for today, October 24th.</p>
+</div>
+</div>
+<!-- Critical Metrics Bento -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+<div class="bg-surface-container p-5 rounded-lg border border-outline-variant flex flex-col justify-between group hover:bg-surface-container-high transition-colors">
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-primary text-2xl">event_available</span>
+<span class="text-xs font-medium text-tertiary bg-tertiary-container/30 px-2 py-1 rounded">Today</span>
+</div>
+<div>
+<p class="text-sm text-on-surface-variant mb-1">Received Appointments</p>
+<div class="flex items-baseline gap-2">
+<span class="text-4xl font-headline font-bold text-on-surface">12</span>
+<span class="text-xs text-on-surface-variant">Scheduled</span>
+</div>
+</div>
+</div>
+<div class="bg-surface-container p-5 rounded-lg border border-outline-variant flex flex-col justify-between group hover:bg-surface-container-high transition-colors">
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-error text-2xl">gavel</span>
+<span class="text-xs font-medium text-error bg-error-container/30 px-2 py-1 rounded">Action Required</span>
+</div>
+<div>
+<p class="text-sm text-on-surface-variant mb-1">Pending Justifications</p>
+<div class="flex items-baseline gap-2">
+<span class="text-4xl font-headline font-bold text-on-surface">7</span>
+<span class="text-xs text-on-surface-variant">Reviews</span>
+</div>
+</div>
+</div>
+<div class="bg-surface-container p-5 rounded-lg border border-outline-variant flex flex-col justify-between group hover:bg-surface-container-high transition-colors">
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-primary text-2xl">warning</span>
+<span class="text-xs font-medium text-primary bg-primary-container/30 px-2 py-1 rounded">High Priority</span>
+</div>
+<div>
+<p class="text-sm text-on-surface-variant mb-1">Critical Class Alerts</p>
+<div class="flex items-baseline gap-2">
+<span class="text-4xl font-headline font-bold text-on-surface">2</span>
+<span class="text-xs text-on-surface-variant">Modules</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Main Work Area Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<!-- Left Column: Actions & Alerts -->
+<div class="lg:col-span-2 space-y-8">
+<!-- Daily Management Quick Actions -->
+<section>
+<h2 class="text-lg font-headline font-bold text-on-surface mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">bolt</span>
+                                Daily Management
+                            </h2>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+<button class="bg-primary/10 hover:bg-primary/20 border border-primary/30 p-4 rounded-lg flex items-center justify-between transition-all group text-left">
+<div>
+<p class="font-medium text-on-surface mb-1">Approve Justification</p>
+<p class="text-xs text-on-surface-variant">Review 7 pending absences</p>
+</div>
+<span class="material-symbols-outlined text-primary group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</button>
+<button class="bg-surface-container hover:bg-surface-container-high border border-outline-variant p-4 rounded-lg flex items-center justify-between transition-all group text-left">
+<div>
+<p class="font-medium text-on-surface mb-1">Start Video Call</p>
+<p class="text-xs text-on-surface-variant">Office hours lobby</p>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-on-surface transition-colors">videocam</span>
+</button>
+<button class="bg-surface-container hover:bg-surface-container-high border border-outline-variant p-4 rounded-lg flex items-center justify-between transition-all group text-left">
+<div>
+<p class="font-medium text-on-surface mb-1">Log Attendance</p>
+<p class="text-xs text-on-surface-variant">CS301 - Data Structures</p>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-on-surface transition-colors">how_to_reg</span>
+</button>
+<button class="bg-surface-container hover:bg-surface-container-high border border-outline-variant p-4 rounded-lg flex items-center justify-between transition-all group text-left">
+<div>
+<p class="font-medium text-on-surface mb-1">Publish Grades</p>
+<p class="text-xs text-on-surface-variant">Midterm examinations</p>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-on-surface transition-colors">publish</span>
+</button>
+</div>
+</section>
+<!-- Activity Feed -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-lg p-6">
+<div class="flex justify-between items-center mb-6 border-b border-outline-variant pb-4">
+<h2 class="text-lg font-headline font-bold text-on-surface">Group Activity Feed</h2>
+<button class="text-sm text-primary hover:text-primary-fixed transition-colors">View All</button>
+</div>
+<div class="space-y-6">
+<div class="flex gap-4">
+<div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center flex-shrink-0 border border-outline-variant">
+<span class="material-symbols-outlined text-sm text-tertiary">swap_horiz</span>
+</div>
+<div>
+<p class="text-sm text-on-surface"><span class="font-medium">Project Group A</span> requested a transfer to <span class="font-medium">Lab Section 2</span>.</p>
+<p class="text-xs text-on-surface-variant mt-1">10 minutes ago • CS301</p>
+</div>
+</div>
+<div class="flex gap-4">
+<div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center flex-shrink-0 border border-outline-variant">
+<span class="material-symbols-outlined text-sm text-primary">upload_file</span>
+</div>
+<div>
+<p class="text-sm text-on-surface"><span class="font-medium">Sarah Jenkins</span> submitted the final assignment for <span class="font-medium">Web Dev Practicum</span>.</p>
+<p class="text-xs text-on-surface-variant mt-1">1 hour ago • IT405</p>
+</div>
+</div>
+<div class="flex gap-4">
+<div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center flex-shrink-0 border border-outline-variant">
+<span class="material-symbols-outlined text-sm text-error">warning</span>
+</div>
+<div>
+<p class="text-sm text-on-surface"><span class="font-medium">Group C</span> missed the milestone deadline.</p>
+<p class="text-xs text-on-surface-variant mt-1">3 hours ago • SE200</p>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Right Column: Contextual Info -->
+<div class="space-y-6">
+<!-- Critical Pinned Info -->
+<div class="bg-surface-container rounded-lg border border-outline-variant p-5">
+<h3 class="text-sm font-bold text-on-surface-variant uppercase tracking-wider mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">push_pin</span> Pinned
+                            </h3>
+<div class="space-y-4">
+<div class="bg-surface-container-lowest p-3 rounded border border-outline-variant border-l-2 border-l-primary">
+<p class="text-sm font-medium text-on-surface">Faculty Meeting</p>
+<p class="text-xs text-on-surface-variant mt-1">Room 402 • 14:00 PM</p>
+</div>
+<div class="bg-surface-container-lowest p-3 rounded border border-outline-variant border-l-2 border-l-error">
+<p class="text-sm font-medium text-on-surface">System Maintenance</p>
+<p class="text-xs text-on-surface-variant mt-1">Portal downtime at midnight. Please save grades.</p>
+</div>
+</div>
+</div>
+<!-- Schedule Snapshot -->
+<div class="bg-surface-container rounded-lg border border-outline-variant p-5">
+<h3 class="text-sm font-bold text-on-surface-variant uppercase tracking-wider mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">schedule</span> Up Next
+                            </h3>
+<div class="relative pl-4 border-l border-outline-variant space-y-6 before:absolute before:left-[-5px] before:top-1 before:w-2.5 before:h-2.5 before:rounded-full before:bg-primary">
+<div>
+<p class="text-sm font-medium text-on-surface">Data Structures Lecture</p>
+<p class="text-xs text-on-surface-variant">10:00 AM - 11:30 AM • Hall B</p>
+</div>
+<div class="relative before:absolute before:left-[-21px] before:top-1 before:w-2 before:h-2 before:rounded-full before:bg-outline-variant">
+<p class="text-sm font-medium text-on-surface">Office Hours</p>
+<p class="text-xs text-on-surface-variant">13:00 PM - 14:00 PM • Virtual</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

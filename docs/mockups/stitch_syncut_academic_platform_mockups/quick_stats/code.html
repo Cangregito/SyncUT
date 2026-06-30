@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SyncUT Portal - Overview</title>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary-container": "#065f46",
+                    "tertiary": "#34d399",
+                    "surface-variant": "#18181b",
+                    "on-surface-variant": "#a1a1aa",
+                    "error-container": "#3b1111",
+                    "surface-container-low": "#0f0f12",
+                    "on-secondary-container": "#a1a1aa",
+                    "on-error": "#1a0000",
+                    "surface-container-lowest": "#09090b",
+                    "on-tertiary-fixed-variant": "#047857",
+                    "surface-container-high": "#18181b",
+                    "tertiary-fixed": "#bbf7d0",
+                    "surface-dim": "#0c0c0f",
+                    "outline": "#52525b",
+                    "on-tertiary-container": "#bbf7d0",
+                    "on-surface": "#fafafa",
+                    "on-primary-fixed-variant": "#5b21b6",
+                    "secondary": "#71717a",
+                    "surface-container-highest": "#1e1e22",
+                    "primary": "#a78bfa",
+                    "secondary-fixed": "#a1a1aa",
+                    "primary-container": "#7c3aed",
+                    "inverse-surface": "#fafafa",
+                    "surface-tint": "#a78bfa",
+                    "inverse-primary": "#5b21b6",
+                    "on-secondary-fixed-variant": "#3f3f46",
+                    "surface-container": "#121215",
+                    "primary-fixed-dim": "#c4b5fd",
+                    "on-tertiary": "#001a12",
+                    "on-error-container": "#fca5a5",
+                    "inverse-on-surface": "#09090b",
+                    "outline-variant": "#27272a",
+                    "tertiary-fixed-dim": "#6ee7b7",
+                    "on-tertiary-fixed": "#003318",
+                    "background": "#09090b",
+                    "on-background": "#fafafa",
+                    "secondary-container": "#27272a",
+                    "surface-bright": "#18181b",
+                    "on-primary-container": "#ede9fe",
+                    "surface": "#0c0c0f",
+                    "on-secondary-fixed": "#18181b",
+                    "on-primary-fixed": "#2e1065",
+                    "on-secondary": "#09090b",
+                    "primary-fixed": "#ede9fe",
+                    "on-primary": "#0a0012",
+                    "secondary-fixed-dim": "#71717a",
+                    "error": "#ef4444"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Geist", "sans-serif"],
+                    "display": ["Geist", "sans-serif"],
+                    "body": ["Geist", "sans-serif"],
+                    "label": ["Geist", "sans-serif"]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        body { font-family: 'Geist', sans-serif; }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex antialiased selection:bg-primary/30 selection:text-primary">
+<!-- SideNavBar -->
+<nav class="bg-surface-container dark:bg-surface-container text-primary dark:text-primary font-body text-sm docked h-full left-0 w-64 border-r border-outline-variant flat no shadows fixed top-0 flex flex-col py-4 z-40">
+<div class="px-6 mb-8 mt-2">
+<div class="text-lg font-headline font-black text-on-surface tracking-tight">SyncUT</div>
+<div class="text-on-surface-variant text-xs mt-0.5">Academic Portal</div>
+</div>
+<div class="px-4 mb-6">
+<button class="w-full bg-primary text-on-primary py-2 px-4 rounded font-medium hover:bg-primary-fixed-dim transition-colors duration-200 shadow-sm active:scale-95">
+                New Record
+            </button>
+</div>
+<ul class="flex-1 px-3 space-y-1">
+<!-- Active Tab: Dashboard -->
+<li>
+<a class="text-primary bg-surface-container-highest border-r-2 border-primary p-3 flex items-center gap-3 cursor-pointer active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="font-medium">Dashboard</span>
+</a>
+</li>
+<li>
+<a class="text-on-surface-variant p-3 flex items-center gap-3 hover:bg-surface-container-high hover:text-on-surface transition-all duration-150 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined">apps</span>
+<span class="font-medium">Modules</span>
+</a>
+</li>
+<li>
+<a class="text-on-surface-variant p-3 flex items-center gap-3 hover:bg-surface-container-high hover:text-on-surface transition-all duration-150 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-medium">Students</span>
+</a>
+</li>
+<li>
+<a class="text-on-surface-variant p-3 flex items-center gap-3 hover:bg-surface-container-high hover:text-on-surface transition-all duration-150 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined">school</span>
+<span class="font-medium">Faculty</span>
+</a>
+</li>
+<li>
+<a class="text-on-surface-variant p-3 flex items-center gap-3 hover:bg-surface-container-high hover:text-on-surface transition-all duration-150 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-medium">Reports</span>
+</a>
+</li>
+</ul>
+<ul class="px-3 space-y-1 mt-auto pb-4">
+<li>
+<a class="text-on-surface-variant p-3 flex items-center gap-3 hover:bg-surface-container-high hover:text-on-surface transition-all duration-150 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined">help_center</span>
+<span class="font-medium">Support</span>
+</a>
+</li>
+<li>
+<a class="text-on-surface-variant p-3 flex items-center gap-3 hover:bg-surface-container-high hover:text-on-surface transition-all duration-150 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span class="font-medium">Logout</span>
+</a>
+</li>
+</ul>
+</nav>
+<!-- Main Content Wrapper -->
+<div class="flex-1 ml-64 flex flex-col min-h-screen">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-surface text-primary dark:text-primary font-body text-on-surface tracking-tight docked full-width top-0 border-b border-outline-variant flat no shadows fixed top-0 w-[calc(100%-16rem)] right-0 z-50 flex justify-between items-center px-6 h-16">
+<div class="text-xl font-headline font-bold text-primary dark:text-primary tracking-tighter">SyncUT Portal</div>
+<div class="flex items-center gap-5">
+<!-- Search Mockup -->
+<div class="hidden md:flex items-center bg-surface-container-highest rounded px-3 py-1.5 border border-outline-variant focus-within:border-primary transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant text-[20px] mr-2">search</span>
+<input class="bg-transparent border-none text-sm text-on-surface focus:ring-0 w-48 placeholder:text-outline p-0" placeholder="Search..." type="text"/>
+</div>
+<button class="cursor-pointer active:opacity-80 hover:text-on-surface transition-colors duration-200 text-on-surface-variant flex items-center">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="cursor-pointer active:opacity-80 hover:text-on-surface transition-colors duration-200 text-on-surface-variant flex items-center">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-surface-container-high border border-outline-variant flex items-center justify-center overflow-hidden ml-2 cursor-pointer ring-2 ring-transparent hover:ring-primary transition-all">
+<!-- DataStore placeholder explicitly requested to NOT have data-alt, but using standard placeholder here. Will use a standard UI avatar to fit the theme if datastore isn't available. -->
+<div class="w-full h-full bg-secondary-container flex items-center justify-center text-xs font-bold text-on-surface">ST</div>
+</div>
+</div>
+</header>
+<!-- Canvas Area -->
+<main class="flex-1 mt-16 p-8 lg:p-10 max-w-7xl mx-auto w-full">
+<div class="mb-8 flex items-baseline justify-between">
+<div>
+<h1 class="text-2xl font-headline font-bold text-on-surface tracking-tight">Overview</h1>
+<p class="text-sm text-on-surface-variant mt-1">Key metrics and system indicators for the current term.</p>
+</div>
+<div class="flex items-center gap-2 text-sm text-on-surface-variant bg-surface-container-highest px-3 py-1.5 rounded-lg border border-outline-variant">
+<span class="material-symbols-outlined text-[18px]">calendar_today</span>
+<span>Last 30 Days</span>
+</div>
+</div>
+<!-- Bento Grid Stats -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+<!-- Primary Stat Card: Growth Focus -->
+<div class="col-span-1 md:col-span-2 bg-surface-container border border-outline-variant rounded-xl p-6 flex flex-col justify-between hover:bg-surface-container-high transition-colors duration-300 group">
+<div class="flex justify-between items-start mb-6">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[20px]">description</span>
+</div>
+<span class="text-on-surface-variant text-sm font-medium">Total Justifications</span>
+</div>
+<button class="text-outline hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined text-[20px]">more_horiz</span>
+</button>
+</div>
+<div class="flex items-end justify-between">
+<div>
+<div class="flex items-center gap-3 mb-1">
+<h2 class="text-5xl font-headline font-bold text-on-surface tracking-tighter">1,240</h2>
+<div class="flex items-center text-tertiary text-sm font-medium bg-tertiary/10 px-2 py-0.5 rounded border border-tertiary/20">
+<span class="material-symbols-outlined text-[16px] mr-0.5">trending_up</span>
+<span>+12.4%</span>
+</div>
+</div>
+<div class="text-xs text-on-surface-variant mt-2">Compared to 1,103 last period</div>
+</div>
+<!-- CSS Bar Sparkline -->
+<div class="flex items-end h-16 gap-1.5 w-32 opacity-70 group-hover:opacity-100 transition-opacity">
+<div class="w-full bg-tertiary/40 rounded-t-sm h-[30%] hover:bg-tertiary transition-colors"></div>
+<div class="w-full bg-tertiary/40 rounded-t-sm h-[45%] hover:bg-tertiary transition-colors"></div>
+<div class="w-full bg-tertiary/40 rounded-t-sm h-[40%] hover:bg-tertiary transition-colors"></div>
+<div class="w-full bg-tertiary/40 rounded-t-sm h-[60%] hover:bg-tertiary transition-colors"></div>
+<div class="w-full bg-tertiary/40 rounded-t-sm h-[55%] hover:bg-tertiary transition-colors"></div>
+<div class="w-full bg-tertiary/60 rounded-t-sm h-[80%] hover:bg-tertiary transition-colors"></div>
+<div class="w-full bg-tertiary rounded-t-sm h-[100%] shadow-[0_0_8px_rgba(52,211,153,0.4)]"></div>
+</div>
+</div>
+</div>
+<!-- Alert Stat Card -->
+<div class="col-span-1 bg-surface-container border border-error/30 rounded-xl p-6 flex flex-col justify-between relative overflow-hidden group">
+<div class="absolute top-0 right-0 w-24 h-24 bg-error/10 rounded-full blur-2xl -mr-8 -mt-8 pointer-events-none transition-transform group-hover:scale-110"></div>
+<div class="flex justify-between items-start mb-4 relative z-10">
+<span class="text-on-surface-variant text-sm font-medium">Pending Approvals</span>
+<span class="material-symbols-outlined text-error text-[20px]">warning</span>
+</div>
+<div class="relative z-10 mt-auto">
+<div class="flex items-center gap-2 mb-1">
+<h2 class="text-4xl font-headline font-bold text-on-surface tracking-tighter">48</h2>
+<span class="text-error text-xs font-medium bg-error/10 px-1.5 py-0.5 rounded flex items-center">
+<span class="material-symbols-outlined text-[14px]">arrow_upward</span> 4
+                            </span>
+</div>
+<div class="text-xs text-on-surface-variant mt-2 border-t border-outline-variant/50 pt-3">
+<span class="text-on-surface font-medium">12</span> high priority requests
+                        </div>
+</div>
+</div>
+<!-- Neutral / Capacity Card -->
+<div class="col-span-1 bg-surface-container border border-outline-variant rounded-xl p-6 flex flex-col justify-between hover:bg-surface-container-high transition-colors duration-300">
+<div class="flex justify-between items-start mb-4">
+<span class="text-on-surface-variant text-sm font-medium">Active Modules</span>
+<span class="material-symbols-outlined text-outline text-[20px]">view_module</span>
+</div>
+<div class="mt-auto">
+<h2 class="text-4xl font-headline font-bold text-on-surface tracking-tighter mb-4">342</h2>
+<div class="w-full bg-surface-container-highest rounded-full h-1.5 mb-2 overflow-hidden">
+<div class="bg-primary h-1.5 rounded-full relative" style="width: 78%">
+<div class="absolute inset-0 bg-white/20 w-full h-full animate-[pulse_2s_ease-in-out_infinite]"></div>
+</div>
+</div>
+<div class="flex justify-between text-[10px] text-on-surface-variant font-medium tracking-wide uppercase">
+<span>Capacity utilized</span>
+<span>78%</span>
+</div>
+</div>
+</div>
+<!-- Minimal Info Row (Spans 4 cols on large screens, acts as a footer band of micro-stats) -->
+<div class="col-span-1 md:col-span-2 lg:col-span-4 grid grid-cols-2 md:grid-cols-4 gap-4 mt-2">
+<div class="bg-surface-container-lowest border border-outline-variant/50 rounded-lg p-4 flex items-center justify-between">
+<div>
+<div class="text-xs text-on-surface-variant mb-1">System Uptime</div>
+<div class="font-headline font-bold text-on-surface text-lg tracking-tight">99.98%</div>
+</div>
+<div class="w-2 h-2 rounded-full bg-tertiary shadow-[0_0_8px_rgba(52,211,153,0.6)]"></div>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant/50 rounded-lg p-4 flex items-center justify-between">
+<div>
+<div class="text-xs text-on-surface-variant mb-1">Active Users</div>
+<div class="font-headline font-bold text-on-surface text-lg tracking-tight">8,902</div>
+</div>
+<span class="material-symbols-outlined text-outline text-[18px]">group</span>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant/50 rounded-lg p-4 flex items-center justify-between">
+<div>
+<div class="text-xs text-on-surface-variant mb-1">Avg Response Time</div>
+<div class="font-headline font-bold text-on-surface text-lg tracking-tight">124ms</div>
+</div>
+<span class="material-symbols-outlined text-outline text-[18px]">speed</span>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant/50 rounded-lg p-4 flex items-center justify-between">
+<div>
+<div class="text-xs text-on-surface-variant mb-1">Sync Status</div>
+<div class="font-headline font-bold text-on-surface text-lg tracking-tight text-primary">Up to date</div>
+</div>
+<span class="material-symbols-outlined text-primary text-[18px]">sync</span>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

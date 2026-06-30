@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SyncUT - New Justification Request</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-primary-fixed-variant": "#5b21b6",
+                        "on-error": "#1a0000",
+                        "surface-bright": "#18181b",
+                        "primary-fixed-dim": "#c4b5fd",
+                        "on-tertiary-fixed-variant": "#047857",
+                        "on-secondary": "#09090b",
+                        "on-primary-fixed": "#2e1065",
+                        "tertiary-fixed": "#bbf7d0",
+                        "on-error-container": "#fca5a5",
+                        "on-surface": "#fafafa",
+                        "on-secondary-fixed-variant": "#3f3f46",
+                        "surface": "#0c0c0f",
+                        "inverse-primary": "#5b21b6",
+                        "inverse-on-surface": "#09090b",
+                        "surface-container-low": "#0f0f12",
+                        "on-secondary-container": "#a1a1aa",
+                        "on-primary-container": "#ede9fe",
+                        "surface-container-high": "#18181b",
+                        "secondary-container": "#27272a",
+                        "background": "#09090b",
+                        "surface-variant": "#18181b",
+                        "surface-dim": "#0c0c0f",
+                        "on-tertiary-fixed": "#003318",
+                        "secondary-fixed": "#a1a1aa",
+                        "on-primary": "#0a0012",
+                        "on-background": "#fafafa",
+                        "on-secondary-fixed": "#18181b",
+                        "inverse-surface": "#fafafa",
+                        "primary": "#a78bfa",
+                        "tertiary-container": "#065f46",
+                        "surface-container-lowest": "#09090b",
+                        "on-surface-variant": "#a1a1aa",
+                        "outline-variant": "#27272a",
+                        "tertiary-fixed-dim": "#6ee7b7",
+                        "surface-container-highest": "#1e1e22",
+                        "error": "#ef4444",
+                        "surface-tint": "#a78bfa",
+                        "surface-container": "#121215",
+                        "primary-container": "#7c3aed",
+                        "on-tertiary-container": "#bbf7d0",
+                        "secondary-fixed-dim": "#71717a",
+                        "primary-fixed": "#ede9fe",
+                        "outline": "#52525b",
+                        "on-tertiary": "#001a12",
+                        "secondary": "#71717a",
+                        "error-container": "#3b1111",
+                        "tertiary": "#34d399"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    fontFamily: {
+                        "headline": ["Geist", "sans-serif"],
+                        "display": ["Geist", "sans-serif"],
+                        "body": ["Geist", "sans-serif"],
+                        "label": ["Geist", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Geist', sans-serif; }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body min-h-screen flex flex-col md:flex-row antialiased">
+<!-- SideNavBar (Desktop/Tablet) -->
+<nav class="hidden md:flex flex-col h-screen left-0 w-64 border-r border-outline-variant bg-surface-container shrink-0 sticky top-0">
+<div class="px-6 py-8 border-b border-outline-variant">
+<h1 class="text-lg font-headline font-bold text-primary tracking-tight">SyncUT</h1>
+<p class="text-sm text-on-surface-variant mt-1">Justifications</p>
+<p class="text-xs text-on-surface-variant opacity-70">Academic Platform</p>
+</div>
+<div class="flex-1 overflow-y-auto py-4">
+<ul class="space-y-1">
+<li>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant hover:text-on-surface transition-all" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-sm font-medium">Home</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 bg-secondary-container text-primary border-r-2 border-primary active:opacity-80 transition-opacity" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">add_box</span>
+<span class="text-sm font-medium">New Request</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant hover:text-on-surface transition-all" href="#">
+<span class="material-symbols-outlined">cloud_upload</span>
+<span class="text-sm font-medium">Uploads</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant hover:text-on-surface transition-all" href="#">
+<span class="material-symbols-outlined">list_alt</span>
+<span class="text-sm font-medium">Justifications</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant hover:text-on-surface transition-all" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="text-sm font-medium">Timeline</span>
+</a>
+</li>
+</ul>
+</div>
+<div class="p-4 border-t border-outline-variant">
+<button class="w-full flex items-center justify-center gap-2 py-2 px-4 rounded bg-surface-variant text-on-surface hover:bg-secondary-container transition-colors text-sm font-medium border border-outline-variant">
+                Support
+            </button>
+<ul class="mt-4 space-y-1">
+<li>
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-surface-variant hover:text-on-surface transition-all rounded" href="#">
+<span class="material-symbols-outlined text-sm">settings</span>
+<span class="text-sm font-medium">Settings</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-surface-variant hover:text-on-surface transition-all rounded" href="#">
+<span class="material-symbols-outlined text-sm">logout</span>
+<span class="text-sm font-medium">Logout</span>
+</a>
+</li>
+</ul>
+</div>
+</nav>
+<!-- Main Content Area -->
+<div class="flex-1 flex flex-col min-h-screen relative">
+<!-- TopNavBar (Mobile Only) -->
+<header class="md:hidden flex justify-between items-center w-full px-4 h-16 bg-surface border-b border-outline-variant sticky top-0 z-10">
+<h1 class="text-xl font-headline font-bold tracking-tight text-on-surface">SyncUT</h1>
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:text-primary transition-colors active:scale-95">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors active:scale-95">
+<span class="material-symbols-outlined">account_circle</span>
+</button>
+</div>
+</header>
+<!-- Form Canvas -->
+<main class="flex-1 p-6 md:p-10 lg:p-12 pb-32">
+<div class="max-w-3xl mx-auto">
+<div class="mb-8">
+<h2 class="text-2xl font-headline font-bold text-on-surface tracking-tight mb-2">Submit New Request</h2>
+<p class="text-on-surface-variant text-sm">Fill out the details below to submit a new justification request. Ensure all required fields are complete.</p>
+</div>
+<form class="space-y-8">
+<!-- Request Information Section -->
+<section class="bg-surface-container rounded-lg border border-outline-variant p-6">
+<h3 class="text-lg font-headline font-semibold text-primary mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-base">info</span>
+                            Request Information
+                        </h3>
+<div class="space-y-6">
+<div>
+<label class="block text-sm font-medium text-on-surface mb-2 flex items-center gap-2" for="requestType">
+                                    Request Type
+                                    <span class="material-symbols-outlined text-xs text-on-surface-variant cursor-help" title="Select the category that best fits your justification.">help</span>
+</label>
+<select class="w-full bg-surface border border-outline-variant rounded px-4 py-2.5 text-on-surface focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background transition-shadow appearance-none" id="requestType" name="requestType">
+<option disabled="" selected="" value="">Select a type...</option>
+<option value="medical">Medical Absence</option>
+<option value="personal">Personal Emergency</option>
+<option value="academic">Academic Extension</option>
+<option value="other">Other</option>
+</select>
+</div>
+<div>
+<label class="block text-sm font-medium text-on-surface mb-2 flex items-center gap-2" for="description">
+                                    Description
+                                    <span class="material-symbols-outlined text-xs text-on-surface-variant cursor-help" title="Provide detailed context for your request.">help</span>
+</label>
+<textarea class="w-full bg-surface border border-outline-variant rounded px-4 py-3 text-on-surface placeholder-on-surface-variant focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background transition-shadow resize-none" id="description" name="description" placeholder="Explain the reason for this justification..." rows="5"></textarea>
+</div>
+</div>
+</section>
+<!-- Duration Section -->
+<section class="bg-surface-container rounded-lg border border-outline-variant p-6">
+<h3 class="text-lg font-headline font-semibold text-primary mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-base">calendar_today</span>
+                            Duration
+                        </h3>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div>
+<label class="block text-sm font-medium text-on-surface mb-2" for="startDate">Start Date</label>
+<input class="w-full bg-surface border border-outline-variant rounded px-4 py-2.5 text-on-surface focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background transition-shadow [color-scheme:dark]" id="startDate" name="startDate" type="date"/>
+</div>
+<div>
+<label class="block text-sm font-medium text-on-surface mb-2" for="endDate">End Date</label>
+<input class="w-full bg-surface border border-outline-variant rounded px-4 py-2.5 text-on-surface focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background transition-shadow [color-scheme:dark]" id="endDate" name="endDate" type="date"/>
+</div>
+</div>
+</section>
+</form>
+</div>
+</main>
+<!-- Fixed Bottom Action Bar -->
+<div class="fixed bottom-0 left-0 md:left-64 right-0 bg-surface border-t border-outline-variant p-4 z-20 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+<div class="max-w-3xl mx-auto flex justify-end gap-4">
+<button class="px-6 py-2.5 rounded border border-outline-variant text-on-surface hover:bg-surface-variant transition-colors font-medium text-sm" type="button">
+                    Cancel
+                </button>
+<button class="px-6 py-2.5 rounded bg-primary text-on-primary hover:bg-primary-fixed transition-colors font-medium text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background" type="button">
+                    Submit Request
+                </button>
+</div>
+</div>
+</div>
+</body></html>

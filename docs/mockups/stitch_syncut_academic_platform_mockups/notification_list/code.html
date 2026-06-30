@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SyncUT - Notifications</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-background": "#fafafa",
+                        "on-primary-fixed": "#2e1065",
+                        "tertiary-container": "#065f46",
+                        "on-primary-fixed-variant": "#5b21b6",
+                        "surface-bright": "#18181b",
+                        "on-secondary": "#09090b",
+                        "surface-container-highest": "#1e1e22",
+                        "surface-container": "#121215",
+                        "secondary": "#71717a",
+                        "outline": "#52525b",
+                        "on-error": "#1a0000",
+                        "on-primary": "#0a0012",
+                        "surface-tint": "#a78bfa",
+                        "tertiary-fixed": "#bbf7d0",
+                        "on-surface-variant": "#a1a1aa",
+                        "on-secondary-fixed": "#18181b",
+                        "inverse-surface": "#fafafa",
+                        "surface-container-lowest": "#09090b",
+                        "background": "#09090b",
+                        "outline-variant": "#27272a",
+                        "inverse-on-surface": "#09090b",
+                        "secondary-fixed-dim": "#71717a",
+                        "on-secondary-container": "#a1a1aa",
+                        "primary-fixed-dim": "#c4b5fd",
+                        "error-container": "#3b1111",
+                        "on-tertiary-fixed-variant": "#047857",
+                        "on-tertiary-fixed": "#003318",
+                        "surface-dim": "#0c0c0f",
+                        "inverse-primary": "#5b21b6",
+                        "on-primary-container": "#ede9fe",
+                        "surface-container-high": "#18181b",
+                        "on-tertiary": "#001a12",
+                        "on-secondary-fixed-variant": "#3f3f46",
+                        "primary": "#a78bfa",
+                        "on-error-container": "#fca5a5",
+                        "surface": "#0c0c0f",
+                        "on-surface": "#fafafa",
+                        "primary-container": "#7c3aed",
+                        "on-tertiary-container": "#bbf7d0",
+                        "secondary-container": "#27272a",
+                        "surface-variant": "#18181b",
+                        "error": "#ef4444",
+                        "tertiary-fixed-dim": "#6ee7b7",
+                        "tertiary": "#34d399",
+                        "surface-container-low": "#0f0f12",
+                        "secondary-fixed": "#a1a1aa",
+                        "primary-fixed": "#ede9fe"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Geist", "sans-serif"],
+                        "display": ["Geist", "sans-serif"],
+                        "body": ["Geist", "sans-serif"],
+                        "label": ["Geist", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Geist', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .icon-fill {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        
+        /* Custom scrollbar for webkit */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #09090b; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #27272a; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #52525b; 
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body antialiased selection:bg-primary-container selection:text-on-primary-container min-h-screen flex">
+<!-- Mobile Top Navigation (md:hidden) -->
+<nav class="md:hidden flex justify-between items-center w-full px-6 py-3 z-50 bg-background border-b border-outline-variant fixed top-0 left-0">
+<div class="flex items-center gap-2 text-xl font-headline font-bold tracking-tighter text-on-surface">
+<span class="material-symbols-outlined text-primary">school</span>
+            SyncUT
+        </div>
+<div class="flex items-center gap-4 text-on-surface-variant">
+<button class="hover:text-on-surface transition-colors"><span class="material-symbols-outlined">help</span></button>
+<button class="hover:text-on-surface transition-colors"><span class="material-symbols-outlined">account_circle</span></button>
+</div>
+</nav>
+<!-- Desktop Side Navigation (hidden md:flex) -->
+<aside class="hidden md:flex flex-col h-screen fixed left-0 top-0 z-40 py-6 w-64 bg-surface-dim border-r border-outline-variant">
+<!-- Header -->
+<div class="px-6 mb-8 flex flex-col gap-2">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-surface-container-high border border-outline-variant flex items-center justify-center">
+<span class="material-symbols-outlined text-primary icon-fill">school</span>
+</div>
+<div>
+<h1 class="text-lg font-headline font-black text-on-surface tracking-tighter leading-none">SyncUT</h1>
+<p class="text-xs text-on-surface-variant font-medium mt-1">Academic Portal</p>
+</div>
+</div>
+<button class="mt-4 w-full bg-surface-container-high hover:bg-surface-container-highest border border-outline-variant text-on-surface text-sm font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                New Alert
+            </button>
+</div>
+<!-- Main Nav Links -->
+<nav class="flex-1 px-3 space-y-1">
+<!-- Dashboard -->
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium tracking-normal text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>
+                Dashboard
+            </a>
+<!-- Courses -->
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium tracking-normal text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">school</span>
+                Courses
+            </a>
+<!-- Notifications (ACTIVE) -->
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium tracking-normal bg-surface-container-highest text-primary border-r-4 border-primary transition-colors duration-150 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.02)]" href="#">
+<span class="material-symbols-outlined text-[20px] icon-fill">notifications</span>
+                Notifications
+            </a>
+<!-- Calendar -->
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium tracking-normal text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">calendar_today</span>
+                Calendar
+            </a>
+<!-- Directory -->
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium tracking-normal text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">badge</span>
+                Directory
+            </a>
+</nav>
+<!-- Footer Nav Links -->
+<div class="px-3 mt-auto space-y-1">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium tracking-normal text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+                Preferences
+            </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium tracking-normal text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">logout</span>
+                Sign Out
+            </a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 md:ml-64 mt-16 md:mt-0 p-6 md:p-10 max-w-[1400px] mx-auto w-full">
+<!-- Page Header Area -->
+<header class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+<div>
+<h2 class="text-3xl md:text-4xl font-headline font-bold tracking-tighter text-on-surface">Inbox History</h2>
+<p class="text-on-surface-variant mt-2 text-sm max-w-md">Review your recent academic updates, system alerts, and scheduling changes.</p>
+</div>
+<div class="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
+<!-- Search Input -->
+<div class="relative w-full sm:w-64 group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px] group-focus-within:text-primary transition-colors">search</span>
+<input class="w-full bg-surface-container border border-outline-variant text-on-surface text-sm rounded-lg pl-10 pr-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all placeholder:text-outline" placeholder="Search notifications..." type="text"/>
+</div>
+<!-- Bulk Action -->
+<button class="w-full sm:w-auto px-4 py-2.5 rounded-lg border border-outline-variant text-sm font-medium text-on-surface-variant hover:text-on-surface hover:bg-surface-container hover:border-outline transition-all whitespace-nowrap flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]">done_all</span>
+                    Mark all as read
+                </button>
+</div>
+</header>
+<!-- Bento Layout for Content -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+<!-- Main Notification List Column (Spans 8 cols) -->
+<div class="lg:col-span-8 flex flex-col gap-8">
+<!-- Group: Today -->
+<section>
+<div class="flex items-center gap-4 mb-4">
+<h3 class="text-sm font-headline font-semibold text-on-surface">Today</h3>
+<div class="h-px flex-1 bg-outline-variant"></div>
+</div>
+<div class="flex flex-col gap-3">
+<!-- Unread Item 1 -->
+<article class="group relative flex items-start gap-4 p-5 rounded-xl border border-outline-variant bg-surface-container hover:bg-surface-container-high transition-all duration-200 overflow-hidden cursor-pointer">
+<!-- High Contrast Unread Indicator Bar -->
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
+<!-- Icon -->
+<div class="flex-shrink-0 w-10 h-10 rounded-full bg-primary-container/10 border border-primary/20 flex items-center justify-center mt-1">
+<span class="material-symbols-outlined text-primary icon-fill">school</span>
+</div>
+<!-- Content -->
+<div class="flex-1 min-w-0">
+<div class="flex items-start justify-between gap-4 mb-1">
+<h4 class="text-base font-medium text-on-surface truncate pr-4">Final Grade Posted: Advanced Data Structures</h4>
+<span class="text-xs text-primary font-medium whitespace-nowrap">10:42 AM</span>
+</div>
+<p class="text-sm text-on-surface-variant leading-relaxed line-clamp-2">Your instructor has published the final grades for CS401. Please review your academic dashboard to see your detailed performance breakdown.</p>
+<div class="mt-3 flex gap-2">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-surface-dim border border-outline text-on-surface-variant">Academic</span>
+</div>
+</div>
+</article>
+<!-- Unread Item 2 -->
+<article class="group relative flex items-start gap-4 p-5 rounded-xl border border-outline-variant bg-surface-container hover:bg-surface-container-high transition-all duration-200 overflow-hidden cursor-pointer">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
+<div class="flex-shrink-0 w-10 h-10 rounded-full bg-tertiary/10 border border-tertiary/20 flex items-center justify-center mt-1">
+<span class="material-symbols-outlined text-tertiary icon-fill">check_circle</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-start justify-between gap-4 mb-1">
+<h4 class="text-base font-medium text-on-surface truncate pr-4">Registration Successful</h4>
+<span class="text-xs text-primary font-medium whitespace-nowrap">08:15 AM</span>
+</div>
+<p class="text-sm text-on-surface-variant leading-relaxed line-clamp-2">You have successfully registered for the Spring 2024 semester. Your schedule has been locked and confirmed.</p>
+</div>
+</article>
+</div>
+</section>
+<!-- Group: Yesterday -->
+<section>
+<div class="flex items-center gap-4 mb-4">
+<h3 class="text-sm font-headline font-semibold text-secondary">Yesterday</h3>
+<div class="h-px flex-1 bg-outline-variant opacity-50"></div>
+</div>
+<div class="flex flex-col gap-3">
+<!-- Read Item 1 -->
+<article class="group flex items-start gap-4 p-5 rounded-xl border border-outline-variant/50 bg-surface-container-lowest hover:bg-surface-container transition-all duration-200 cursor-pointer opacity-80 hover:opacity-100">
+<div class="flex-shrink-0 w-10 h-10 rounded-full bg-surface-dim border border-outline-variant flex items-center justify-center mt-1">
+<span class="material-symbols-outlined text-secondary">campaign</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-start justify-between gap-4 mb-1">
+<h4 class="text-base font-medium text-on-surface/90 truncate pr-4">Campus Event: Tech Symposium</h4>
+<span class="text-xs text-secondary whitespace-nowrap">Yesterday</span>
+</div>
+<p class="text-sm text-on-surface-variant/80 leading-relaxed line-clamp-2">Join us at the main auditorium for the annual tech symposium featuring guest speakers from major tech firms. Registration is open until Friday.</p>
+</div>
+</article>
+<!-- Read Item 2 -->
+<article class="group flex items-start gap-4 p-5 rounded-xl border border-outline-variant/50 bg-surface-container-lowest hover:bg-surface-container transition-all duration-200 cursor-pointer opacity-80 hover:opacity-100">
+<div class="flex-shrink-0 w-10 h-10 rounded-full bg-surface-dim border border-outline-variant flex items-center justify-center mt-1">
+<span class="material-symbols-outlined text-secondary">calendar_today</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-start justify-between gap-4 mb-1">
+<h4 class="text-base font-medium text-on-surface/90 truncate pr-4">Assignment Deadline Reminder</h4>
+<span class="text-xs text-secondary whitespace-nowrap">Yesterday</span>
+</div>
+<p class="text-sm text-on-surface-variant/80 leading-relaxed line-clamp-2">Your thesis draft submission for ENG302 is due in 48 hours. Ensure all citations are formatted correctly before upload.</p>
+</div>
+</article>
+</div>
+</section>
+<!-- Group: Older -->
+<section class="opacity-75">
+<div class="flex items-center gap-4 mb-4">
+<h3 class="text-sm font-headline font-semibold text-secondary">Older</h3>
+<div class="h-px flex-1 bg-outline-variant opacity-30"></div>
+</div>
+<div class="flex flex-col gap-3">
+<!-- Read Item 3 -->
+<article class="group flex items-start gap-4 p-5 rounded-xl border border-outline-variant/30 bg-background hover:bg-surface-container-lowest transition-all duration-200 cursor-pointer">
+<div class="flex-shrink-0 w-10 h-10 rounded-full bg-surface-dim border border-outline-variant/50 flex items-center justify-center mt-1">
+<span class="material-symbols-outlined text-secondary/70">warning</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-start justify-between gap-4 mb-1">
+<h4 class="text-base font-medium text-on-surface/70 truncate pr-4">System Maintenance Notice</h4>
+<span class="text-xs text-secondary/70 whitespace-nowrap">Oct 12</span>
+</div>
+<p class="text-sm text-on-surface-variant/60 leading-relaxed line-clamp-1">The portal will undergo scheduled maintenance this weekend.</p>
+</div>
+</article>
+</div>
+</section>
+<!-- Load More -->
+<button class="w-full py-4 rounded-xl border border-dashed border-outline-variant text-sm font-medium text-secondary hover:text-on-surface hover:border-outline hover:bg-surface-container-lowest transition-all mt-4">
+                    Load More History
+                </button>
+</div>
+<!-- Right Column: Filters & Insights (Spans 4 cols) -->
+<aside class="lg:col-span-4 flex flex-col gap-6">
+<!-- Filter Glassmorphism Card -->
+<div class="bg-surface-container/80 backdrop-blur-md border border-outline-variant rounded-2xl p-6 relative overflow-hidden">
+<!-- Subtle ambient glow top right -->
+<div class="absolute -top-10 -right-10 w-32 h-32 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
+<h3 class="text-base font-headline font-semibold text-on-surface mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-primary">filter_list</span>
+                        Quick Filters
+                    </h3>
+<div class="flex flex-col gap-2">
+<label class="flex items-center justify-between p-3 rounded-lg hover:bg-surface-container-high cursor-pointer transition-colors border border-transparent hover:border-outline-variant group">
+<div class="flex items-center gap-3">
+<div class="w-4 h-4 rounded-full border border-primary flex items-center justify-center relative">
+<div class="w-2 h-2 rounded-full bg-primary absolute"></div>
+</div>
+<span class="text-sm text-on-surface font-medium group-hover:text-primary transition-colors">All Notifications</span>
+</div>
+<span class="text-xs text-secondary bg-surface-dim px-2 py-0.5 rounded-full border border-outline-variant">24</span>
+</label>
+<label class="flex items-center justify-between p-3 rounded-lg hover:bg-surface-container-high cursor-pointer transition-colors border border-transparent hover:border-outline-variant group">
+<div class="flex items-center gap-3">
+<div class="w-4 h-4 rounded-full border border-outline group-hover:border-primary transition-colors"></div>
+<span class="text-sm text-on-surface-variant group-hover:text-on-surface transition-colors">Academic</span>
+</div>
+<span class="text-xs text-secondary">8</span>
+</label>
+<label class="flex items-center justify-between p-3 rounded-lg hover:bg-surface-container-high cursor-pointer transition-colors border border-transparent hover:border-outline-variant group">
+<div class="flex items-center gap-3">
+<div class="w-4 h-4 rounded-full border border-outline group-hover:border-primary transition-colors"></div>
+<span class="text-sm text-on-surface-variant group-hover:text-on-surface transition-colors">System Alerts</span>
+</div>
+<span class="text-xs text-secondary">3</span>
+</label>
+<label class="flex items-center justify-between p-3 rounded-lg hover:bg-surface-container-high cursor-pointer transition-colors border border-transparent hover:border-outline-variant group">
+<div class="flex items-center gap-3">
+<div class="w-4 h-4 rounded-full border border-outline group-hover:border-primary transition-colors"></div>
+<span class="text-sm text-on-surface-variant group-hover:text-on-surface transition-colors">Social &amp; Clubs</span>
+</div>
+<span class="text-xs text-secondary">13</span>
+</label>
+</div>
+</div>
+<!-- Unread Summary Card -->
+<div class="bg-surface-container border border-outline-variant rounded-2xl p-6">
+<h3 class="text-sm font-headline font-semibold text-secondary uppercase tracking-wider mb-6">Inbox Status</h3>
+<div class="flex items-center justify-between mb-4">
+<div class="flex items-center gap-3">
+<div class="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_rgba(167,139,250,0.5)]"></div>
+<span class="text-sm text-on-surface">Unread</span>
+</div>
+<span class="text-lg font-bold text-on-surface font-headline">2</span>
+</div>
+<div class="w-full h-1.5 bg-surface-dim rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[8%]" style="width: 8%"></div>
+</div>
+<p class="text-xs text-secondary mt-3 text-right">24 total items</p>
+</div>
+</aside>
+</div>
+</main>
+</body></html>

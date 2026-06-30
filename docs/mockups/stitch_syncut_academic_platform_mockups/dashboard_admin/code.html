@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SyncUT Portal - Admin Dashboard</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Theme Config -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary-container": "#065f46",
+                    "tertiary": "#34d399",
+                    "surface-variant": "#18181b",
+                    "on-surface-variant": "#a1a1aa",
+                    "error-container": "#3b1111",
+                    "surface-container-low": "#0f0f12",
+                    "on-secondary-container": "#a1a1aa",
+                    "on-error": "#1a0000",
+                    "surface-container-lowest": "#09090b",
+                    "on-tertiary-fixed-variant": "#047857",
+                    "surface-container-high": "#18181b",
+                    "tertiary-fixed": "#bbf7d0",
+                    "surface-dim": "#0c0c0f",
+                    "outline": "#52525b",
+                    "on-tertiary-container": "#bbf7d0",
+                    "on-surface": "#fafafa",
+                    "on-primary-fixed-variant": "#5b21b6",
+                    "secondary": "#71717a",
+                    "surface-container-highest": "#1e1e22",
+                    "primary": "#a78bfa",
+                    "secondary-fixed": "#a1a1aa",
+                    "primary-container": "#7c3aed",
+                    "inverse-surface": "#fafafa",
+                    "surface-tint": "#a78bfa",
+                    "inverse-primary": "#5b21b6",
+                    "on-secondary-fixed-variant": "#3f3f46",
+                    "surface-container": "#121215",
+                    "primary-fixed-dim": "#c4b5fd",
+                    "on-tertiary": "#001a12",
+                    "on-error-container": "#fca5a5",
+                    "inverse-on-surface": "#09090b",
+                    "outline-variant": "#27272a",
+                    "tertiary-fixed-dim": "#6ee7b7",
+                    "on-tertiary-fixed": "#003318",
+                    "background": "#09090b",
+                    "on-background": "#fafafa",
+                    "secondary-container": "#27272a",
+                    "surface-bright": "#18181b",
+                    "on-primary-container": "#ede9fe",
+                    "surface": "#0c0c0f",
+                    "on-secondary-fixed": "#18181b",
+                    "on-primary-fixed": "#2e1065",
+                    "on-secondary": "#09090b",
+                    "primary-fixed": "#ede9fe",
+                    "on-primary": "#0a0012",
+                    "secondary-fixed-dim": "#71717a",
+                    "error": "#ef4444"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Geist", "sans-serif"],
+                    "display": ["Geist", "sans-serif"],
+                    "body": ["Geist", "sans-serif"],
+                    "label": ["Geist", "sans-serif"]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        body { font-family: 'Geist', sans-serif; }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body antialiased selection:bg-primary selection:text-on-primary">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-surface fixed top-0 w-full z-50 flex justify-between items-center px-6 h-16 border-b border-outline-variant font-body text-on-surface tracking-tight">
+<div class="flex items-center gap-4">
+<span class="text-xl font-headline font-bold text-primary dark:text-primary tracking-tighter">SyncUT Portal</span>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden md:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+<input class="w-64 bg-surface-container border border-outline-variant rounded-md py-1.5 pl-9 pr-3 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors text-on-surface placeholder:text-on-surface-variant" placeholder="Search system..." type="text"/>
+</div>
+<div class="flex items-center gap-2">
+<button aria-label="notifications" class="w-10 h-10 flex items-center justify-center rounded-md hover:bg-surface-container-high transition-colors duration-200 cursor-pointer active:opacity-80 text-primary dark:text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">notifications</span>
+</button>
+<button aria-label="settings" class="w-10 h-10 flex items-center justify-center rounded-md hover:bg-surface-container-high transition-colors duration-200 cursor-pointer active:opacity-80 text-primary dark:text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">settings</span>
+</button>
+<button class="ml-2 w-8 h-8 rounded-full bg-surface-container-highest border border-outline-variant overflow-hidden cursor-pointer active:opacity-80">
+<img alt="Staff profile avatar" class="w-full h-full object-cover" data-alt="A minimalist digital avatar representing an administrator, set against a dark mode interface. The image uses a solid, high-contrast violet background with sharp, clean typography. The lighting is uniform and digital, reinforcing a developer-grade, functional aesthetic appropriate for an obsidian dark theme." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAsmgAE1AsJQB5sea_fXJ6SKblGUZ5ShvhSyQMOg7h44q_EedGX_rZAdCncr6XfoaoQFImexLnE8IANzK3RYA3pBoenooQYMEAbPryE0WZxhzNB6wyY8wiPU1cuIaVUuQ3NRuuyvUvtSY-v_rTxy12nr-jun8UyDwhlInoqTHHYlbMICwlrn2XzBFmfZsJMI6mbMzWzS_WdIX9jDVBj_lWDareYvh8lr5MAgmhMfWLct7-XY4Y8V994Cl5dS7xOwy3KK1qFdW-pC6Bv"/>
+</button>
+</div>
+</div>
+</header>
+<!-- SideNavBar -->
+<nav class="bg-surface-container dark:bg-surface-container fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 border-r border-outline-variant flex flex-col py-4 z-40 font-body text-sm text-primary dark:text-primary overflow-y-auto">
+<div class="px-6 mb-6">
+<div class="flex items-center gap-3 mb-2">
+<div class="w-8 h-8 bg-primary rounded-md flex items-center justify-center text-on-primary font-bold">
+                    S
+                </div>
+<div>
+<h2 class="text-lg font-headline font-black text-on-surface leading-tight">SyncUT</h2>
+<p class="text-xs text-on-surface-variant">Academic Portal</p>
+</div>
+</div>
+<button class="w-full mt-4 bg-primary text-on-primary py-2 px-4 rounded-md font-medium hover:bg-primary-fixed-dim transition-colors active:scale-95 duration-150 flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">add</span> New Record
+            </button>
+</div>
+<div class="flex-1 px-3 space-y-1">
+<!-- Active Tab -->
+<a class="text-primary bg-surface-container-highest border-r-2 border-primary p-3 flex items-center gap-3 rounded-l-md font-bold cursor-pointer active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+                Dashboard
+            </a>
+<a class="text-on-surface-variant p-3 flex items-center gap-3 hover:bg-surface-container-high rounded-md font-medium hover:text-on-surface transition-all duration-150 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined">apps</span>
+                Modules
+            </a>
+<a class="text-on-surface-variant p-3 flex items-center gap-3 hover:bg-surface-container-high rounded-md font-medium hover:text-on-surface transition-all duration-150 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined">group</span>
+                Students
+            </a>
+<a class="text-on-surface-variant p-3 flex items-center gap-3 hover:bg-surface-container-high rounded-md font-medium hover:text-on-surface transition-all duration-150 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined">school</span>
+                Faculty
+            </a>
+<a class="text-on-surface-variant p-3 flex items-center gap-3 hover:bg-surface-container-high rounded-md font-medium hover:text-on-surface transition-all duration-150 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined">analytics</span>
+                Reports
+            </a>
+</div>
+<div class="px-3 mt-auto pt-4 border-t border-outline-variant space-y-1">
+<a class="text-on-surface-variant p-3 flex items-center gap-3 hover:bg-surface-container-high rounded-md font-medium hover:text-on-surface transition-all duration-150 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined">help_center</span>
+                Support
+            </a>
+<a class="text-on-surface-variant p-3 flex items-center gap-3 hover:bg-surface-container-high rounded-md font-medium hover:text-on-surface transition-all duration-150 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined">logout</span>
+                Logout
+            </a>
+</div>
+</nav>
+<!-- Main Content -->
+<main class="ml-64 pt-16 min-h-screen p-8">
+<div class="max-w-7xl mx-auto space-y-6">
+<!-- Page Header -->
+<div class="flex items-end justify-between border-b border-outline-variant pb-4">
+<div>
+<h1 class="text-2xl font-headline font-bold text-on-surface tracking-tight">System Overview</h1>
+<p class="text-sm text-on-surface-variant mt-1">Real-time telemetry and access control panel.</p>
+</div>
+<div class="flex items-center gap-2 text-xs text-on-surface-variant font-medium">
+<span class="w-2 h-2 rounded-full bg-tertiary animate-pulse"></span>
+                    Live Updates Active
+                </div>
+</div>
+<!-- Bento Grid - KPIs -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- KPI 1 -->
+<div class="bg-surface-container border border-outline-variant rounded-lg p-6 flex flex-col justify-between hover:bg-surface-container-high transition-colors">
+<div class="flex justify-between items-start mb-4">
+<div class="text-on-surface-variant font-medium text-sm">Total Logins (24h)</div>
+<span class="material-symbols-outlined text-primary">login</span>
+</div>
+<div>
+<div class="text-3xl font-bold text-on-surface tracking-tight">14,289</div>
+<div class="text-xs text-tertiary mt-2 flex items-center gap-1 font-medium">
+<span class="material-symbols-outlined text-sm">trending_up</span> +12% from yesterday
+                        </div>
+</div>
+</div>
+<!-- KPI 2 -->
+<div class="bg-surface-container border border-outline-variant rounded-lg p-6 flex flex-col justify-between hover:bg-surface-container-high transition-colors">
+<div class="flex justify-between items-start mb-4">
+<div class="text-on-surface-variant font-medium text-sm">System Health</div>
+<span class="material-symbols-outlined text-tertiary">monitor_heart</span>
+</div>
+<div>
+<div class="text-3xl font-bold text-on-surface tracking-tight">99.9%</div>
+<div class="text-xs text-on-surface-variant mt-2 font-medium">
+                            All critical services operational
+                        </div>
+</div>
+</div>
+<!-- KPI 3 -->
+<div class="bg-surface-container border border-outline-variant rounded-lg p-6 flex flex-col justify-between hover:bg-surface-container-high transition-colors">
+<div class="flex justify-between items-start mb-4">
+<div class="text-on-surface-variant font-medium text-sm">Resource Allocation</div>
+<span class="material-symbols-outlined text-primary">memory</span>
+</div>
+<div>
+<div class="text-3xl font-bold text-on-surface tracking-tight">68%</div>
+<div class="w-full bg-surface-container-highest rounded-full h-1.5 mt-3 overflow-hidden border border-outline-variant">
+<div class="bg-primary h-1.5 rounded-full" style="width: 68%"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Complex Grid Row -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<!-- Security Alerts (Spans 2 columns) -->
+<div class="lg:col-span-2 bg-surface-container border border-outline-variant rounded-lg flex flex-col">
+<div class="p-5 border-b border-outline-variant flex justify-between items-center">
+<h3 class="font-headline font-bold text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-error text-lg" style="font-variation-settings: 'FILL' 1;">warning</span>
+                            Critical Security Alerts
+                        </h3>
+<button class="text-xs text-primary hover:text-on-surface transition-colors font-medium">View All</button>
+</div>
+<div class="p-0 flex-1 overflow-hidden">
+<table class="w-full text-left text-sm whitespace-nowrap">
+<thead>
+<tr class="text-on-surface-variant border-b border-outline-variant bg-surface-container-low">
+<th class="px-5 py-3 font-medium">Timestamp</th>
+<th class="px-5 py-3 font-medium">Event</th>
+<th class="px-5 py-3 font-medium">Source IP</th>
+<th class="px-5 py-3 font-medium">Status</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant">
+<tr class="hover:bg-surface-container-high transition-colors">
+<td class="px-5 py-3 text-on-surface-variant">10:42 AM</td>
+<td class="px-5 py-3 text-on-surface font-medium">Unauthorized Access Attempt</td>
+<td class="px-5 py-3 text-on-surface-variant font-mono text-xs">192.168.1.104</td>
+<td class="px-5 py-3"><span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-error-container text-error border border-error/20">Blocked</span></td>
+</tr>
+<tr class="hover:bg-surface-container-high transition-colors">
+<td class="px-5 py-3 text-on-surface-variant">09:15 AM</td>
+<td class="px-5 py-3 text-on-surface font-medium">Multiple Failed Logins</td>
+<td class="px-5 py-3 text-on-surface-variant font-mono text-xs">45.22.19.8</td>
+<td class="px-5 py-3"><span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-surface-container-highest text-on-surface-variant border border-outline-variant">Investigating</span></td>
+</tr>
+<tr class="hover:bg-surface-container-high transition-colors">
+<td class="px-5 py-3 text-on-surface-variant">08:00 AM</td>
+<td class="px-5 py-3 text-on-surface font-medium">Database Connection Spikes</td>
+<td class="px-5 py-3 text-on-surface-variant font-mono text-xs">Internal Subnet</td>
+<td class="px-5 py-3"><span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-surface-container-highest text-tertiary border border-tertiary/20">Resolved</span></td>
+</tr>
+<tr class="hover:bg-surface-container-high transition-colors">
+<td class="px-5 py-3 text-on-surface-variant">Yesterday</td>
+<td class="px-5 py-3 text-on-surface font-medium">API Rate Limit Exceeded</td>
+<td class="px-5 py-3 text-on-surface-variant font-mono text-xs">10.0.0.52</td>
+<td class="px-5 py-3"><span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-surface-container-highest text-tertiary border border-tertiary/20">Resolved</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Global Modules -->
+<div class="bg-surface-container border border-outline-variant rounded-lg flex flex-col">
+<div class="p-5 border-b border-outline-variant">
+<h3 class="font-headline font-bold text-on-surface">Global Modules</h3>
+</div>
+<div class="p-3 flex-1 flex flex-col gap-2">
+<a class="group flex items-center justify-between p-3 rounded-md hover:bg-surface-container-high border border-transparent hover:border-outline-variant transition-all cursor-pointer" href="#">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-surface-container-highest flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors border border-outline-variant">
+<span class="material-symbols-outlined text-sm">group</span>
+</div>
+<span class="text-sm font-medium text-on-surface">Student Directory</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary text-sm transition-colors">arrow_forward</span>
+</a>
+<a class="group flex items-center justify-between p-3 rounded-md hover:bg-surface-container-high border border-transparent hover:border-outline-variant transition-all cursor-pointer" href="#">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-surface-container-highest flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors border border-outline-variant">
+<span class="material-symbols-outlined text-sm">school</span>
+</div>
+<span class="text-sm font-medium text-on-surface">Faculty Roster</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary text-sm transition-colors">arrow_forward</span>
+</a>
+<a class="group flex items-center justify-between p-3 rounded-md hover:bg-surface-container-high border border-transparent hover:border-outline-variant transition-all cursor-pointer" href="#">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-surface-container-highest flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors border border-outline-variant">
+<span class="material-symbols-outlined text-sm">settings_applications</span>
+</div>
+<span class="text-sm font-medium text-on-surface">System Configuration</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary text-sm transition-colors">arrow_forward</span>
+</a>
+<a class="group flex items-center justify-between p-3 rounded-md hover:bg-surface-container-high border border-transparent hover:border-outline-variant transition-all cursor-pointer mt-auto" href="#">
+<div class="flex items-center gap-3">
+<span class="text-xs font-bold text-primary tracking-wide uppercase">Manage All Modules</span>
+</div>
+<span class="material-symbols-outlined text-primary text-sm">open_in_new</span>
+</a>
+</div>
+</div>
+</div>
+<!-- Activity Summary by Role -->
+<div class="bg-surface-container border border-outline-variant rounded-lg p-6">
+<div class="flex justify-between items-center mb-6">
+<h3 class="font-headline font-bold text-on-surface">Activity Summary by Role</h3>
+<select class="bg-surface-container-lowest border border-outline-variant text-on-surface text-xs rounded px-2 py-1 focus:ring-primary focus:border-primary">
+<option>Last 7 Days</option>
+<option>Last 30 Days</option>
+<option>This Year</option>
+</select>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+<!-- Role Bar -->
+<div class="space-y-2">
+<div class="flex justify-between text-xs font-medium">
+<span class="text-on-surface">Students</span>
+<span class="text-on-surface-variant">65%</span>
+</div>
+<div class="w-full bg-surface-container-highest rounded-full h-2 border border-outline-variant overflow-hidden">
+<div class="bg-primary h-2 rounded-full" style="width: 65%"></div>
+</div>
+<div class="text-xs text-on-surface-variant">8,542 active sessions</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-xs font-medium">
+<span class="text-on-surface">Faculty</span>
+<span class="text-on-surface-variant">20%</span>
+</div>
+<div class="w-full bg-surface-container-highest rounded-full h-2 border border-outline-variant overflow-hidden">
+<div class="bg-tertiary h-2 rounded-full" style="width: 20%"></div>
+</div>
+<div class="text-xs text-on-surface-variant">2,105 active sessions</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-xs font-medium">
+<span class="text-on-surface">Administrators</span>
+<span class="text-on-surface-variant">10%</span>
+</div>
+<div class="w-full bg-surface-container-highest rounded-full h-2 border border-outline-variant overflow-hidden">
+<div class="bg-on-surface h-2 rounded-full" style="width: 10%"></div>
+</div>
+<div class="text-xs text-on-surface-variant">420 active sessions</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-xs font-medium">
+<span class="text-on-surface">Support Staff</span>
+<span class="text-on-surface-variant">5%</span>
+</div>
+<div class="w-full bg-surface-container-highest rounded-full h-2 border border-outline-variant overflow-hidden">
+<div class="bg-secondary h-2 rounded-full" style="width: 5%"></div>
+</div>
+<div class="text-xs text-on-surface-variant">180 active sessions</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

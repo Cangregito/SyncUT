@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Appointments Home - SyncUT</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary": "#a78bfa",
+                        "on-secondary-fixed-variant": "#3f3f46",
+                        "on-secondary-container": "#a1a1aa",
+                        "on-primary": "#0a0012",
+                        "on-tertiary-fixed": "#003318",
+                        "on-surface-variant": "#a1a1aa",
+                        "background": "#09090b",
+                        "tertiary-fixed": "#bbf7d0",
+                        "surface-variant": "#18181b",
+                        "primary-fixed": "#ede9fe",
+                        "on-error": "#1a0000",
+                        "on-tertiary-fixed-variant": "#047857",
+                        "surface-tint": "#a78bfa",
+                        "on-tertiary-container": "#bbf7d0",
+                        "on-secondary": "#09090b",
+                        "inverse-surface": "#fafafa",
+                        "inverse-on-surface": "#09090b",
+                        "error-container": "#3b1111",
+                        "on-background": "#fafafa",
+                        "inverse-primary": "#5b21b6",
+                        "on-primary-fixed": "#2e1065",
+                        "surface-container-highest": "#1e1e22",
+                        "surface-container": "#121215",
+                        "tertiary": "#34d399",
+                        "secondary": "#71717a",
+                        "surface-container-low": "#0f0f12",
+                        "primary-fixed-dim": "#c4b5fd",
+                        "on-surface": "#fafafa",
+                        "secondary-fixed-dim": "#71717a",
+                        "secondary-fixed": "#a1a1aa",
+                        "tertiary-container": "#065f46",
+                        "surface-dim": "#0c0c0f",
+                        "on-secondary-fixed": "#18181b",
+                        "outline-variant": "#27272a",
+                        "error": "#ef4444",
+                        "on-primary-container": "#ede9fe",
+                        "surface-bright": "#18181b",
+                        "surface": "#0c0c0f",
+                        "on-primary-fixed-variant": "#5b21b6",
+                        "on-tertiary": "#001a12",
+                        "tertiary-fixed-dim": "#6ee7b7",
+                        "primary-container": "#7c3aed",
+                        "surface-container-lowest": "#09090b",
+                        "outline": "#52525b",
+                        "secondary-container": "#27272a",
+                        "on-error-container": "#fca5a5",
+                        "surface-container-high": "#18181b"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Geist", "sans-serif"],
+                        "display": ["Geist", "sans-serif"],
+                        "body": ["Geist", "sans-serif"],
+                        "label": ["Geist", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Geist', sans-serif;
+            letter-spacing: -0.01em;
+        }
+        h1, h2, h3, h4, h5, h6, .font-headline {
+            letter-spacing: -0.02em;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.fill {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        
+        /* Custom Scrollbar for dark theme */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #09090b; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #27272a; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3f3f46; 
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface flex h-screen overflow-hidden antialiased">
+<!-- TopNavBar (Mobile Only) -->
+<nav class="md:hidden flex justify-between items-center w-full px-4 h-16 z-50 bg-surface border-b border-outline-variant fixed top-0 left-0 right-0">
+<div class="flex items-center gap-3">
+<span class="text-xl font-headline font-bold tracking-tight text-on-surface">SyncUT</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-on-surface hover:bg-surface-container-high transition-colors p-2 rounded-full cursor-pointer active:opacity-80">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-on-surface hover:bg-surface-container-high transition-colors p-2 rounded-full cursor-pointer active:opacity-80">
+<span class="material-symbols-outlined">menu</span>
+</button>
+</div>
+</nav>
+<!-- SideNavBar (Desktop Only) -->
+<nav class="hidden md:flex flex-col h-screen p-4 gap-2 bg-surface-container docked left-0 w-64 border-r border-outline-variant flex-shrink-0 z-40 relative">
+<div class="mb-8 px-2 flex flex-col items-start pt-2">
+<span class="text-lg font-headline font-bold text-primary">Appointments</span>
+<span class="text-xs text-on-surface-variant mt-1">Institutional Sync</span>
+</div>
+<div class="flex flex-col gap-1 flex-grow">
+<!-- Active Nav Item -->
+<a class="flex items-center gap-3 px-3 py-2 bg-primary-container text-on-primary-container font-semibold rounded-lg focus-within:ring-2 focus-within:ring-primary cursor-pointer active:opacity-80" href="#">
+<span class="material-symbols-outlined fill">home</span>
+<span class="font-body text-sm">Appointments Home</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-all rounded-lg focus-within:ring-2 focus-within:ring-primary cursor-pointer active:opacity-80" href="#">
+<span class="material-symbols-outlined">event_available</span>
+<span class="font-body text-sm">Schedule</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-all rounded-lg focus-within:ring-2 focus-within:ring-primary cursor-pointer active:opacity-80" href="#">
+<span class="material-symbols-outlined">calendar_month</span>
+<span class="font-body text-sm">Calendar</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-all rounded-lg focus-within:ring-2 focus-within:ring-primary cursor-pointer active:opacity-80" href="#">
+<span class="material-symbols-outlined">history</span>
+<span class="font-body text-sm">History</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-all rounded-lg focus-within:ring-2 focus-within:ring-primary cursor-pointer active:opacity-80 mt-auto mb-2" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-body text-sm">Settings</span>
+</a>
+</div>
+<div class="mt-auto border-t border-outline-variant pt-4 flex items-center justify-between px-2 cursor-pointer hover:bg-surface-container-highest transition-colors rounded-lg p-2">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center border border-outline-variant overflow-hidden">
+<span class="material-symbols-outlined text-on-surface-variant text-sm">person</span>
+</div>
+<div class="flex flex-col">
+<span class="text-sm font-medium text-on-surface leading-tight">Admin User</span>
+<span class="text-xs text-on-surface-variant">syncut@admin.edu</span>
+</div>
+</div>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="flex-grow flex flex-col h-full overflow-y-auto mt-16 md:mt-0 relative bg-background">
+<!-- Top App Bar Content Header (Desktop) -->
+<header class="hidden md:flex justify-between items-center w-full px-8 h-20 border-b border-outline-variant bg-surface sticky top-0 z-30">
+<h1 class="text-2xl font-headline font-bold text-on-surface tracking-tight">Overview</h1>
+<div class="flex items-center gap-4">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+<input class="bg-surface-container border border-outline-variant text-on-surface text-sm rounded-lg pl-9 pr-4 py-2 w-64 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent placeholder-on-surface-variant" placeholder="Search appointments..." type="text"/>
+</div>
+<button class="text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors p-2 rounded-full cursor-pointer relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-1.5 right-1.5 w-2 h-2 bg-primary rounded-full border-2 border-surface"></span>
+</button>
+</div>
+</header>
+<div class="p-4 md:p-8 flex flex-col gap-6 max-w-7xl mx-auto w-full pb-24">
+<!-- Conflict Alert -->
+<div class="bg-error-container border border-error/20 rounded-lg p-4 flex items-start gap-3">
+<span class="material-symbols-outlined text-error mt-0.5">warning</span>
+<div class="flex flex-col">
+<span class="text-sm font-medium text-on-error-container">Schedule Conflict Detected</span>
+<span class="text-xs text-on-error-container/80 mt-1">Dr. Aris Thorne has double-booked slots on Thursday, Oct 26. Review calendar to resolve.</span>
+</div>
+<button class="ml-auto text-sm font-medium text-on-error-container hover:underline mt-0.5">Review</button>
+</div>
+<!-- Header Actions -->
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+<div>
+<h2 class="text-xl font-headline font-semibold text-on-surface">Appointments Home</h2>
+<p class="text-sm text-on-surface-variant mt-1">Manage and track institutional scheduling</p>
+</div>
+<button class="bg-primary hover:bg-primary/90 text-on-primary font-medium py-2 px-4 rounded-lg flex items-center gap-2 transition-colors focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background border border-primary">
+<span class="material-symbols-outlined text-sm">add</span>
+                    New Appointment
+                </button>
+</div>
+<!-- Summary Cards Bento Grid -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+<div class="bg-surface-container border border-outline-variant rounded-xl p-4 flex flex-col hover:bg-surface-container-high transition-colors cursor-pointer group">
+<div class="flex justify-between items-start mb-4">
+<span class="text-sm font-medium text-on-surface-variant">Upcoming</span>
+<div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors">
+<span class="material-symbols-outlined text-sm">calendar_clock</span>
+</div>
+</div>
+<span class="text-3xl font-headline font-bold text-on-surface">24</span>
+<div class="flex items-center gap-1 mt-2 text-xs text-tertiary">
+<span class="material-symbols-outlined text-[14px]">trending_up</span>
+<span>+12% from last week</span>
+</div>
+</div>
+<div class="bg-surface-container border border-outline-variant rounded-xl p-4 flex flex-col hover:bg-surface-container-high transition-colors cursor-pointer group">
+<div class="flex justify-between items-start mb-4">
+<span class="text-sm font-medium text-on-surface-variant">Pending</span>
+<div class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant group-hover:bg-primary/20 group-hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-sm">hourglass_empty</span>
+</div>
+</div>
+<span class="text-3xl font-headline font-bold text-on-surface">8</span>
+<div class="flex items-center gap-1 mt-2 text-xs text-on-surface-variant">
+<span>Requires confirmation</span>
+</div>
+</div>
+<div class="bg-surface-container border border-outline-variant rounded-xl p-4 flex flex-col hover:bg-surface-container-high transition-colors cursor-pointer group">
+<div class="flex justify-between items-start mb-4">
+<span class="text-sm font-medium text-on-surface-variant">Completed</span>
+<div class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant group-hover:bg-tertiary/20 group-hover:text-tertiary transition-colors">
+<span class="material-symbols-outlined text-sm">check_circle</span>
+</div>
+</div>
+<span class="text-3xl font-headline font-bold text-on-surface">156</span>
+<div class="flex items-center gap-1 mt-2 text-xs text-tertiary">
+<span class="material-symbols-outlined text-[14px]">trending_up</span>
+<span>+4% from last week</span>
+</div>
+</div>
+<div class="bg-surface-container border border-outline-variant rounded-xl p-4 flex flex-col hover:bg-surface-container-high transition-colors cursor-pointer group">
+<div class="flex justify-between items-start mb-4">
+<span class="text-sm font-medium text-on-surface-variant">Canceled</span>
+<div class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant group-hover:bg-error/20 group-hover:text-error transition-colors">
+<span class="material-symbols-outlined text-sm">cancel</span>
+</div>
+</div>
+<span class="text-3xl font-headline font-bold text-on-surface">3</span>
+<div class="flex items-center gap-1 mt-2 text-xs text-on-surface-variant">
+<span>Within 48h window</span>
+</div>
+</div>
+</div>
+<!-- Next Appointment Featured & Upcoming List -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<!-- Featured Next Appointment -->
+<div class="lg:col-span-1 flex flex-col gap-4">
+<h3 class="text-lg font-headline font-semibold text-on-surface">Up Next</h3>
+<div class="bg-gradient-to-br from-surface-container to-surface-container-low border border-primary/30 rounded-xl p-5 relative overflow-hidden">
+<!-- Decorative glow -->
+<div class="absolute -top-10 -right-10 w-32 h-32 bg-primary/10 rounded-full blur-2xl"></div>
+<div class="flex justify-between items-start mb-6 relative z-10">
+<span class="bg-primary/20 text-primary text-xs font-semibold px-2 py-1 rounded border border-primary/20">In 45 mins</span>
+<button class="text-on-surface-variant hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined text-sm">more_horiz</span>
+</button>
+</div>
+<div class="mb-6 relative z-10">
+<h4 class="text-xl font-headline font-bold text-on-surface mb-1">Department Sync: Engineering</h4>
+<p class="text-sm text-on-surface-variant flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">schedule</span>
+                                10:30 AM - 11:30 AM
+                            </p>
+<p class="text-sm text-on-surface-variant flex items-center gap-2 mt-1">
+<span class="material-symbols-outlined text-[16px]">location_on</span>
+                                Conference Room B / Video
+                            </p>
+</div>
+<div class="flex items-center gap-3 pt-4 border-t border-outline-variant/50 relative z-10">
+<div class="flex -space-x-2">
+<div class="w-8 h-8 rounded-full bg-surface-container-high border-2 border-surface flex items-center justify-center text-xs font-medium text-on-surface">JD</div>
+<div class="w-8 h-8 rounded-full bg-surface-container-high border-2 border-surface flex items-center justify-center text-xs font-medium text-on-surface">MK</div>
+<div class="w-8 h-8 rounded-full bg-surface-container-high border-2 border-surface flex items-center justify-center text-xs font-medium text-on-surface">AT</div>
+</div>
+<span class="text-xs text-on-surface-variant">+4 participants</span>
+</div>
+<div class="mt-5 flex gap-2 relative z-10">
+<button class="flex-1 bg-surface-container-high hover:bg-surface-container-highest border border-outline-variant text-on-surface text-sm font-medium py-2 rounded-lg transition-colors text-center">Join Call</button>
+<button class="flex-1 bg-surface-container-high hover:bg-surface-container-highest border border-outline-variant text-on-surface text-sm font-medium py-2 rounded-lg transition-colors text-center">Details</button>
+</div>
+</div>
+</div>
+<!-- Upcoming Appointments List -->
+<div class="lg:col-span-2 flex flex-col gap-4">
+<div class="flex justify-between items-center">
+<h3 class="text-lg font-headline font-semibold text-on-surface">Schedule - Today</h3>
+<button class="text-sm text-primary hover:text-primary-fixed-dim transition-colors font-medium">View Calendar</button>
+</div>
+<div class="bg-surface-container border border-outline-variant rounded-xl overflow-hidden flex flex-col">
+<!-- List Item 1 -->
+<div class="flex items-center p-4 border-b border-outline-variant hover:bg-surface-container-high transition-colors group cursor-pointer">
+<div class="w-16 flex flex-col items-center justify-center mr-4">
+<span class="text-sm font-medium text-on-surface">11:45</span>
+<span class="text-xs text-on-surface-variant">AM</span>
+</div>
+<div class="w-1 h-12 bg-primary rounded-full mr-4"></div>
+<div class="flex-grow">
+<h4 class="text-base font-medium text-on-surface">Quarterly Review w/ Finance</h4>
+<span class="text-sm text-on-surface-variant">Virtual</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="px-2 py-1 bg-surface-container-high border border-outline-variant rounded text-xs text-on-surface-variant">Confirmed</span>
+<button class="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant group-hover:text-primary group-hover:bg-primary/10 transition-colors opacity-0 group-hover:opacity-100">
+<span class="material-symbols-outlined text-[20px]">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- List Item 2 -->
+<div class="flex items-center p-4 border-b border-outline-variant hover:bg-surface-container-high transition-colors group cursor-pointer">
+<div class="w-16 flex flex-col items-center justify-center mr-4">
+<span class="text-sm font-medium text-on-surface">01:00</span>
+<span class="text-xs text-on-surface-variant">PM</span>
+</div>
+<div class="w-1 h-12 bg-surface-container-highest rounded-full mr-4"></div>
+<div class="flex-grow">
+<h4 class="text-base font-medium text-on-surface">Lunch Block</h4>
+<span class="text-sm text-on-surface-variant">Personal</span>
+</div>
+</div>
+<!-- List Item 3 -->
+<div class="flex items-center p-4 border-b border-outline-variant hover:bg-surface-container-high transition-colors group cursor-pointer">
+<div class="w-16 flex flex-col items-center justify-center mr-4">
+<span class="text-sm font-medium text-on-surface">02:30</span>
+<span class="text-xs text-on-surface-variant">PM</span>
+</div>
+<div class="w-1 h-12 bg-tertiary rounded-full mr-4"></div>
+<div class="flex-grow">
+<h4 class="text-base font-medium text-on-surface">Student Advising - M. Chen</h4>
+<span class="text-sm text-on-surface-variant">Office 304</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="px-2 py-1 bg-surface-container-high border border-outline-variant rounded text-xs text-on-surface-variant">Pending</span>
+<button class="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant group-hover:text-primary group-hover:bg-primary/10 transition-colors opacity-0 group-hover:opacity-100">
+<span class="material-symbols-outlined text-[20px]">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- List Item 4 -->
+<div class="flex items-center p-4 hover:bg-surface-container-high transition-colors group cursor-pointer">
+<div class="w-16 flex flex-col items-center justify-center mr-4">
+<span class="text-sm font-medium text-on-surface">04:00</span>
+<span class="text-xs text-on-surface-variant">PM</span>
+</div>
+<div class="w-1 h-12 bg-primary rounded-full mr-4"></div>
+<div class="flex-grow">
+<h4 class="text-base font-medium text-on-surface">Faculty Board Prep</h4>
+<span class="text-sm text-on-surface-variant">Conference Room A</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="px-2 py-1 bg-surface-container-high border border-outline-variant rounded text-xs text-on-surface-variant">Confirmed</span>
+<button class="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant group-hover:text-primary group-hover:bg-primary/10 transition-colors opacity-0 group-hover:opacity-100">
+<span class="material-symbols-outlined text-[20px]">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

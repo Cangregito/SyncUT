@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SyncUT - Document Upload</title>
+<!-- Google Fonts: Geist -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-primary-fixed-variant": "#5b21b6",
+                    "on-error": "#1a0000",
+                    "surface-bright": "#18181b",
+                    "primary-fixed-dim": "#c4b5fd",
+                    "on-tertiary-fixed-variant": "#047857",
+                    "on-secondary": "#09090b",
+                    "on-primary-fixed": "#2e1065",
+                    "tertiary-fixed": "#bbf7d0",
+                    "on-error-container": "#fca5a5",
+                    "on-surface": "#fafafa",
+                    "on-secondary-fixed-variant": "#3f3f46",
+                    "surface": "#0c0c0f",
+                    "inverse-primary": "#5b21b6",
+                    "inverse-on-surface": "#09090b",
+                    "surface-container-low": "#0f0f12",
+                    "on-secondary-container": "#a1a1aa",
+                    "on-primary-container": "#ede9fe",
+                    "surface-container-high": "#18181b",
+                    "secondary-container": "#27272a",
+                    "background": "#09090b",
+                    "surface-variant": "#18181b",
+                    "surface-dim": "#0c0c0f",
+                    "on-tertiary-fixed": "#003318",
+                    "secondary-fixed": "#a1a1aa",
+                    "on-primary": "#0a0012",
+                    "on-background": "#fafafa",
+                    "on-secondary-fixed": "#18181b",
+                    "inverse-surface": "#fafafa",
+                    "primary": "#a78bfa",
+                    "tertiary-container": "#065f46",
+                    "surface-container-lowest": "#09090b",
+                    "on-surface-variant": "#a1a1aa",
+                    "outline-variant": "#27272a",
+                    "tertiary-fixed-dim": "#6ee7b7",
+                    "surface-container-highest": "#1e1e22",
+                    "error": "#ef4444",
+                    "surface-tint": "#a78bfa",
+                    "surface-container": "#121215",
+                    "primary-container": "#7c3aed",
+                    "on-tertiary-container": "#bbf7d0",
+                    "secondary-fixed-dim": "#71717a",
+                    "primary-fixed": "#ede9fe",
+                    "outline": "#52525b",
+                    "on-tertiary": "#001a12",
+                    "secondary": "#71717a",
+                    "error-container": "#3b1111",
+                    "tertiary": "#34d399"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Geist", "sans-serif"],
+                    "display": ["Geist", "sans-serif"],
+                    "body": ["Geist", "sans-serif"],
+                    "label": ["Geist", "sans-serif"]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Custom scrollbar for dark theme */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #09090b; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #27272a; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3f3f46; 
+        }
+        
+        /* Shimmer effect for progress bar */
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        .progress-shimmer::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            animation: shimmer 1.5s infinite;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body h-screen flex overflow-hidden antialiased">
+<!-- SideNavBar (Shared Component) -->
+<nav class="bg-surface-container dark:bg-surface-container docked h-screen left-0 w-64 flex-col border-r border-outline-variant hidden md:flex">
+<!-- Header -->
+<div class="p-6 border-b border-outline-variant flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-primary flex items-center justify-center text-on-primary font-bold">S</div>
+<div>
+<div class="text-lg font-headline font-bold text-primary tracking-tight">Justifications</div>
+<div class="text-xs text-on-surface-variant">Academic Platform</div>
+</div>
+</div>
+<!-- Navigation Links -->
+<div class="flex-1 overflow-y-auto py-4 flex flex-col font-body text-sm font-medium">
+<!-- Home -->
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant hover:text-on-surface transition-all active:opacity-80" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+                Home
+            </a>
+<!-- New Request -->
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant hover:text-on-surface transition-all active:opacity-80" href="#">
+<span class="material-symbols-outlined" data-icon="add_box">add_box</span>
+                New Request
+            </a>
+<!-- Uploads (ACTIVE) -->
+<a class="flex items-center gap-3 px-4 py-3 bg-secondary-container text-primary border-r-2 border-primary active:opacity-80 transition-opacity" href="#">
+<span class="material-symbols-outlined" data-icon="cloud_upload" data-weight="fill" style="font-variation-settings: 'FILL' 1;">cloud_upload</span>
+                Uploads
+            </a>
+<!-- Justifications -->
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant hover:text-on-surface transition-all active:opacity-80" href="#">
+<span class="material-symbols-outlined" data-icon="list_alt">list_alt</span>
+                Justifications
+            </a>
+<!-- Timeline -->
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant hover:text-on-surface transition-all active:opacity-80" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+                Timeline
+            </a>
+</div>
+<!-- Footer Actions -->
+<div class="p-4 border-t border-outline-variant flex flex-col gap-1 font-body text-sm font-medium">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant hover:text-on-surface transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+                Settings
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant hover:text-error transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+                Logout
+            </a>
+</div>
+</nav>
+<!-- Main Content Area -->
+<div class="flex-1 flex flex-col min-w-0">
+<!-- TopNavBar (Shared Component) -->
+<header class="bg-surface dark:bg-surface font-body text-on-surface antialiased border-b border-outline-variant flat no shadows flex justify-between items-center w-full px-6 h-16 shrink-0">
+<!-- Left: Search -->
+<div class="flex-1 flex items-center">
+<div class="relative w-full max-w-md hidden md:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-xl">search</span>
+<input class="w-full bg-surface-container border border-outline-variant rounded-lg pl-10 pr-4 py-1.5 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-on-surface placeholder:text-on-surface-variant" placeholder="Search uploads..." type="text"/>
+</div>
+<!-- Mobile brand, visible only on small screens -->
+<div class="text-xl font-headline font-bold tracking-tight text-on-surface md:hidden">SyncUT</div>
+</div>
+<!-- Right: Actions -->
+<div class="flex items-center gap-4">
+<button class="w-9 h-9 rounded-full flex items-center justify-center text-on-surface-variant hover:text-primary hover:bg-surface-variant transition-colors active:scale-95 duration-100">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="w-9 h-9 rounded-full flex items-center justify-center text-on-surface-variant hover:text-primary hover:bg-surface-variant transition-colors active:scale-95 duration-100">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+</button>
+</div>
+</header>
+<!-- Canvas -->
+<main class="flex-1 overflow-y-auto p-6 md:p-10">
+<div class="max-w-4xl mx-auto">
+<!-- Page Header -->
+<div class="mb-8">
+<h1 class="text-3xl font-headline font-extrabold tracking-tight text-on-surface">Document Upload</h1>
+<p class="text-on-surface-variant mt-2 text-sm">Securely attach medical certificates, official letters, or other required evidence for your justification request.</p>
+</div>
+<!-- Error Message (Mock state) -->
+<div class="hidden bg-error-container border border-error text-on-error rounded-lg p-4 mb-6 flex items-start gap-3" id="error-banner">
+<span class="material-symbols-outlined text-error shrink-0 mt-0.5">error</span>
+<div>
+<h4 class="text-sm font-bold text-error">Invalid File Type</h4>
+<p class="text-xs mt-1 opacity-90">The file 'vacation_photos.zip' is not supported. Please upload PDF, JPG, or PNG files under 10MB.</p>
+</div>
+<button class="ml-auto text-error opacity-70 hover:opacity-100" onclick="document.getElementById('error-banner').classList.add('hidden')">
+<span class="material-symbols-outlined text-sm">close</span>
+</button>
+</div>
+<!-- Drag & Drop Zone -->
+<div class="bg-surface-container border-2 border-dashed border-outline-variant hover:border-primary/50 transition-colors rounded-xl flex flex-col items-center justify-center p-12 text-center group cursor-pointer relative overflow-hidden" id="drop-zone">
+<div class="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+<div class="w-16 h-16 rounded-full bg-surface-variant flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+<span class="material-symbols-outlined text-3xl text-primary" data-icon="upload_file">upload_file</span>
+</div>
+<h3 class="text-lg font-bold text-on-surface mb-1">Drag and drop files here</h3>
+<p class="text-sm text-on-surface-variant mb-6">Supports PDF, JPG, PNG (Max 10MB)</p>
+<div class="flex items-center gap-4 w-full max-w-xs mb-6">
+<div class="flex-1 h-px bg-outline-variant"></div>
+<span class="text-xs text-on-surface-variant uppercase font-bold tracking-wider">OR</span>
+<div class="flex-1 h-px bg-outline-variant"></div>
+</div>
+<button class="bg-primary text-on-primary-fixed-variant px-6 py-2.5 rounded-lg font-bold text-sm hover:bg-primary-fixed-dim transition-all active:scale-95 shadow-[0_0_15px_rgba(167,139,250,0.1)] hover:shadow-[0_0_20px_rgba(167,139,250,0.2)] flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">folder_open</span>
+                        Browse Files
+                    </button>
+<!-- Hidden file input for real implementation -->
+<input accept=".pdf,.jpg,.jpeg,.png" class="hidden" multiple="" type="file"/>
+</div>
+<!-- Uploads List Section -->
+<div class="mt-12">
+<div class="flex items-center justify-between mb-4 border-b border-outline-variant pb-2">
+<h2 class="text-lg font-headline font-bold text-on-surface">Upload Queue</h2>
+<span class="text-xs text-on-surface-variant font-medium bg-surface-variant px-2 py-1 rounded">3 Files</span>
+</div>
+<div class="flex flex-col gap-3">
+<!-- Item: Active Upload (Progress) -->
+<div class="bg-surface border border-outline-variant rounded-lg p-4 flex flex-col relative overflow-hidden group">
+<!-- Background gradient pulse for active state -->
+<div class="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent -translate-x-full animate-[shimmer_2s_infinite]"></div>
+<div class="flex items-center justify-between relative z-10">
+<div class="flex items-center gap-4">
+<div class="text-primary bg-surface-variant p-2 rounded">
+<span class="material-symbols-outlined">picture_as_pdf</span>
+</div>
+<div>
+<p class="text-sm font-medium text-on-surface truncate max-w-[200px] md:max-w-xs">medical_certificate_signed_2023.pdf</p>
+<div class="flex items-center gap-2 text-xs mt-0.5">
+<span class="text-on-surface-variant">2.4 MB</span>
+<span class="w-1 h-1 rounded-full bg-outline-variant"></span>
+<span class="text-primary font-medium">Uploading 45%</span>
+</div>
+</div>
+</div>
+<button class="w-8 h-8 rounded flex items-center justify-center text-on-surface-variant hover:text-error hover:bg-error-container/20 transition-colors">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<!-- Progress Bar -->
+<div class="w-full h-1.5 bg-surface-variant rounded-full mt-4 overflow-hidden relative z-10">
+<div class="h-full bg-primary rounded-full w-[45%] progress-shimmer relative"></div>
+</div>
+</div>
+<!-- Item: Completed -->
+<div class="bg-surface border border-outline-variant rounded-lg p-4 flex items-center justify-between group hover:border-outline transition-colors">
+<div class="flex items-center gap-4">
+<div class="text-tertiary bg-tertiary-container/20 p-2 rounded relative">
+<span class="material-symbols-outlined">image</span>
+<div class="absolute -bottom-1 -right-1 w-4 h-4 bg-background rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-[12px] text-tertiary" data-weight="fill" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+</div>
+<div>
+<p class="text-sm font-medium text-on-surface truncate max-w-[200px] md:max-w-xs">prescription_scan_front.jpg</p>
+<p class="text-xs text-on-surface-variant mt-0.5">1.2 MB • Completed</p>
+</div>
+</div>
+<button class="w-8 h-8 rounded flex items-center justify-center text-on-surface-variant hover:text-error hover:bg-error-container/20 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">
+<span class="material-symbols-outlined text-[20px]">delete</span>
+</button>
+</div>
+<!-- Item: Error -->
+<div class="bg-surface border border-error/50 rounded-lg p-4 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="text-error bg-error-container/20 p-2 rounded">
+<span class="material-symbols-outlined">broken_image</span>
+</div>
+<div>
+<p class="text-sm font-medium text-on-surface truncate max-w-[200px] md:max-w-xs line-through opacity-70">clinic_receipt_corrupted.png</p>
+<p class="text-xs text-error mt-0.5 font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">warning</span>
+                                        File corrupted or unreadable
+                                    </p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="text-xs font-medium text-on-surface-variant hover:text-primary transition-colors px-2 py-1">Retry</button>
+<button class="w-8 h-8 rounded flex items-center justify-center text-on-surface-variant hover:text-error hover:bg-error-container/20 transition-colors">
+<span class="material-symbols-outlined text-[20px]">delete</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Action Footer (Canvas level) -->
+<div class="mt-8 pt-6 border-t border-outline-variant flex justify-end gap-3">
+<button class="px-5 py-2.5 rounded-lg font-medium text-sm text-on-surface-variant border border-outline-variant hover:bg-surface-variant transition-colors">Cancel</button>
+<button class="bg-primary text-on-primary-fixed-variant px-5 py-2.5 rounded-lg font-bold text-sm hover:bg-primary-fixed-dim transition-colors opacity-50 cursor-not-allowed">Continue to Details</button>
+</div>
+</div>
+</main>
+</div>
+<!-- Minimal script for drag/drop visual feedback demo -->
+<script>
+        const dropZone = document.getElementById('drop-zone');
+        
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight(e) {
+            dropZone.classList.add('border-primary', 'bg-surface-variant/30');
+            dropZone.classList.remove('border-outline-variant');
+        }
+
+        function unhighlight(e) {
+            dropZone.classList.remove('border-primary', 'bg-surface-variant/30');
+            dropZone.classList.add('border-outline-variant');
+        }
+        
+        dropZone.addEventListener('drop', handleDrop, false);
+        
+        function handleDrop(e) {
+            // Mock showing error on drop for demonstration
+            document.getElementById('error-banner').classList.remove('hidden');
+        }
+    </script>
+</body></html>

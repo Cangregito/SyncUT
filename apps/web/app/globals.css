@@ -10,6 +10,61 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Mockup Material Design 3 Custom Colors */
+  --color-tertiary-container: #065f46;
+  --color-tertiary: #34d399;
+  --color-surface-variant: #18181b;
+  --color-on-surface-variant: #a1a1aa;
+  --color-error-container: #3b1111;
+  --color-surface-container-low: #0f0f12;
+  --color-on-secondary-container: #a1a1aa;
+  --color-on-error: #1a0000;
+  --color-surface-container-lowest: #09090b;
+  --color-on-tertiary-fixed-variant: #047857;
+  --color-surface-container-high: #18181b;
+  --color-tertiary-fixed: #bbf7d0;
+  --color-surface-dim: #0c0c0f;
+  --color-outline: #52525b;
+  --color-on-tertiary-container: #bbf7d0;
+  --color-on-surface: #fafafa;
+  --color-on-primary-fixed-variant: #5b21b6;
+  --color-secondary: #71717a;
+  --color-surface-container-highest: #1e1e22;
+  --color-primary: #a78bfa;
+  --color-secondary-fixed: #a1a1aa;
+  --color-primary-container: #7c3aed;
+  --color-inverse-surface: #fafafa;
+  --color-surface-tint: #a78bfa;
+  --color-inverse-primary: #5b21b6;
+  --color-on-secondary-fixed-variant: #3f3f46;
+  --color-surface-container: #121215;
+  --color-primary-fixed-dim: #c4b5fd;
+  --color-on-tertiary: #001a12;
+  --color-on-error-container: #fca5a5;
+  --color-inverse-on-surface: #09090b;
+  --color-outline-variant: #27272a;
+  --color-tertiary-fixed-dim: #6ee7b7;
+  --color-on-tertiary-fixed: #003318;
+  --color-background: #09090b;
+  --color-on-background: #fafafa;
+  --color-secondary-container: #27272a;
+  --color-surface-bright: #18181b;
+  --color-on-primary-container: #ede9fe;
+  --color-surface: #0c0c0f;
+  --color-on-secondary-fixed: #18181b;
+  --color-on-primary-fixed: #2e1065;
+  --color-on-secondary: #09090b;
+  --color-primary-fixed: #ede9fe;
+  --color-on-primary: #0a0012;
+  --color-secondary-fixed-dim: #71717a;
+  --color-error: #ef4444;
+
+  /* Mockup Typography Fonts */
+  --font-headline: "Geist", sans-serif;
+  --font-display: "Geist", sans-serif;
+  --font-body: "Geist", sans-serif;
+  --font-label: "Geist", sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {

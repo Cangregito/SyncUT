@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SyncUT - Authentication</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed": "#bbf7d0",
+                        "primary-fixed": "#ede9fe",
+                        "surface-container-high": "#18181b",
+                        "tertiary-fixed-dim": "#6ee7b7",
+                        "tertiary-container": "#065f46",
+                        "error-container": "#3b1111",
+                        "on-secondary-fixed-variant": "#3f3f46",
+                        "on-tertiary": "#001a12",
+                        "on-surface": "#fafafa",
+                        "outline-variant": "#27272a",
+                        "surface": "#0c0c0f",
+                        "on-secondary": "#09090b",
+                        "outline": "#52525b",
+                        "surface-dim": "#0c0c0f",
+                        "secondary-fixed-dim": "#71717a",
+                        "on-primary-container": "#ede9fe",
+                        "error": "#ef4444",
+                        "primary-fixed-dim": "#c4b5fd",
+                        "on-tertiary-container": "#bbf7d0",
+                        "surface-container-low": "#0f0f12",
+                        "secondary-fixed": "#a1a1aa",
+                        "primary-container": "#7c3aed",
+                        "on-primary-fixed": "#2e1065",
+                        "surface-tint": "#a78bfa",
+                        "on-background": "#fafafa",
+                        "surface-container-lowest": "#09090b",
+                        "secondary": "#71717a",
+                        "on-surface-variant": "#a1a1aa",
+                        "primary": "#a78bfa",
+                        "surface-bright": "#18181b",
+                        "secondary-container": "#27272a",
+                        "on-tertiary-fixed-variant": "#047857",
+                        "background": "#09090b",
+                        "surface-container": "#121215",
+                        "surface-variant": "#18181b",
+                        "inverse-primary": "#5b21b6",
+                        "inverse-on-surface": "#09090b",
+                        "inverse-surface": "#fafafa",
+                        "on-tertiary-fixed": "#003318",
+                        "on-secondary-container": "#a1a1aa",
+                        "tertiary": "#34d399",
+                        "on-primary-fixed-variant": "#5b21b6",
+                        "surface-container-highest": "#1e1e22",
+                        "on-primary": "#0a0012",
+                        "on-error": "#1a0000",
+                        "on-secondary-fixed": "#18181b",
+                        "on-error-container": "#fca5a5"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Geist", "sans-serif"],
+                        "display": ["Geist", "sans-serif"],
+                        "body": ["Geist", "sans-serif"],
+                        "label": ["Geist", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Geist', sans-serif;
+            background-color: theme('colors.background');
+            color: theme('colors.on-background');
+        }
+        .bg-grid-pattern {
+            background-size: 40px 40px;
+            background-image: linear-gradient(to right, rgba(39, 39, 42, 0.1) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(39, 39, 42, 0.1) 1px, transparent 1px);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-primary selection:text-on-primary">
+<!-- Main Content Area -->
+<main class="flex-grow flex flex-col md:flex-row relative overflow-hidden">
+<!-- Left Side: Value Proposition -->
+<section class="w-full md:w-1/2 flex flex-col justify-center px-8 py-16 md:px-16 lg:px-24 bg-surface-container-lowest relative z-10 border-b md:border-b-0 md:border-r border-outline-variant bg-grid-pattern">
+<div class="max-w-xl mx-auto md:mx-0">
+<!-- Branding -->
+<div class="flex items-center gap-3 mb-12">
+<div class="w-10 h-10 rounded-lg bg-surface-container border border-outline-variant flex items-center justify-center text-primary shadow-[0_0_15px_rgba(167,139,250,0.1)]">
+<span class="material-symbols-outlined text-2xl" data-weight="fill" style="font-variation-settings: 'FILL' 1;">security</span>
+</div>
+<span class="font-headline font-bold text-2xl text-on-surface tracking-tighter">SyncUT</span>
+</div>
+<!-- Headline & Value Prop -->
+<h1 class="font-display font-bold text-4xl md:text-5xl lg:text-6xl text-on-surface mb-6 leading-tight tracking-tight">
+                    Welcome to <span class="text-primary">SyncUT</span>
+</h1>
+<p class="font-body text-lg md:text-xl text-on-surface-variant mb-12 leading-relaxed max-w-md">
+                    The institutional standard for academic productivity and secure process management.
+                </p>
+<!-- Feature Highlights -->
+<div class="space-y-6">
+<div class="flex items-start gap-4">
+<div class="w-8 h-8 mt-1 rounded bg-surface-container flex items-center justify-center border border-outline-variant text-tertiary">
+<span class="material-symbols-outlined text-sm">verified_user</span>
+</div>
+<div>
+<h3 class="font-headline font-semibold text-on-surface text-base mb-1">Enterprise Grade Security</h3>
+<p class="font-body text-sm text-on-surface-variant">End-to-end encryption and strict access controls to protect sensitive academic data.</p>
+</div>
+</div>
+<div class="flex items-start gap-4">
+<div class="w-8 h-8 mt-1 rounded bg-surface-container flex items-center justify-center border border-outline-variant text-primary">
+<span class="material-symbols-outlined text-sm">hub</span>
+</div>
+<div>
+<h3 class="font-headline font-semibold text-on-surface text-base mb-1">Centralized Process Management</h3>
+<p class="font-body text-sm text-on-surface-variant">Streamline workflows, manage identities, and audit activity from a single, unified interface.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Ambient Glow Effect -->
+<div class="absolute top-1/4 -left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl pointer-events-none"></div>
+</section>
+<!-- Right Side: Auth Container -->
+<section class="w-full md:w-1/2 flex flex-col justify-center items-center p-8 bg-surface relative z-10">
+<div class="w-full max-w-md">
+<div class="text-center mb-10">
+<h2 class="font-headline font-semibold text-2xl text-on-surface tracking-tight mb-2">Get Started</h2>
+<p class="font-body text-sm text-on-surface-variant">Authenticate to access the SyncUT platform</p>
+</div>
+<!-- Auth Action Cards -->
+<div class="space-y-4">
+<!-- Sign In Card -->
+<button class="w-full group text-left bg-surface-container hover:bg-surface-container-high border border-outline-variant hover:border-primary/50 transition-all duration-200 rounded-xl p-5 flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-surface">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-lg bg-surface border border-outline-variant flex items-center justify-center text-on-surface group-hover:text-primary transition-colors">
+<span class="material-symbols-outlined">login</span>
+</div>
+<div>
+<h3 class="font-headline font-medium text-base text-on-surface">Sign In</h3>
+<p class="font-body text-xs text-on-surface-variant mt-0.5">Access your existing account</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors">arrow_forward</span>
+</button>
+<!-- Create Account Card -->
+<button class="w-full group text-left bg-surface-container hover:bg-surface-container-high border border-outline-variant hover:border-primary/50 transition-all duration-200 rounded-xl p-5 flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-surface">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-lg bg-surface border border-outline-variant flex items-center justify-center text-on-surface group-hover:text-primary transition-colors">
+<span class="material-symbols-outlined">person_add</span>
+</div>
+<div>
+<h3 class="font-headline font-medium text-base text-on-surface">Create Account</h3>
+<p class="font-body text-xs text-on-surface-variant mt-0.5">Register for institutional access</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors">arrow_forward</span>
+</button>
+</div>
+<!-- Separation Line -->
+<div class="relative mt-10 mb-8">
+<div class="absolute inset-0 flex items-center">
+<div class="w-full border-t border-outline-variant"></div>
+</div>
+<div class="relative flex justify-center text-xs">
+<span class="bg-surface px-4 text-on-surface-variant font-body uppercase tracking-wider">Institutional Access</span>
+</div>
+</div>
+<!-- SSO Option Placeholder -->
+<button class="w-full flex items-center justify-center gap-3 bg-surface border border-outline-variant hover:bg-surface-container transition-colors duration-200 text-on-surface font-body font-medium text-sm py-3 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-surface">
+<span class="material-symbols-outlined text-lg">account_balance</span>
+                    Continue with University SSO
+                </button>
+</div>
+</section>
+</main>
+<!-- Minimal Footer -->
+<footer class="w-full border-t border-outline-variant bg-surface-container-lowest py-6 px-8 flex flex-col sm:flex-row justify-between items-center gap-4 z-20 relative">
+<p class="font-body text-xs text-on-surface-variant">
+            © 2024 SyncUT Systems. All rights reserved.
+        </p>
+<div class="flex items-center gap-6">
+<a class="font-body text-xs text-on-surface-variant hover:text-primary transition-colors focus:outline-none focus:text-primary" href="#">Help Center</a>
+<a class="font-body text-xs text-on-surface-variant hover:text-primary transition-colors focus:outline-none focus:text-primary" href="#">Account Recovery</a>
+<a class="font-body text-xs text-on-surface-variant hover:text-primary transition-colors focus:outline-none focus:text-primary" href="#">Privacy Policy</a>
+</div>
+</footer>
+</body></html>

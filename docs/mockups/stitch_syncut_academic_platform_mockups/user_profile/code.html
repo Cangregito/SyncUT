@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SyncUT - Profile</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "tertiary-fixed": "#bbf7d0",
+                      "primary-fixed": "#ede9fe",
+                      "surface-container-high": "#18181b",
+                      "tertiary-fixed-dim": "#6ee7b7",
+                      "tertiary-container": "#065f46",
+                      "error-container": "#3b1111",
+                      "on-secondary-fixed-variant": "#3f3f46",
+                      "on-tertiary": "#001a12",
+                      "on-surface": "#fafafa",
+                      "outline-variant": "#27272a",
+                      "surface": "#0c0c0f",
+                      "on-secondary": "#09090b",
+                      "outline": "#52525b",
+                      "surface-dim": "#0c0c0f",
+                      "secondary-fixed-dim": "#71717a",
+                      "on-primary-container": "#ede9fe",
+                      "error": "#ef4444",
+                      "primary-fixed-dim": "#c4b5fd",
+                      "on-tertiary-container": "#bbf7d0",
+                      "surface-container-low": "#0f0f12",
+                      "secondary-fixed": "#a1a1aa",
+                      "primary-container": "#7c3aed",
+                      "on-primary-fixed": "#2e1065",
+                      "surface-tint": "#a78bfa",
+                      "on-background": "#fafafa",
+                      "surface-container-lowest": "#09090b",
+                      "secondary": "#71717a",
+                      "on-surface-variant": "#a1a1aa",
+                      "primary": "#a78bfa",
+                      "surface-bright": "#18181b",
+                      "secondary-container": "#27272a",
+                      "on-tertiary-fixed-variant": "#047857",
+                      "background": "#09090b",
+                      "surface-container": "#121215",
+                      "surface-variant": "#18181b",
+                      "inverse-primary": "#5b21b6",
+                      "inverse-on-surface": "#09090b",
+                      "inverse-surface": "#fafafa",
+                      "on-tertiary-fixed": "#003318",
+                      "on-secondary-container": "#a1a1aa",
+                      "tertiary": "#34d399",
+                      "on-primary-fixed-variant": "#5b21b6",
+                      "surface-container-highest": "#1e1e22",
+                      "on-primary": "#0a0012",
+                      "on-error": "#1a0000",
+                      "on-secondary-fixed": "#18181b",
+                      "on-error-container": "#fca5a5"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {},
+              "fontFamily": {
+                      "headline": [
+                              "Geist"
+                      ],
+                      "display": [
+                              "Geist"
+                      ],
+                      "body": [
+                              "Geist"
+                      ],
+                      "label": [
+                              "Geist"
+                      ]
+              },
+              "fontSize": {}
+      },
+          },
+        }
+    </script>
+<style>
+        body { font-family: 'Geist', sans-serif; }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 flex justify-between items-center px-6 h-16 bg-surface border-b border-outline-variant">
+<div class="flex items-center gap-8">
+<span class="text-xl font-headline font-black tracking-tighter text-on-surface">SyncUT</span>
+<div class="hidden md:flex gap-6 font-body text-on-surface tracking-tight">
+<a class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer active:opacity-80 pb-1" href="#">Dashboard</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer active:opacity-80 pb-1" href="#">Security</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer active:opacity-80 pb-1" href="#">Audit</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer active:opacity-80 pb-1" href="#">Settings</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer active:opacity-80">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer active:opacity-80">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-surface-container-high border border-outline-variant overflow-hidden cursor-pointer active:opacity-80">
+<img alt="User profile avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC01TGS_xNlpP02hdEIu9l0IPvGHVO9Btj8X91GFzdml0nidFsZHS1Cb8w-goh0SYpQxLcnULm0nP5-U5b4tfWn82zigiSuVbhZ-cJ4xn4kWuFKQIoDqsQrerkPePnvrXISolJrTIjmDHf7op7iLLT3T0Xa-In3Q8ABweqO5b_QaJOl3GLFbOAfEZ8Qejsj1Oque5W2_MVjRCxYgoe39BX_FIqy0n3dqWRmEBTric-_pn_Uztz3Cc0Cy561j-qF8ZwPGxLKwSURjdJq"/>
+</div>
+</div>
+</nav>
+<div class="flex h-screen pt-16">
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-16 bottom-0 flex flex-col p-4 w-64 bg-surface-container-low border-r border-outline-variant hidden md:flex">
+<div class="mb-8 px-2">
+<div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center mb-3">
+<span class="material-symbols-outlined text-primary">admin_panel_settings</span>
+</div>
+<h2 class="font-headline font-bold text-on-surface text-lg tracking-tight">Security Center</h2>
+<p class="font-body text-sm text-on-surface-variant">Audit &amp; Auth</p>
+</div>
+<button class="w-full bg-primary text-on-primary font-label py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 mb-6 hover:bg-surface-tint transition-colors cursor-pointer active:scale-[0.98] duration-150 font-bold">
+<span class="material-symbols-outlined text-sm">add</span>
+                New Audit Session
+            </button>
+<nav class="flex-1 flex flex-col gap-1 font-body text-sm">
+<a class="bg-secondary-container text-on-secondary-container rounded-lg flex items-center gap-3 px-3 py-2.5 active:scale-[0.98] duration-150" href="#">
+<span class="material-symbols-outlined">fingerprint</span>
+                    Identity
+                </a>
+<a class="text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all rounded-lg flex items-center gap-3 px-3 py-2.5 active:scale-[0.98] duration-150" href="#">
+<span class="material-symbols-outlined">devices_fold</span>
+                    Active Sessions
+                </a>
+<a class="text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all rounded-lg flex items-center gap-3 px-3 py-2.5 active:scale-[0.98] duration-150" href="#">
+<span class="material-symbols-outlined">security_update_good</span>
+                    Audit Logs
+                </a>
+<a class="text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all rounded-lg flex items-center gap-3 px-3 py-2.5 active:scale-[0.98] duration-150" href="#">
+<span class="material-symbols-outlined">lock_person</span>
+                    Access Control
+                </a>
+<a class="text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all rounded-lg flex items-center gap-3 px-3 py-2.5 active:scale-[0.98] duration-150" href="#">
+<span class="material-symbols-outlined">policy</span>
+                    Global Policy
+                </a>
+</nav>
+<div class="mt-auto flex flex-col gap-1 font-body text-sm border-t border-outline-variant pt-4">
+<a class="text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all rounded-lg flex items-center gap-3 px-3 py-2 active:scale-[0.98] duration-150" href="#">
+<span class="material-symbols-outlined">support_agent</span>
+                    Support
+                </a>
+<a class="text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all rounded-lg flex items-center gap-3 px-3 py-2 active:scale-[0.98] duration-150" href="#">
+<span class="material-symbols-outlined">logout</span>
+                    Sign Out
+                </a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 md:ml-64 p-6 lg:p-10 overflow-y-auto">
+<div class="max-w-4xl mx-auto space-y-8">
+<header class="flex justify-between items-end pb-4 border-b border-outline-variant">
+<div>
+<h1 class="text-3xl font-headline font-bold text-on-surface tracking-tight">Identity Profile</h1>
+<p class="text-on-surface-variant mt-1 text-sm">Manage your personal information and security preferences.</p>
+</div>
+<button class="bg-primary text-on-primary px-4 py-2 rounded-lg font-medium hover:bg-surface-tint transition-colors active:scale-[0.98]">
+                        Edit Profile
+                    </button>
+</header>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Profile Card -->
+<div class="md:col-span-1 space-y-6">
+<div class="bg-surface-container border border-outline-variant rounded-xl p-6 flex flex-col items-center text-center">
+<div class="relative w-32 h-32 rounded-full overflow-hidden border-2 border-outline-variant mb-4">
+<img alt="High resolution user portrait" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA_HihQob0pk8fBqKHt5P2XR-HD6UTpQK1JwlVaP7xPCWBcEap-4hAkdxzSramaEsL7jDa6PPYjA82A9WS3C4SaUlQtqHQmPdZdjJCvMAu76C5C5KjpSIprQv-2_clStzoavhN_KzvoRCm5Mi6lKn9ACpqVUoU8H7QyPt9kDEB7Ox1OgQepFWTlQtWUsL15qNp8p79b8RQ_GwlPonFmV3yJvRkcCNiwqopvGYFgZfSDrOh6IxSUoFF39No4e_B5nSZp7RMCJvVFeL3D"/>
+<div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity cursor-pointer">
+<span class="material-symbols-outlined text-white">photo_camera</span>
+</div>
+</div>
+<h2 class="text-xl font-bold text-on-surface tracking-tight">Alex Vance</h2>
+<p class="text-on-surface-variant text-sm mt-1">a.vance@syncut.edu</p>
+<div class="w-full mt-6 space-y-3">
+<div class="flex justify-between items-center py-2 border-b border-outline-variant">
+<span class="text-sm text-on-surface-variant">Role</span>
+<span class="text-sm font-medium text-on-surface">Academic Coordinator</span>
+</div>
+<div class="flex justify-between items-center py-2 border-b border-outline-variant">
+<span class="text-sm text-on-surface-variant">Department</span>
+<span class="text-sm font-medium text-on-surface">Sciences</span>
+</div>
+<div class="flex justify-between items-center py-2">
+<span class="text-sm text-on-surface-variant">Status</span>
+<div class="flex items-center gap-1.5 px-2 py-1 rounded-full bg-tertiary/10 border border-tertiary/20 text-tertiary">
+<div class="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse"></div>
+<span class="text-xs font-medium">Active</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Details & Settings -->
+<div class="md:col-span-2 space-y-6">
+<!-- Personal Info (Read-Only representation) -->
+<section class="bg-surface-container border border-outline-variant rounded-xl p-6">
+<h3 class="text-lg font-bold text-on-surface mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-on-surface-variant text-sm">badge</span>
+                                System Identity
+                            </h3>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+<div>
+<label class="block text-xs font-medium text-on-surface-variant mb-1 uppercase tracking-wider">Employee ID</label>
+<div class="px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg font-mono text-sm text-on-surface">
+                                        SU-8492-AC
+                                    </div>
+</div>
+<div>
+<label class="block text-xs font-medium text-on-surface-variant mb-1 uppercase tracking-wider">Clearance Level</label>
+<div class="px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg font-mono text-sm text-on-surface">
+                                        Level 3 (Academic)
+                                    </div>
+</div>
+<div class="sm:col-span-2">
+<label class="block text-xs font-medium text-on-surface-variant mb-1 uppercase tracking-wider">Last Login</label>
+<div class="px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg text-sm text-on-surface">
+                                        Today, 08:42 AM from IP 192.168.1.104
+                                    </div>
+</div>
+</div>
+</section>
+<!-- Security Settings -->
+<section class="bg-surface-container border border-outline-variant rounded-xl p-6">
+<h3 class="text-lg font-bold text-on-surface mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-on-surface-variant text-sm">shield</span>
+                                Security Settings
+                            </h3>
+<div class="space-y-6">
+<div class="flex items-center justify-between p-4 bg-surface-container-lowest border border-outline-variant rounded-lg">
+<div>
+<p class="font-medium text-on-surface">Authentication Password</p>
+<p class="text-sm text-on-surface-variant mt-1">Last changed 45 days ago</p>
+</div>
+<button class="px-3 py-1.5 border border-outline-variant text-on-surface rounded hover:bg-surface-container-high transition-colors text-sm">
+                                        Update
+                                    </button>
+</div>
+<div class="flex items-center justify-between p-4 bg-surface-container-lowest border border-outline-variant rounded-lg">
+<div>
+<p class="font-medium text-on-surface">Two-Factor Authentication</p>
+<p class="text-sm text-on-surface-variant mt-1">Require 2FA for all sign-ins to SyncUT.</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox" value=""/>
+<div class="w-11 h-6 bg-surface-container-highest peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary border border-outline-variant"></div>
+</label>
+</div>
+</div>
+</section>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

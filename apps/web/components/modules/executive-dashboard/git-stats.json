@@ -1,0 +1,396 @@
+{
+  "totalCommits": 58,
+  "totalPRs": 8,
+  "mergedPRs": 8,
+  "openPRs": 0,
+  "commitsBySquad": [
+    {
+      "squad": "S1 (Justificaciones)",
+      "progreso": 4
+    },
+    {
+      "squad": "S2 (Autenticación)",
+      "progreso": 1
+    },
+    {
+      "squad": "S3 (Citas)",
+      "progreso": 2
+    },
+    {
+      "squad": "S4 (Notificaciones)",
+      "progreso": 1
+    },
+    {
+      "squad": "S5 (Incidencias)",
+      "progreso": 1
+    },
+    {
+      "squad": "S6 (Chatbot)",
+      "progreso": 0
+    }
+  ],
+  "prsBySquad": [
+    {
+      "squad": "S1 (Justificaciones)",
+      "total": 2,
+      "closed": 2
+    },
+    {
+      "squad": "S2 (Autenticación)",
+      "total": 0,
+      "closed": 0
+    },
+    {
+      "squad": "S3 (Citas)",
+      "total": 1,
+      "closed": 1
+    },
+    {
+      "squad": "S4 (Notificaciones)",
+      "total": 0,
+      "closed": 0
+    },
+    {
+      "squad": "S5 (Incidencias)",
+      "total": 2,
+      "closed": 2
+    },
+    {
+      "squad": "S6 (Chatbot)",
+      "total": 0,
+      "closed": 0
+    }
+  ],
+  "commitsByWeek": [
+    {
+      "week": "W-3",
+      "commits": 0
+    },
+    {
+      "week": "W-2",
+      "commits": 25
+    },
+    {
+      "week": "W-1",
+      "commits": 4
+    },
+    {
+      "week": "Actual",
+      "commits": 29
+    }
+  ],
+  "recentActivities": [
+    {
+      "user": "Jassiel García",
+      "action": "validation",
+      "description": "feat(admin): load real git statistics, assign real squad members, and adapt dashboard UI to design system theme",
+      "module": "Dashboard Base",
+      "squad": "Admin Master",
+      "sprint": "Sprint 3",
+      "date": "05-jun",
+      "time": "19:07",
+      "status": "Completado",
+      "impact": "Alto"
+    },
+    {
+      "user": "Jassiel García",
+      "action": "hotfix",
+      "description": "fix(auth): trim email whitespaces and show current user email on restricted page",
+      "module": "Autenticación",
+      "squad": "Admin Master",
+      "sprint": "Sprint 3",
+      "date": "05-jun",
+      "time": "18:59",
+      "status": "Completado",
+      "impact": "Medio"
+    },
+    {
+      "user": "Jassiel García",
+      "action": "validation",
+      "description": "chore(login): assign admin role to master email in mockup login",
+      "module": "Autenticación",
+      "squad": "Admin Master",
+      "sprint": "Sprint 3",
+      "date": "05-jun",
+      "time": "18:55",
+      "status": "Completado",
+      "impact": "Medio"
+    },
+    {
+      "user": "Jassiel García",
+      "action": "validation",
+      "description": "feat(admin): implement restricted admin route and auto-admin trigger for master email",
+      "module": "Notificaciones",
+      "squad": "Admin Master",
+      "sprint": "Sprint 3",
+      "date": "05-jun",
+      "time": "18:01",
+      "status": "Completado",
+      "impact": "Alto"
+    },
+    {
+      "user": "Jassiel García",
+      "action": "test",
+      "description": "chore: update database types from remote schema and add connection test script",
+      "module": "Dashboard Base",
+      "squad": "Admin Master",
+      "sprint": "Sprint 3",
+      "date": "05-jun",
+      "time": "17:56",
+      "status": "Completado",
+      "impact": "Medio"
+    },
+    {
+      "user": "Jassiel García",
+      "action": "validation",
+      "description": "feat: integrate design mockups layout, custom tailwind theme and unified database schema",
+      "module": "Dashboard Base",
+      "squad": "Admin Master",
+      "sprint": "Sprint 3",
+      "date": "05-jun",
+      "time": "17:43",
+      "status": "Completado",
+      "impact": "Alto"
+    },
+    {
+      "user": "Jassiel García",
+      "action": "validation",
+      "description": "chore(docs): agregar mockups centralizados de stitch",
+      "module": "Dashboard Base",
+      "squad": "Admin Master",
+      "sprint": "Sprint 3",
+      "date": "03-jun",
+      "time": "19:48",
+      "status": "Completado",
+      "impact": "Medio"
+    },
+    {
+      "user": "Jassiel García",
+      "action": "validation",
+      "description": "feat(web): home como centro operativo de plataforma",
+      "module": "Dashboard Base",
+      "squad": "Admin Master",
+      "sprint": "Sprint 3",
+      "date": "03-jun",
+      "time": "19:35",
+      "status": "Completado",
+      "impact": "Alto"
+    },
+    {
+      "user": "Jassiel García",
+      "action": "validation",
+      "description": "feat(web): beta funcional por modulos con navegacion real",
+      "module": "Dashboard Base",
+      "squad": "Admin Master",
+      "sprint": "Sprint 3",
+      "date": "03-jun",
+      "time": "19:32",
+      "status": "Completado",
+      "impact": "Alto"
+    },
+    {
+      "user": "Jassiel García",
+      "action": "merge",
+      "description": "Merge pull request #7 from Cangregito/develop",
+      "module": "Dashboard Base",
+      "squad": "Admin Master",
+      "sprint": "Sprint 3",
+      "date": "03-jun",
+      "time": "18:33",
+      "status": "Completado",
+      "impact": "Alto"
+    },
+    {
+      "user": "Jassiel García",
+      "action": "merge",
+      "description": "Merge pull request #6 from Cangregito/feature/squad-5-incidents",
+      "module": "Incidencias",
+      "squad": "Admin Master",
+      "sprint": "Sprint 3",
+      "date": "03-jun",
+      "time": "18:32",
+      "status": "Completado",
+      "impact": "Alto"
+    },
+    {
+      "user": "Ángel Zataráin",
+      "action": "test",
+      "description": "develop-test",
+      "module": "Dashboard Base",
+      "squad": "Squad 2",
+      "sprint": "Sprint 3",
+      "date": "01-jun",
+      "time": "21:29",
+      "status": "Completado",
+      "impact": "Medio"
+    },
+    {
+      "user": "Osmara Araujo",
+      "action": "validation",
+      "description": "docs: define modulo 5 incidencias y reglas semaforo semanal",
+      "module": "Incidencias",
+      "squad": "Squad 5",
+      "sprint": "Sprint 3",
+      "date": "02-jun",
+      "time": "20:36",
+      "status": "Completado",
+      "impact": "Medio"
+    },
+    {
+      "user": "Jassiel García",
+      "action": "merge",
+      "description": "Merge pull request #5 from panadero414/feature/squad-1-justifications",
+      "module": "Justificaciones",
+      "squad": "Admin Master",
+      "sprint": "Sprint 3",
+      "date": "03-jun",
+      "time": "18:23",
+      "status": "Completado",
+      "impact": "Alto"
+    },
+    {
+      "user": "Jassiel García",
+      "action": "validation",
+      "description": "chore: finalize CI/tooling alignment and pnpm hygiene",
+      "module": "Dashboard Base",
+      "squad": "Admin Master",
+      "sprint": "Sprint 3",
+      "date": "03-jun",
+      "time": "18:11",
+      "status": "Completado",
+      "impact": "Medio"
+    },
+    {
+      "user": "Langostin",
+      "action": "approval",
+      "description": "Pull Request #8: prueba pull request (Estado: CLOSED)",
+      "module": "Dashboard Base",
+      "squad": "Admin Master",
+      "sprint": "Sprint 3",
+      "date": "05-jun",
+      "time": "11:59",
+      "status": "Fucionado",
+      "impact": "Alto"
+    },
+    {
+      "user": "Cangregito",
+      "action": "approval",
+      "description": "Pull Request #7: develop-test (Estado: CLOSED)",
+      "module": "Dashboard Base",
+      "squad": "Admin Master",
+      "sprint": "Sprint 3",
+      "date": "03-jun",
+      "time": "18:32",
+      "status": "Fucionado",
+      "impact": "Alto"
+    },
+    {
+      "user": "Cangregito",
+      "action": "approval",
+      "description": "Pull Request #6: docs: define modulo 5 incidencias y reglas semaforo semanal (Estado: CLOSED)",
+      "module": "Incidencias",
+      "squad": "Squad 5",
+      "sprint": "Sprint 3",
+      "date": "03-jun",
+      "time": "18:31",
+      "status": "Fucionado",
+      "impact": "Alto"
+    },
+    {
+      "user": "panadero414",
+      "action": "approval",
+      "description": "Pull Request #5: Feature/squad 1 justifications (Estado: CLOSED)",
+      "module": "Justificaciones",
+      "squad": "Squad 1",
+      "sprint": "Sprint 3",
+      "date": "03-jun",
+      "time": "18:10",
+      "status": "Fucionado",
+      "impact": "Alto"
+    },
+    {
+      "user": "Osmi29",
+      "action": "approval",
+      "description": "Pull Request #4:  define modulo 5 incidencias y reglas semaforo semanal (Estado: CLOSED)",
+      "module": "Incidencias",
+      "squad": "Squad 5",
+      "sprint": "Sprint 3",
+      "date": "02-jun",
+      "time": "21:22",
+      "status": "Fucionado",
+      "impact": "Alto"
+    }
+  ],
+  "owners": [
+    {
+      "name": "Jassiel García",
+      "squad": "Admin Master",
+      "role": "Project Lead",
+      "tasks": 49,
+      "progress": 100,
+      "weekly": "49 cambios",
+      "prs": 3,
+      "status": "activo"
+    },
+    {
+      "name": "Joel Chaparro",
+      "squad": "Squad 1",
+      "role": "Tech Lead Justificaciones",
+      "tasks": 3,
+      "progress": 64,
+      "weekly": "3 cambios",
+      "prs": 1,
+      "status": "activo"
+    },
+    {
+      "name": "Eduardo García",
+      "squad": "Squad 3",
+      "role": "Tech Lead Citas",
+      "tasks": 2,
+      "progress": 56,
+      "weekly": "2 cambios",
+      "prs": 1,
+      "status": "activo"
+    },
+    {
+      "name": "Ángel Zataráin",
+      "squad": "Squad 2",
+      "role": "Tech Lead Auditoría",
+      "tasks": 1,
+      "progress": 48,
+      "weekly": "1 cambios",
+      "prs": 1,
+      "status": "activo"
+    },
+    {
+      "name": "Osmara Araujo",
+      "squad": "Squad 5",
+      "role": "Tech Lead Incidencias",
+      "tasks": 1,
+      "progress": 48,
+      "weekly": "1 cambios",
+      "prs": 1,
+      "status": "activo"
+    },
+    {
+      "name": "Iván Vivanco",
+      "squad": "Squad 4",
+      "role": "Tech Lead Notificaciones",
+      "tasks": 1,
+      "progress": 48,
+      "weekly": "1 cambios",
+      "prs": 1,
+      "status": "activo"
+    },
+    {
+      "name": "Magdalena Silva",
+      "squad": "Squad 1",
+      "role": "QA Engineer Justificaciones",
+      "tasks": 1,
+      "progress": 48,
+      "weekly": "1 cambios",
+      "prs": 1,
+      "status": "activo"
+    }
+  ]
+}

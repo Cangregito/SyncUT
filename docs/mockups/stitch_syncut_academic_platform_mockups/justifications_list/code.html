@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SyncUT - Justifications</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-fixed-variant": "#5b21b6",
+                        "on-error": "#1a0000",
+                        "surface-bright": "#18181b",
+                        "primary-fixed-dim": "#c4b5fd",
+                        "on-tertiary-fixed-variant": "#047857",
+                        "on-secondary": "#09090b",
+                        "on-primary-fixed": "#2e1065",
+                        "tertiary-fixed": "#bbf7d0",
+                        "on-error-container": "#fca5a5",
+                        "on-surface": "#fafafa",
+                        "on-secondary-fixed-variant": "#3f3f46",
+                        "surface": "#0c0c0f",
+                        "inverse-primary": "#5b21b6",
+                        "inverse-on-surface": "#09090b",
+                        "surface-container-low": "#0f0f12",
+                        "on-secondary-container": "#a1a1aa",
+                        "on-primary-container": "#ede9fe",
+                        "surface-container-high": "#18181b",
+                        "secondary-container": "#27272a",
+                        "background": "#09090b",
+                        "surface-variant": "#18181b",
+                        "surface-dim": "#0c0c0f",
+                        "on-tertiary-fixed": "#003318",
+                        "secondary-fixed": "#a1a1aa",
+                        "on-primary": "#0a0012",
+                        "on-background": "#fafafa",
+                        "on-secondary-fixed": "#18181b",
+                        "inverse-surface": "#fafafa",
+                        "primary": "#a78bfa",
+                        "tertiary-container": "#065f46",
+                        "surface-container-lowest": "#09090b",
+                        "on-surface-variant": "#a1a1aa",
+                        "outline-variant": "#27272a",
+                        "tertiary-fixed-dim": "#6ee7b7",
+                        "surface-container-highest": "#1e1e22",
+                        "error": "#ef4444",
+                        "surface-tint": "#a78bfa",
+                        "surface-container": "#121215",
+                        "primary-container": "#7c3aed",
+                        "on-tertiary-container": "#bbf7d0",
+                        "secondary-fixed-dim": "#71717a",
+                        "primary-fixed": "#ede9fe",
+                        "outline": "#52525b",
+                        "on-tertiary": "#001a12",
+                        "secondary": "#71717a",
+                        "error-container": "#3b1111",
+                        "tertiary": "#34d399"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Geist", "sans-serif"],
+                        "display": ["Geist", "sans-serif"],
+                        "body": ["Geist", "sans-serif"],
+                        "label": ["Geist", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Geist', sans-serif; }
+    </style>
+</head>
+<body class="bg-background text-on-background h-screen flex overflow-hidden selection:bg-primary/30">
+<!-- SideNavBar (Web Only) -->
+<nav class="hidden md:flex flex-col h-screen left-0 w-64 bg-surface-container border-r border-outline-variant flex-shrink-0 relative z-20 transition-all duration-300">
+<div class="p-6">
+<div class="flex items-center gap-3 mb-1">
+<div class="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center border border-primary/30">
+<span class="material-symbols-outlined text-primary text-xl" style="font-variation-settings: 'FILL' 1;">dataset</span>
+</div>
+<div>
+<h1 class="text-lg font-headline font-bold text-primary tracking-tight leading-none">Justifications</h1>
+</div>
+</div>
+<p class="text-xs text-on-surface-variant font-medium ml-11">Academic Platform</p>
+</div>
+<div class="flex-1 overflow-y-auto py-4">
+<ul class="space-y-1">
+<li>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant hover:text-on-surface transition-all active:opacity-80" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-body text-sm font-medium">Home</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant hover:text-on-surface transition-all active:opacity-80" href="#">
+<span class="material-symbols-outlined">add_box</span>
+<span class="font-body text-sm font-medium">New Request</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant hover:text-on-surface transition-all active:opacity-80" href="#">
+<span class="material-symbols-outlined">cloud_upload</span>
+<span class="font-body text-sm font-medium">Uploads</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 bg-secondary-container text-primary border-r-2 border-primary active:opacity-80 transition-opacity" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">list_alt</span>
+<span class="font-body text-sm font-medium">Justifications</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant hover:text-on-surface transition-all active:opacity-80" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-body text-sm font-medium">Timeline</span>
+</a>
+</li>
+</ul>
+</div>
+<div class="p-4 border-t border-outline-variant space-y-4">
+<button class="w-full py-2.5 bg-secondary-container hover:bg-surface-variant border border-outline-variant rounded-lg text-sm font-medium text-on-surface transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">help</span>
+                Support
+            </button>
+<ul class="space-y-1">
+<li>
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+<span class="font-body text-sm font-medium">Settings</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-2 text-error hover:text-error/80 transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">logout</span>
+<span class="font-body text-sm font-medium">Logout</span>
+</a>
+</li>
+</ul>
+</div>
+</nav>
+<!-- Main Content Area -->
+<div class="flex-1 flex flex-col h-screen overflow-hidden relative bg-background">
+<!-- TopNavBar (Web) -->
+<header class="hidden md:flex justify-between items-center w-full px-6 h-16 bg-surface border-b border-outline-variant flex-shrink-0 z-10">
+<div class="flex items-center w-1/3">
+<div class="relative w-full max-w-md group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px] group-focus-within:text-primary transition-colors">search</span>
+<input class="w-full bg-surface-container-high border border-outline-variant text-on-surface text-sm rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all placeholder:text-on-surface-variant/70" placeholder="Search Justifications..." type="text"/>
+</div>
+</div>
+<div class="flex items-center justify-center w-1/3">
+<span class="text-xl font-headline font-bold tracking-tight text-on-surface">SyncUT</span>
+</div>
+<div class="flex items-center justify-end w-1/3 gap-2">
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:text-primary hover:bg-surface-variant transition-colors active:scale-95 duration-100">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<div class="h-6 w-px bg-outline-variant mx-2"></div>
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:text-primary hover:bg-surface-variant transition-colors active:scale-95 duration-100 relative overflow-hidden group">
+<span class="material-symbols-outlined text-2xl group-hover:hidden">account_circle</span>
+<img alt="User profile" class="w-full h-full object-cover hidden group-hover:block rounded-full ring-2 ring-transparent group-hover:ring-primary transition-all" data-alt="A macro, extremely high-contrast portrait of a diverse individual, bathed in dramatic neon violet rim lighting against a pitch-black background. The lighting emphasizes angular facial structures and conveys a gritty, high-tech, cybernetic aesthetic. The mood is intense, focused, and enigmatic. The image acts as a placeholder for a user profile in a developer-centric interface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuApIvvoGcK24CJCwvdD-Buv8nzUBEbxXeNQg3b1KiDgdrXVywTvN8tpo3JEw16TP5wPu84R1lL-1JFwrAhahKwpToEYdSS6I9GhwXSISkdq3K-Almgb1wOsJec5ZvfFyJPB-aojVykJ57zaJu6LsjTRED0H2y0j0mogxYfpQ31hPFDMvbsx7awqd02Z0dKi4JkkmmLQNnX0NQtG9uFUuwzMTiTExfeqsm--vc5giwoANGn50dGShYGkxnKD14wVtZ-HvA6RprlcwhA5"/>
+</button>
+</div>
+</header>
+<!-- Main Scrollable Area -->
+<main class="flex-1 overflow-y-auto p-4 md:p-8">
+<div class="max-w-7xl mx-auto space-y-6">
+<!-- Page Header & Toolbar -->
+<div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+<div>
+<h2 class="text-2xl font-headline font-bold text-on-surface tracking-tight mb-1">Justifications Directory</h2>
+<p class="text-on-surface-variant text-sm">Manage and track operational requests.</p>
+</div>
+<div class="flex items-center gap-3">
+<div class="relative">
+<select class="appearance-none bg-surface-container border border-outline-variant text-on-surface text-sm rounded-lg pl-4 pr-10 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent cursor-pointer hover:border-outline transition-colors">
+<option value="all">All Statuses</option>
+<option value="pending">Pending</option>
+<option value="approved">Approved</option>
+<option value="rejected">Rejected</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none text-[20px]">expand_more</span>
+</div>
+<div class="relative">
+<select class="appearance-none bg-surface-container border border-outline-variant text-on-surface text-sm rounded-lg pl-4 pr-10 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent cursor-pointer hover:border-outline transition-colors">
+<option value="7d">Last 7 Days</option>
+<option value="30d">Last 30 Days</option>
+<option value="90d">Last 90 Days</option>
+<option value="all">All Time</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none text-[20px]">calendar_today</span>
+</div>
+</div>
+</div>
+<!-- High-Density Data Table -->
+<div class="bg-surface-container rounded-xl border border-outline-variant overflow-hidden shadow-sm">
+<div class="overflow-x-auto">
+<table class="w-full text-left text-sm whitespace-nowrap">
+<thead class="bg-surface-container-high border-b border-outline-variant text-on-surface-variant uppercase tracking-wider text-xs font-semibold">
+<tr>
+<th class="px-6 py-4">Folio ID</th>
+<th class="px-6 py-4">Type</th>
+<th class="px-6 py-4">Date Submitted</th>
+<th class="px-6 py-4">Status</th>
+<th class="px-6 py-4">Last Update</th>
+<th class="px-6 py-4 text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant">
+<tr class="hover:bg-surface-container-high transition-colors group cursor-pointer">
+<td class="px-6 py-4 font-mono text-primary font-medium">#JST-2023-089</td>
+<td class="px-6 py-4 text-on-surface">Equipment Allocation</td>
+<td class="px-6 py-4 text-on-surface-variant">Oct 24, 2023</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-tertiary/10 text-tertiary border border-tertiary/20">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+                                            Approved
+                                        </span>
+</td>
+<td class="px-6 py-4 text-on-surface-variant">2 hrs ago</td>
+<td class="px-6 py-4 text-right">
+<button class="text-on-surface-variant hover:text-primary transition-colors opacity-0 group-hover:opacity-100 p-1">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-high transition-colors group cursor-pointer">
+<td class="px-6 py-4 font-mono text-primary font-medium">#JST-2023-090</td>
+<td class="px-6 py-4 text-on-surface">Budget Reallocation</td>
+<td class="px-6 py-4 text-on-surface-variant">Oct 25, 2023</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+                                            Pending Review
+                                        </span>
+</td>
+<td class="px-6 py-4 text-on-surface-variant">1 day ago</td>
+<td class="px-6 py-4 text-right">
+<button class="text-on-surface-variant hover:text-primary transition-colors opacity-0 group-hover:opacity-100 p-1">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-high transition-colors group cursor-pointer">
+<td class="px-6 py-4 font-mono text-primary font-medium">#JST-2023-091</td>
+<td class="px-6 py-4 text-on-surface">Software License</td>
+<td class="px-6 py-4 text-on-surface-variant">Oct 26, 2023</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-error/10 text-error border border-error/20">
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span>
+                                            Rejected
+                                        </span>
+</td>
+<td class="px-6 py-4 text-on-surface-variant">Oct 27, 2023</td>
+<td class="px-6 py-4 text-right">
+<button class="text-on-surface-variant hover:text-primary transition-colors opacity-0 group-hover:opacity-100 p-1">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-high transition-colors group cursor-pointer bg-surface-container-lowest/50">
+<td class="px-6 py-4 font-mono text-on-surface-variant font-medium">#JST-2023-085</td>
+<td class="px-6 py-4 text-on-surface-variant">Facility Maintenance</td>
+<td class="px-6 py-4 text-on-surface-variant/50">Sep 12, 2023</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-surface-variant text-on-surface-variant border border-outline-variant">
+<span class="w-1.5 h-1.5 rounded-full bg-outline"></span>
+                                            Archived
+                                        </span>
+</td>
+<td class="px-6 py-4 text-on-surface-variant/50">Sep 15, 2023</td>
+<td class="px-6 py-4 text-right">
+<button class="text-on-surface-variant hover:text-primary transition-colors opacity-0 group-hover:opacity-100 p-1">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination Footer -->
+<div class="px-6 py-3 border-t border-outline-variant bg-surface-container flex items-center justify-between">
+<span class="text-xs text-on-surface-variant">Showing 1 to 4 of 42 entries</span>
+<div class="flex gap-1">
+<button class="p-1 rounded text-on-surface-variant hover:bg-surface-variant hover:text-on-surface transition-colors disabled:opacity-50" disabled="">
+<span class="material-symbols-outlined text-[20px]">chevron_left</span>
+</button>
+<button class="w-8 h-8 rounded bg-primary/20 text-primary border border-primary/30 text-sm font-medium flex items-center justify-center">1</button>
+<button class="w-8 h-8 rounded text-on-surface-variant hover:bg-surface-variant text-sm font-medium flex items-center justify-center transition-colors">2</button>
+<button class="w-8 h-8 rounded text-on-surface-variant hover:bg-surface-variant text-sm font-medium flex items-center justify-center transition-colors">3</button>
+<button class="p-1 rounded text-on-surface-variant hover:bg-surface-variant hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined text-[20px]">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Empty State (Hidden by default, shown for demonstration if needed) -->
+<!-- 
+                <div class="flex flex-col items-center justify-center py-20 px-4 text-center border border-dashed border-outline-variant rounded-xl bg-surface-container/50">
+                    <div class="w-24 h-24 mb-6 rounded-full bg-surface-variant flex items-center justify-center">
+                        <span class="material-symbols-outlined text-4xl text-on-surface-variant">search_off</span>
+                    </div>
+                    <h3 class="text-lg font-headline font-semibold text-on-surface mb-2">No Justifications Found</h3>
+                    <p class="text-sm text-on-surface-variant max-w-md mb-6">We couldn't find any records matching your current filter criteria. Try adjusting your search or clearing filters.</p>
+                    <button class="px-4 py-2 bg-secondary-container hover:bg-surface-variant border border-outline-variant text-on-surface text-sm font-medium rounded-lg transition-colors">
+                        Clear Filters
+                    </button>
+                </div>
+                -->
+</div>
+</main>
+</div>
+<!-- BottomNavBar (Mobile Only - Suppressed per rules for complex desktop view, but structure kept if viewport shrinks below md) -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 bg-surface border-t border-outline-variant z-50 px-2 py-2 flex justify-between items-center pb-safe">
+<a class="flex flex-col items-center justify-center w-16 h-12 text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-2xl mb-1">dashboard</span>
+<span class="text-[10px] font-medium leading-none">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center w-16 h-12 text-primary font-bold" href="#">
+<span class="material-symbols-outlined text-2xl mb-1" style="font-variation-settings: 'FILL' 1;">list_alt</span>
+<span class="text-[10px] font-medium leading-none">Justifs</span>
+</a>
+<a class="flex flex-col items-center justify-center w-16 h-12 text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-2xl mb-1">add_box</span>
+<span class="text-[10px] font-medium leading-none">New</span>
+</a>
+<a class="flex flex-col items-center justify-center w-16 h-12 text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-2xl mb-1">account_circle</span>
+<span class="text-[10px] font-medium leading-none">Profile</span>
+</a>
+</nav>
+</body></html>
