@@ -67,6 +67,7 @@ function isAttendanceStatus(value: string): value is AttendanceStatus {
   return ["attended", "no_show", "excused_absence"].includes(value);
 }
 
+//Holaaaaaaaa alan
 function toMinutes(value: string) {
   const [hours, minutes] = value.split(":").map(Number);
   return hours * 60 + minutes;
