@@ -1,8 +1,11 @@
 {
-  "totalCommits": 63,
-  "totalPRs": 8,
-  "mergedPRs": 8,
-  "openPRs": 0,
+  "generatedAt": "2026-06-26T03:18:14.772Z",
+  "headCommit": "20d3fc16a4aae420dc106d727768268a2f4050ba",
+  "githubAvailable": true,
+  "totalCommits": 91,
+  "totalPRs": 13,
+  "mergedPRs": 11,
+  "openPRs": 1,
   "commitsBySquad": [
     {
       "squad": "S1 (Justificaciones)",
@@ -30,7 +33,7 @@
     },
     {
       "squad": "Admin (Dashboard Gobernanza)",
-      "progreso": 67
+      "progreso": 72
     }
   ],
   "prsBySquad": [
@@ -41,8 +44,8 @@
     },
     {
       "squad": "S2 (Autenticación)",
-      "total": 1,
-      "closed": 1
+      "total": 3,
+      "closed": 2
     },
     {
       "squad": "S3 (Citas)",
@@ -51,13 +54,13 @@
     },
     {
       "squad": "S4 (Notificaciones)",
-      "total": 0,
-      "closed": 0
+      "total": 1,
+      "closed": 1
     },
     {
       "squad": "S5 (Incidencias)",
-      "total": 2,
-      "closed": 2
+      "total": 3,
+      "closed": 3
     },
     {
       "squad": "S6 (Chatbot)",
@@ -66,86 +69,122 @@
     },
     {
       "squad": "Admin (Dashboard Gobernanza)",
-      "total": 3,
-      "closed": 2
+      "total": 2,
+      "closed": 1
     }
   ],
   "commitsByWeek": [
     {
       "week": "W-3",
-      "commits": 19
+      "commits": 25
     },
     {
       "week": "W-2",
-      "commits": 0
+      "commits": 16
     },
     {
       "week": "W-1",
-      "commits": 31
+      "commits": 8
     },
     {
       "week": "Actual",
-      "commits": 3
+      "commits": 13
     }
   ],
   "recentActivities": [
     {
-      "user": "Marvin61-LOVIU",
-      "action": "validation",
-      "description": "x",
+      "user": "Jassiel García",
+      "action": "hotfix",
+      "description": "fix(admin): refresh squad progress dashboard",
       "module": "Dashboard Base",
-      "squad": "Externo",
+      "squad": "Admin Master",
       "sprint": "Sprint 3",
-      "date": "13-jun",
-      "time": "19:16",
-      "status": "Completado",
-      "impact": "Medio"
-    },
-    {
-      "user": "Marvin61-LOVIU",
-      "action": "validation",
-      "description": "x",
-      "module": "Dashboard Base",
-      "squad": "Externo",
-      "sprint": "Sprint 3",
-      "date": "13-jun",
-      "time": "19:16",
-      "status": "Completado",
-      "impact": "Medio"
-    },
-    {
-      "user": "Marvin61-LOVIU",
-      "action": "validation",
-      "description": "x",
-      "module": "Dashboard Base",
-      "squad": "Externo",
-      "sprint": "Sprint 3",
-      "date": "13-jun",
-      "time": "19:16",
+      "date": "25-jun",
+      "time": "21:16",
       "status": "Completado",
       "impact": "Medio"
     },
     {
       "user": "Jassiel García",
-      "action": "validation",
-      "description": "feat(admin): implement dynamic role validation via Supabase profiles table, removing hardcoded email checks",
+      "action": "merge",
+      "description": "merge: integrate squad 4 notifications",
       "module": "Notificaciones",
       "squad": "Admin Master",
       "sprint": "Sprint 3",
-      "date": "05-jun",
-      "time": "19:19",
+      "date": "25-jun",
+      "time": "21:14",
       "status": "Completado",
       "impact": "Alto"
     },
     {
       "user": "Jassiel García",
-      "action": "validation",
-      "description": "feat(admin): fetch pull requests from GitHub and compute module progress dynamically",
+      "action": "merge",
+      "description": "Merge pull request #12 from ponkis/main",
       "module": "Dashboard Base",
       "squad": "Admin Master",
       "sprint": "Sprint 3",
-      "date": "05-jun",
-      "time": "19:13",
+      "date": "25-jun",
+      "time": "21:08",
+      "status": "Completado",
+      "impact": "Alto"
+    },
+    {
+      "user": "ponkis",
+      "action": "validation",
+      "description": "Modificación General de Frontend",
+      "module": "Dashboard Base",
+      "squad": "Externo",
+      "sprint": "Sprint 3",
+      "date": "25-jun",
+      "time": "19:20",
+      "status": "Completado",
+      "impact": "Medio"
+    },
+    {
+      "user": "Jassiel García",
+      "action": "merge",
+      "description": "Merge pull request #11 from Marvin61-LOVIU/feature/squad-5-incidents",
+      "module": "Incidencias",
+      "squad": "Admin Master",
+      "sprint": "Sprint 3",
+      "date": "25-jun",
+      "time": "18:12",
+      "status": "Completado",
+      "impact": "Alto"
+    },
+    {
+      "user": "Marvin61-LOVIU",
+      "action": "merge",
+      "description": "Merge branch 'main' into feature/squad-5-incidents",
+      "module": "Incidencias",
+      "squad": "Externo",
+      "sprint": "Sprint 3",
+      "date": "24-jun",
+      "time": "15:07",
+      "status": "Completado",
+      "impact": "Alto"
+    },
+    {
+      "user": "Marvin61-LOVIU",
+      "action": "validation",
+      "description": "endpoints",
+      "module": "Dashboard Base",
+      "squad": "Externo",
+      "sprint": "Sprint 3",
+      "date": "20-jun",
+      "time": "18:27",
+      "status": "Completado",
+      "impact": "Medio"
+    },
+    {
+      "user": "Jassiel García",
+      "action": "merge",
+      "description": "chore(admin): refresh stats after squad merges",
+      "module": "Dashboard Base",
+      "squad": "Admin Master",
+      "sprint": "Sprint 3",
+      "date": "19-jun",
+      "time": "18:29",
       "status": "Completado",
       "impact": "Alto"
     },
@@ -234,74 +273,62 @@
       "impact": "Alto"
     },
     {
-      "user": "Jassiel García",
-      "action": "merge",
-      "description": "Merge pull request #10 from Langostin/feature/squad-2-authentication",
+      "user": "Langostin",
+      "action": "approval",
+      "description": "Pull Request #13: prueba (Estado: OPEN)",
       "module": "Autenticación",
-      "squad": "Admin Master",
+      "squad": "Squad 2",
       "sprint": "Sprint 3",
-      "date": "15-jun",
-      "time": "21:30",
-      "status": "Completado",
+      "date": "25-jun",
+      "time": "21:09",
+      "status": "Abierto",
       "impact": "Alto"
     },
     {
-      "user": "langostin",
-      "action": "validation",
-      "description": "prueba",
-      "module": "Dashboard Base",
-      "squad": "Externo",
+      "user": "ponkis",
+      "action": "approval",
+      "description": "Pull Request #12: Modificacion General a Frontend (Estado: CLOSED)",
+      "module": "Notificaciones",
+      "squad": "Squad 4",
       "sprint": "Sprint 3",
-      "date": "15-jun",
-      "time": "21:27",
-      "status": "Completado",
-      "impact": "Medio"
+      "date": "25-jun",
+      "time": "19:21",
+      "status": "Fusionado",
+      "impact": "Alto"
     },
     {
-      "user": "Jassiel García",
-      "action": "merge",
-      "description": "Merge pull request #9 from ReyMarroquin/feature/squad-6-chatbot",
-      "module": "Chatbot",
-      "squad": "Admin Master",
+      "user": "Marvin61-LOVIU",
+      "action": "approval",
+      "description": "Pull Request #11: Feature/squad 5 incidents, endpoints (Estado: CLOSED)",
+      "module": "Incidencias",
+      "squad": "Squad 5",
       "sprint": "Sprint 3",
-      "date": "15-jun",
-      "time": "19:31",
-      "status": "Completado",
+      "date": "24-jun",
+      "time": "15:06",
+      "status": "Fusionado",
       "impact": "Alto"
     },
     {
       "user": "Langostin",
       "action": "approval",
-      "description": "Pull Request #8: prueba pull request (Estado: CLOSED)",
-      "module": "Dashboard Base",
-      "squad": "Admin Master",
+      "description": "Pull Request #10: Feature/squad 2 authentication (Estado: CLOSED)",
+      "module": "Autenticación",
+      "squad": "Squad 2",
       "sprint": "Sprint 3",
-      "date": "05-jun",
-      "time": "11:59",
+      "date": "15-jun",
+      "time": "21:28",
       "status": "Fusionado",
       "impact": "Alto"
     },
     {
-      "user": "Cangregito",
+      "user": "ReyMarroquin",
       "action": "approval",
-      "description": "Pull Request #7: develop-test (Estado: CLOSED)",
-      "module": "Dashboard Base",
-      "squad": "Admin Master",
+      "description": "Pull Request #9: Prueba de push a rama feature/squad-6-chatbot (Estado: CLOSED)",
+      "module": "Chatbot",
+      "squad": "Squad 6",
       "sprint": "Sprint 3",
-      "date": "03-jun",
-      "time": "18:32",
-      "status": "Fusionado",
-      "impact": "Alto"
-    },
-    {
-      "user": "Cangregito",
-      "action": "approval",
-      "description": "Pull Request #6: docs: define modulo 5 incidencias y reglas semaforo semanal (Estado: CLOSED)",
-      "module": "Incidencias",
-      "squad": "Squad 5",
-      "sprint": "Sprint 3",
-      "date": "03-jun",
-      "time": "18:31",
+      "date": "15-jun",
+      "time": "19:25",
       "status": "Fusionado",
       "impact": "Alto"
     }
@@ -311,9 +338,9 @@
       "name": "Jassiel García",
       "squad": "Admin Master",
       "role": "Project Lead",
-      "tasks": 51,
+      "tasks": 72,
       "progress": 100,
-      "weekly": "51 cambios",
+      "weekly": "72 cambios",
       "prs": 3,
       "status": "activo"
     },
@@ -321,10 +348,10 @@
       "name": "Marvin61-LOVIU",
       "squad": "Externo",
       "role": "Desarrollador",
-      "tasks": 3,
-      "progress": 64,
-      "weekly": "3 cambios",
-      "prs": 1,
+      "tasks": 5,
+      "progress": 50,
+      "weekly": "5 cambios",
+      "prs": 0,
       "status": "activo"
     },
     {
@@ -355,6 +382,16 @@
       "progress": 20,
       "weekly": "2 cambios",
       "prs": 1,
+      "status": "activo"
+    },
+    {
+      "name": "ponkis",
+      "squad": "Externo",
+      "role": "Desarrollador",
+      "tasks": 1,
+      "progress": 10,
+      "weekly": "1 cambios",
+      "prs": 0,
       "status": "activo"
     },
     {

@@ -119,6 +119,20 @@ function getSquadFromRefOrAuthor(ref, author) {
   return "Admin Master";
 }
 
+function getSquadFromPullRequest(pr) {
+  const searchableRef = [
+    pr.head?.ref,
+    pr.head?.label,
+    pr.base?.ref,
+    pr.base?.label,
+    pr.title,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  return getSquadFromRefOrAuthor(searchableRef, pr.user?.login);
+}
+
 function getLocalGitData() {
   try {
     const rawLog = execSync(
@@ -268,7 +282,7 @@ async function run() {
         console.log(`GitHub API: Se encontraron ${pulls.length} Pull Requests.`);
         
         pulls.forEach((pr) => {
-          const sq = getSquadFromRefOrAuthor(pr.head?.ref, pr.user?.login);
+          const sq = getSquadFromPullRequest(pr);
           if (prsBySquad[sq]) {
             prsBySquad[sq].total++;
             if (pr.merged_at) prsBySquad[sq].closed++;
@@ -323,7 +337,7 @@ async function run() {
 
     // Agregar PRs activos al feed
     pulls.slice(0, 5).forEach((pr) => {
-      const sq = getSquadFromRefOrAuthor(pr.head?.ref, pr.user?.login);
+      const sq = getSquadFromPullRequest(pr);
       const prDate = new Date(pr.created_at);
       const localDate = prDate.toLocaleDateString("es-MX", { day: "2-digit", month: "short" });
       const localTime = prDate.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit", hour12: false });
