@@ -79,7 +79,6 @@ export default function SignupPage() {
     }
   }
 
-  // Basic calculation for password strength (mock matching the mockup styling)
   const isPasswordStrong = password.length >= 8;
 
   return (

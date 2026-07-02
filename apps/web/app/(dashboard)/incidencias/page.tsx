@@ -1,180 +1,640 @@
-"use client";
+import { revalidatePath } from "next/cache";
+import type { Tables } from "@plataforma/types";
 
-import Link from "next/link";
-import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { requireProfile } from "@/lib/auth/session";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-type Priority = "alta" | "media" | "baja";
-type IncidentStatus = "abierta" | "en_proceso" | "resuelta" | "cerrada";
+type Priority = Tables<"incidents">["priority"];
+type IncidentStatus = Tables<"incidents">["status"];
 
-type Incident = {
-  id: string;
-  titulo: string;
-  area: string;
-  prioridad: Priority;
-  descripcion: string;
-  status: IncidentStatus;
-  createdAt: string;
+type ProfileSummary = {
+  full_name: string | null;
+  email: string;
 };
 
-const STORAGE_KEY = "syncut_beta_incidencias_v1";
+type IncidentRow = Tables<"incidents"> & {
+  reporter: ProfileSummary | null;
+  assignee: ProfileSummary | null;
+};
 
-const seedData: Incident[] = [
-  {
-    id: "INC-3001",
-    titulo: "Fallo intermitente en portal de tutorias",
-    area: "Plataforma academica",
-    prioridad: "alta",
-    descripcion: "Usuarios reportan desconexion al intentar confirmar cita",
-    status: "en_proceso",
-    createdAt: "2026-06-03T09:30:00.000Z",
-  },
-];
+type IncidentCommentRow = Tables<"incident_comments"> & {
+  author: ProfileSummary | null;
+};
 
-export default function IncidenciasPage() {
-  const [incidents, setIncidents] = useState<Incident[]>(seedData);
-  const [priorityFilter, setPriorityFilter] = useState<"todas" | Priority>("todas");
-  const [form, setForm] = useState({ titulo: "", area: "", prioridad: "media" as Priority, descripcion: "" });
-  const [message, setMessage] = useState("");
+type IncidentAuditRow = Tables<"incident_audit_events"> & {
+  actor: ProfileSummary | null;
+  assignee: ProfileSummary | null;
+};
 
-  useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as Incident[];
-        if (Array.isArray(parsed) && parsed.length) {
-          setIncidents(parsed);
-        }
-      }
-    } catch {
-      setIncidents(seedData);
-    }
-  }, []);
+type StaffProfile = Pick<Tables<"profiles">, "id" | "full_name" | "email" | "role">;
+type IncidentCategory = NonNullable<Tables<"incidents">["category"]>;
 
-  useEffect(() => {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(incidents));
-  }, [incidents]);
+const priorityLabels: Record<Priority, string> = {
+  alta: "Alta",
+  media: "Media",
+  baja: "Baja",
+};
 
-  const filtered = useMemo(() => {
-    if (priorityFilter === "todas") return incidents;
-    return incidents.filter((item) => item.prioridad === priorityFilter);
-  }, [incidents, priorityFilter]);
+const statusLabels: Record<IncidentStatus, string> = {
+  abierta: "Abierta",
+  en_proceso: "En proceso",
+  resuelta: "Resuelta",
+  cerrada: "Cerrada",
+};
 
-  function submitIncident(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setMessage("");
+const categoryLabels: Record<IncidentCategory, string> = {
+  academica: "Académica",
+  tecnica: "Técnica",
+  administrativa: "Administrativa",
+  bienestar: "Bienestar",
+  seguridad: "Seguridad",
+};
 
-    if (!form.titulo || !form.area || !form.descripcion) {
-      setMessage("Completa los campos obligatorios del reporte.");
-      return;
-    }
+function isPriority(value: string | undefined): value is Priority {
+  return value === "alta" || value === "media" || value === "baja";
+}
 
-    const newItem: Incident = {
-      id: `INC-${Math.floor(Math.random() * 9000) + 1000}`,
-      titulo: form.titulo,
-      area: form.area,
-      prioridad: form.prioridad,
-      descripcion: form.descripcion,
-      status: "abierta",
-      createdAt: new Date().toISOString(),
-    };
+function isIncidentStatus(value: string | undefined): value is IncidentStatus {
+  return value === "abierta" || value === "en_proceso" || value === "resuelta" || value === "cerrada";
+}
 
-    setIncidents((current) => [newItem, ...current]);
-    setForm({ titulo: "", area: "", prioridad: "media", descripcion: "" });
-    setMessage("Incidencia registrada en modo beta.");
+function isIncidentCategory(value: string | undefined): value is IncidentCategory {
+  return value === "academica" || value === "tecnica" || value === "administrativa" || value === "bienestar" || value === "seguridad";
+}
+
+function getSlaState(dueAt: string | null, status: IncidentStatus) {
+  if (!dueAt || ["resuelta", "cerrada"].includes(status)) return "neutral";
+  return Date.parse(dueAt) < Date.now() ? "overdue" : "active";
+}
+
+async function createIncident(formData: FormData) {
+  "use server";
+
+  const profile = await requireProfile();
+  const supabase = await createSupabaseServerClient();
+
+  const title = String(formData.get("title") ?? "").trim();
+  const area = String(formData.get("area") ?? "").trim();
+  const description = String(formData.get("description") ?? "").trim();
+  const priorityValue = String(formData.get("priority") ?? "media");
+  const priority = isPriority(priorityValue) ? priorityValue : "media";
+  const categoryValue = String(formData.get("category") ?? "academica");
+  const category = isIncidentCategory(categoryValue) ? categoryValue : "academica";
+
+  if (!title || !area || !description) {
+    return;
   }
 
-  function setStatus(id: string, status: IncidentStatus) {
-    setIncidents((current) => current.map((item) => (item.id === id ? { ...item, status } : item)));
+  const { data: incident } = await supabase
+    .from("incidents")
+    .insert({
+      reported_by: profile.id,
+      title,
+      area,
+      description,
+      priority,
+      category,
+    })
+    .select("id")
+    .single();
+
+  if (incident) {
+    await supabase.from("incident_audit_events").insert({
+      incident_id: incident.id,
+      actor_id: profile.id,
+      event_type: "created",
+      to_status: "abierta",
+      to_priority: priority,
+      note: "Incidencia registrada desde el portal.",
+    });
+    await supabase.rpc("emit_notification", {
+      p_user_id: profile.id,
+      p_event_type: "incident.created",
+      p_title: "Incidencia registrada",
+      p_body: `Tu reporte "${title}" fue registrado con prioridad ${priorityLabels[priority]}.`,
+      p_metadata: {
+        incident_id: incident.id,
+        priority,
+      },
+      p_triggered_by: profile.id,
+    });
   }
+
+  revalidatePath("/incidencias");
+  revalidatePath("/dashboard");
+}
+
+async function assignIncident(formData: FormData) {
+  "use server";
+
+  const profile = await requireProfile();
+  if (!["admin", "coordinator", "teacher", "tutor"].includes(profile.role)) {
+    return;
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const incidentId = String(formData.get("incident_id") ?? "");
+  const assignedTo = String(formData.get("assigned_to") ?? "");
+
+  if (!incidentId || !assignedTo) {
+    return;
+  }
+
+  const { data: incident } = await supabase
+    .from("incidents")
+    .select("reported_by, assigned_to, title")
+    .eq("id", incidentId)
+    .maybeSingle();
+
+  if (!incident) {
+    return;
+  }
+
+  const { error } = await supabase
+    .from("incidents")
+    .update({
+      assigned_to: assignedTo,
+      status: "en_proceso",
+      first_response_at: new Date().toISOString(),
+    })
+    .eq("id", incidentId);
+
+  if (!error) {
+    await supabase.from("incident_audit_events").insert({
+      incident_id: incidentId,
+      actor_id: profile.id,
+      event_type: "assigned",
+      from_status: "abierta",
+      to_status: "en_proceso",
+      assigned_to: assignedTo,
+      note: "Incidencia asignada para seguimiento.",
+    });
+
+    await supabase.rpc("emit_notification", {
+      p_user_id: assignedTo,
+      p_event_type: "incident.assigned",
+      p_title: "Incidencia asignada",
+      p_body: `Se te asignó el reporte "${incident.title}".`,
+      p_metadata: {
+        incident_id: incidentId,
+      },
+      p_triggered_by: profile.id,
+    });
+  }
+
+  revalidatePath("/incidencias");
+  revalidatePath("/dashboard");
+}
+
+async function updateIncidentStatus(formData: FormData) {
+  "use server";
+
+  const profile = await requireProfile();
+  const supabase = await createSupabaseServerClient();
+  const id = String(formData.get("id") ?? "");
+  const status = String(formData.get("status") ?? "");
+  const resolutionSummary = String(formData.get("resolution_summary") ?? "").trim();
+
+  if (!id || !isIncidentStatus(status)) {
+    return;
+  }
+
+  const { data: incident } = await supabase
+    .from("incidents")
+    .select("reported_by, assigned_to, status, title")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (!incident) {
+    return;
+  }
+
+  if (["resuelta", "cerrada"].includes(status) && !resolutionSummary) {
+    return;
+  }
+
+  const { error } = await supabase
+    .from("incidents")
+    .update({
+      status,
+      updated_at: new Date().toISOString(),
+      resolved_at: ["resuelta", "cerrada"].includes(status) ? new Date().toISOString() : null,
+      closed_at: status === "cerrada" ? new Date().toISOString() : null,
+      resolution_summary: ["resuelta", "cerrada"].includes(status) ? resolutionSummary : null,
+    })
+    .eq("id", id);
+
+  if (!error) {
+    await supabase.from("incident_audit_events").insert({
+      incident_id: id,
+      actor_id: profile.id,
+      event_type: status === "resuelta" ? "resolved" : status === "cerrada" ? "closed" : "status_changed",
+      from_status: incident.status,
+      to_status: status,
+      note: resolutionSummary || `Cambio de estado a ${statusLabels[status]}.`,
+    });
+    const targetUserId = profile.id === incident.reported_by ? incident.assigned_to : incident.reported_by;
+    if (targetUserId) {
+      await supabase.rpc("emit_notification", {
+        p_user_id: targetUserId,
+        p_event_type: status === "resuelta" ? "incident.resolved" : status === "cerrada" ? "incident.closed" : "incident.status_changed",
+        p_title: `Incidencia ${statusLabels[status].toLowerCase()}`,
+        p_body: `El reporte "${incident.title}" cambió a ${statusLabels[status]}.`,
+        p_metadata: {
+          incident_id: id,
+          from_status: incident.status,
+          to_status: status,
+        },
+        p_triggered_by: profile.id,
+      });
+    }
+  }
+
+  revalidatePath("/incidencias");
+  revalidatePath("/dashboard");
+}
+
+async function createIncidentComment(formData: FormData) {
+  "use server";
+
+  const profile = await requireProfile();
+  const supabase = await createSupabaseServerClient();
+  const incidentId = String(formData.get("incident_id") ?? "");
+  const comment = String(formData.get("comment") ?? "").trim();
+
+  if (!incidentId || !comment) {
+    return;
+  }
+
+  const { error } = await supabase.from("incident_comments").insert({
+    incident_id: incidentId,
+    author_id: profile.id,
+    comment,
+  });
+
+  if (!error) {
+    await supabase.from("incident_audit_events").insert({
+      incident_id: incidentId,
+      actor_id: profile.id,
+      event_type: "comment_added",
+      note: comment,
+    });
+    const { data: incident } = await supabase
+      .from("incidents")
+      .select("reported_by, assigned_to, title")
+      .eq("id", incidentId)
+      .maybeSingle();
+
+    const targetUserId = incident
+      ? profile.id === incident.reported_by
+        ? incident.assigned_to
+        : incident.reported_by
+      : null;
+
+    if (targetUserId) {
+      await supabase.rpc("emit_notification", {
+        p_user_id: targetUserId,
+        p_event_type: "incident.comment_added",
+        p_title: "Nuevo comentario en incidencia",
+        p_body: `Se agregó seguimiento al reporte "${incident?.title ?? "Incidencia"}".`,
+        p_metadata: {
+          incident_id: incidentId,
+        },
+        p_triggered_by: profile.id,
+      });
+    }
+  }
+
+  revalidatePath("/incidencias");
+}
+
+export default async function IncidenciasPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ priority?: string; status?: string; sla?: string }>;
+}) {
+  const profile = await requireProfile();
+  const params = await searchParams;
+  const supabase = await createSupabaseServerClient();
+  const canManage = ["admin", "coordinator", "teacher", "tutor"].includes(profile.role);
+
+  let query = supabase
+    .from("incidents")
+    .select(`
+      id,
+      reported_by,
+      assigned_to,
+      title,
+      area,
+      category,
+      description,
+      priority,
+      status,
+      sla_due_at,
+      first_response_at,
+      resolution_summary,
+      created_at,
+      updated_at,
+      resolved_at,
+      closed_at,
+      reporter:profiles!incidents_reported_by_fkey(full_name,email),
+      assignee:profiles!incidents_assigned_to_fkey(full_name,email)
+    `)
+    .order("created_at", { ascending: false });
+
+  if (isPriority(params.priority)) {
+    query = query.eq("priority", params.priority);
+  }
+
+  if (isIncidentStatus(params.status)) {
+    query = query.eq("status", params.status);
+  }
+
+  const { data, error } = await query;
+  let incidents = (data ?? []) as unknown as IncidentRow[];
+  if (params.sla === "vencidas") {
+    incidents = incidents.filter((incident) => getSlaState(incident.sla_due_at, incident.status) === "overdue");
+  }
+  const { data: commentsData } = incidents.length
+    ? await supabase
+        .from("incident_comments")
+        .select(`
+          id,
+          incident_id,
+          author_id,
+          comment,
+          created_at,
+          author:profiles!incident_comments_author_id_fkey(full_name,email)
+        `)
+        .in("incident_id", incidents.map((item) => item.id))
+        .order("created_at", { ascending: true })
+    : { data: [] };
+  const comments = (commentsData ?? []) as unknown as IncidentCommentRow[];
+  const [{ data: staffData }, { data: auditData }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("id, full_name, email, role")
+      .in("role", ["admin", "coordinator", "teacher", "tutor"])
+      .order("full_name", { ascending: true }),
+    incidents.length
+      ? supabase
+          .from("incident_audit_events")
+          .select(`
+            id,
+            incident_id,
+            actor_id,
+            event_type,
+            from_status,
+            to_status,
+            from_priority,
+            to_priority,
+            assigned_to,
+            note,
+            created_at,
+            actor:profiles!incident_audit_events_actor_id_fkey(full_name,email),
+            assignee:profiles!incident_audit_events_assigned_to_fkey(full_name,email)
+          `)
+          .in("incident_id", incidents.map((item) => item.id))
+          .order("created_at", { ascending: false })
+      : Promise.resolve({ data: [] }),
+  ]);
+  const staff = (staffData ?? []) as StaffProfile[];
+  const auditEvents = (auditData ?? []) as unknown as IncidentAuditRow[];
+  const commentsByIncident = comments.reduce<Map<string, IncidentCommentRow[]>>((acc, comment) => {
+    const current = acc.get(comment.incident_id) ?? [];
+    current.push(comment);
+    acc.set(comment.incident_id, current);
+    return acc;
+  }, new Map());
+  const auditByIncident = auditEvents.reduce<Map<string, IncidentAuditRow[]>>((acc, event) => {
+    const current = acc.get(event.incident_id) ?? [];
+    current.push(event);
+    acc.set(event.incident_id, current);
+    return acc;
+  }, new Map());
+  const activeCount = incidents.filter((incident) => ["abierta", "en_proceso"].includes(incident.status)).length;
+  const overdueCount = incidents.filter((incident) => getSlaState(incident.sla_due_at, incident.status) === "overdue").length;
 
   return (
-    <main className="min-h-screen bg-slate-100 px-6 py-8 md:px-10">
-      <section className="mx-auto max-w-6xl space-y-6">
-        <header className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-          <p className="text-xs font-semibold uppercase tracking-wider text-amber-600">Beta funcional - Squad 5</p>
-          <h1 className="mt-2 text-3xl font-black text-slate-900">Buzon de Incidencias</h1>
-          <p className="mt-2 text-sm text-slate-600">Gestion de reportes con semaforo de prioridad y seguimiento de estado.</p>
-          <div className="mt-5 flex flex-wrap gap-3">
-            <Link href="/" className="rounded-xl bg-slate-900 px-4 py-2 text-xs font-semibold text-white">Inicio</Link>
-            <Link href="/notificaciones" className="rounded-xl border border-slate-300 px-4 py-2 text-xs font-semibold text-slate-700">Notificaciones</Link>
-          </div>
-        </header>
+    <div className="mx-auto flex max-w-6xl flex-col gap-6">
+      <header>
+        <p className="text-xs font-semibold uppercase tracking-wider text-primary">Squad 5</p>
+        <h1 className="mt-2 text-2xl md:text-3xl font-headline font-bold text-on-surface">
+          Buzon de Incidencias
+        </h1>
+        <p className="mt-2 text-sm text-on-surface-variant">
+          Reportes guardados en `public.incidents` con semaforo por prioridad.
+        </p>
+      </header>
 
-        <div className="grid gap-6 lg:grid-cols-[1.1fr_1.9fr]">
-          <form onSubmit={submitIncident} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-sm font-bold uppercase tracking-wide text-slate-700">Nuevo reporte</h2>
-            <div className="mt-4 space-y-3 text-sm">
-              <input
-                value={form.titulo}
-                onChange={(e) => setForm((prev) => ({ ...prev, titulo: e.target.value }))}
-                placeholder="Titulo"
-                className="w-full rounded-xl border border-slate-300 px-3 py-2"
-              />
-              <input
-                value={form.area}
-                onChange={(e) => setForm((prev) => ({ ...prev, area: e.target.value }))}
-                placeholder="Area afectada"
-                className="w-full rounded-xl border border-slate-300 px-3 py-2"
-              />
-              <select
-                value={form.prioridad}
-                onChange={(e) => setForm((prev) => ({ ...prev, prioridad: e.target.value as Priority }))}
-                className="w-full rounded-xl border border-slate-300 px-3 py-2"
-              >
-                <option value="alta">Alta</option>
-                <option value="media">Media</option>
-                <option value="baja">Baja</option>
-              </select>
-              <textarea
-                rows={3}
-                value={form.descripcion}
-                onChange={(e) => setForm((prev) => ({ ...prev, descripcion: e.target.value }))}
-                placeholder="Descripcion del problema"
-                className="w-full rounded-xl border border-slate-300 px-3 py-2"
-              />
-            </div>
-            {message ? <p className="mt-3 text-xs font-semibold text-amber-600">{message}</p> : null}
-            <button type="submit" className="mt-4 w-full rounded-xl bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700">
-              Reportar incidencia
-            </button>
-          </form>
-
-          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <h2 className="text-sm font-bold uppercase tracking-wide text-slate-700">Incidencias activas</h2>
-              <select
-                value={priorityFilter}
-                onChange={(e) => setPriorityFilter(e.target.value as "todas" | Priority)}
-                className="rounded-lg border border-slate-300 px-2 py-1 text-xs"
-              >
-                <option value="todas">Todas</option>
-                <option value="alta">Alta</option>
-                <option value="media">Media</option>
-                <option value="baja">Baja</option>
-              </select>
-            </div>
-            <div className="mt-4 space-y-3">
-              {filtered.map((item) => (
-                <article key={item.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-sm font-semibold text-slate-900">{item.id} - {item.titulo}</p>
-                    <span className="rounded-full bg-slate-900 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-white">
-                      {item.prioridad} | {item.status.replace("_", " ")}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-xs text-slate-600">{item.area}</p>
-                  <p className="mt-1 text-xs text-slate-600">{item.descripcion}</p>
-                  <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold">
-                    <button onClick={() => setStatus(item.id, "en_proceso")} className="rounded-lg border border-blue-300 px-2 py-1 text-blue-700">En proceso</button>
-                    <button onClick={() => setStatus(item.id, "resuelta")} className="rounded-lg border border-emerald-300 px-2 py-1 text-emerald-700">Resolver</button>
-                    <button onClick={() => setStatus(item.id, "cerrada")} className="rounded-lg border border-slate-300 px-2 py-1 text-slate-700">Cerrar</button>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </section>
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="rounded-lg border border-outline-variant bg-surface-container p-5">
+          <p className="text-xs uppercase text-on-surface-variant">Activas</p>
+          <p className="mt-2 text-3xl font-bold text-on-surface">{activeCount}</p>
+        </div>
+        <div className="rounded-lg border border-outline-variant bg-surface-container p-5">
+          <p className="text-xs uppercase text-on-surface-variant">SLA vencido</p>
+          <p className="mt-2 text-3xl font-bold text-error">{overdueCount}</p>
+        </div>
+        <div className="rounded-lg border border-outline-variant bg-surface-container p-5">
+          <p className="text-xs uppercase text-on-surface-variant">Staff disponible</p>
+          <p className="mt-2 text-3xl font-bold text-primary">{staff.length}</p>
         </div>
       </section>
-    </main>
+
+      <div className="grid gap-6 lg:grid-cols-[1fr_1.6fr]">
+        <form action={createIncident} className="rounded-lg border border-outline-variant bg-surface-container p-5">
+          <h2 className="text-sm font-semibold uppercase text-on-surface-variant">Nuevo reporte</h2>
+          <div className="mt-4 space-y-3">
+            <label className="block text-xs font-medium text-on-surface-variant">
+              Titulo
+              <input name="title" required minLength={3} className="mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
+            </label>
+            <label className="block text-xs font-medium text-on-surface-variant">
+              Area afectada
+              <input name="area" required className="mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
+            </label>
+            <label className="block text-xs font-medium text-on-surface-variant">
+              Categoria
+              <select name="category" className="mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface">
+                <option value="academica">Académica</option>
+                <option value="tecnica">Técnica</option>
+                <option value="administrativa">Administrativa</option>
+                <option value="bienestar">Bienestar</option>
+                <option value="seguridad">Seguridad</option>
+              </select>
+            </label>
+            <label className="block text-xs font-medium text-on-surface-variant">
+              Prioridad
+              <select name="priority" className="mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface">
+                <option value="alta">Alta</option>
+                <option value="media">Media</option>
+                <option value="baja">Baja</option>
+              </select>
+            </label>
+            <label className="block text-xs font-medium text-on-surface-variant">
+              Descripcion
+              <textarea name="description" required minLength={10} rows={4} className="mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
+            </label>
+          </div>
+          <button type="submit" className="mt-4 w-full rounded bg-primary-container px-4 py-2 text-sm font-semibold text-on-primary-container hover:bg-primary">
+            Reportar incidencia
+          </button>
+        </form>
+
+        <section className="rounded-lg border border-outline-variant bg-surface-container p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-sm font-semibold uppercase text-on-surface-variant">Incidencias visibles</h2>
+            <div className="flex gap-2 text-xs">
+              <a href="/incidencias" className="rounded border border-outline-variant px-3 py-1 text-on-surface-variant">Todas</a>
+              <a href="/incidencias?status=abierta" className="rounded border border-outline-variant px-3 py-1 text-on-surface-variant">Abiertas</a>
+              <a href="/incidencias?sla=vencidas" className="rounded border border-error px-3 py-1 text-error">SLA vencido</a>
+              <a href="/incidencias?priority=alta" className="rounded border border-error px-3 py-1 text-error">Alta</a>
+            </div>
+          </div>
+
+          {error ? (
+            <p className="mt-4 rounded border border-error/40 bg-error-container/20 p-3 text-sm text-on-error-container">
+              {error.message}
+            </p>
+          ) : null}
+
+          <div className="mt-4 space-y-3">
+            {incidents.length === 0 && !error ? (
+              <p className="rounded border border-outline-variant bg-surface p-4 text-sm text-on-surface-variant">
+                No hay incidencias visibles con los filtros actuales.
+              </p>
+            ) : null}
+
+            {incidents.map((item) => (
+              <article key={item.id} className="rounded border border-outline-variant bg-surface p-4">
+                {(() => {
+                  const incidentComments = commentsByIncident.get(item.id) ?? [];
+                  const incidentAudit = auditByIncident.get(item.id) ?? [];
+                  const slaState = getSlaState(item.sla_due_at, item.status);
+                  return (
+                    <>
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div>
+                    <h3 className="text-sm font-semibold text-on-surface">{item.title}</h3>
+                    <p className="mt-1 text-xs text-on-surface-variant">
+                      {item.area} | {item.created_at ? new Date(item.created_at).toLocaleString("es-MX") : "Sin fecha"}
+                    </p>
+                    <p className="mt-1 text-xs text-on-surface-variant">
+                      {categoryLabels[item.category ?? "academica"]}
+                      {item.sla_due_at ? ` | SLA: ${new Date(item.sla_due_at).toLocaleString("es-MX")}` : ""}
+                      {slaState === "overdue" ? " | Vencida" : ""}
+                    </p>
+                    <p className="mt-1 text-xs text-on-surface-variant">
+                      Reporta: {item.reporter?.full_name ?? item.reporter?.email ?? "Usuario visible por RLS"}
+                      {item.assignee ? ` | Asignado: ${item.assignee.full_name ?? item.assignee.email}` : ""}
+                    </p>
+                  </div>
+                  <span className="rounded bg-surface-container-highest px-2 py-1 text-[10px] font-semibold uppercase text-primary">
+                    {priorityLabels[item.priority]} | {statusLabels[item.status]}
+                  </span>
+                </div>
+                <p className="mt-3 text-sm text-on-surface-variant">{item.description}</p>
+                {item.resolution_summary ? (
+                  <p className="mt-3 rounded border border-primary/40 bg-primary-container/10 p-3 text-sm text-on-surface-variant">
+                    Resolución: {item.resolution_summary}
+                  </p>
+                ) : null}
+
+                {canManage ? (
+                  <div className="mt-4 space-y-3">
+                  <form action={assignIncident} className="flex flex-col gap-2 sm:flex-row">
+                    <input type="hidden" name="incident_id" value={item.id} />
+                    <select name="assigned_to" className="min-w-0 flex-1 rounded border border-outline-variant bg-surface-container px-3 py-2 text-xs text-on-surface" defaultValue={item.assigned_to ?? ""}>
+                      <option value="">Asignar responsable</option>
+                      {staff.map((member) => (
+                        <option key={member.id} value={member.id}>
+                          {member.full_name || member.email} · {member.role}
+                        </option>
+                      ))}
+                    </select>
+                    <button className="rounded border border-primary px-3 py-2 text-xs font-semibold text-primary">
+                      Asignar
+                    </button>
+                  </form>
+                  <form action={updateIncidentStatus} className="flex flex-col gap-2">
+                    <input type="hidden" name="id" value={item.id} />
+                    <input
+                      name="resolution_summary"
+                      placeholder="Resumen de resolución requerido para resolver/cerrar"
+                      className="rounded border border-outline-variant bg-surface-container px-3 py-2 text-xs text-on-surface"
+                    />
+                    <div className="flex flex-wrap gap-2">
+                      <button name="status" value="en_proceso" className="rounded border border-outline-variant px-3 py-2 text-xs font-semibold text-on-surface-variant">
+                        En proceso
+                      </button>
+                      <button name="status" value="resuelta" className="rounded border border-primary px-3 py-2 text-xs font-semibold text-primary">
+                        Resolver
+                      </button>
+                      <button name="status" value="cerrada" className="rounded border border-outline px-3 py-2 text-xs font-semibold text-on-surface-variant">
+                        Cerrar
+                      </button>
+                    </div>
+                  </form>
+                  </div>
+                ) : null}
+                {incidentComments.length > 0 ? (
+                  <div className="mt-4 space-y-2 rounded border border-outline-variant bg-surface-container p-3">
+                    <p className="text-xs font-semibold uppercase text-on-surface-variant">Seguimiento</p>
+                    {incidentComments.map((comment) => (
+                      <div key={comment.id} className="border-t border-outline-variant pt-2 first:border-t-0 first:pt-0">
+                        <p className="text-sm text-on-surface-variant">{comment.comment}</p>
+                        <p className="mt-1 text-[11px] text-on-surface-variant">
+                          {comment.author?.full_name ?? comment.author?.email ?? "Usuario visible por RLS"}
+                          {comment.created_at ? ` | ${new Date(comment.created_at).toLocaleString("es-MX")}` : ""}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+                <form action={createIncidentComment} className="mt-4 flex flex-col gap-2 sm:flex-row">
+                  <input type="hidden" name="incident_id" value={item.id} />
+                  <input
+                    name="comment"
+                    required
+                    placeholder="Agregar comentario de seguimiento"
+                    className="min-w-0 flex-1 rounded border border-outline-variant bg-surface-container px-3 py-2 text-sm text-on-surface"
+                  />
+                  <button className="rounded border border-primary px-3 py-2 text-xs font-semibold text-primary">
+                    Comentar
+                  </button>
+                </form>
+                {incidentAudit.length > 0 ? (
+                  <details className="mt-4 rounded border border-outline-variant bg-surface-container p-3">
+                    <summary className="cursor-pointer text-xs font-semibold uppercase text-on-surface-variant">
+                      Bitácora ({incidentAudit.length})
+                    </summary>
+                    <div className="mt-3 space-y-2">
+                      {incidentAudit.map((event) => (
+                        <div key={event.id} className="border-t border-outline-variant pt-2 first:border-t-0 first:pt-0">
+                          <p className="text-xs text-on-surface-variant">
+                            {event.event_type}
+                            {event.from_status && event.to_status ? ` · ${statusLabels[event.from_status]} -> ${statusLabels[event.to_status]}` : ""}
+                            {event.assignee ? ` · asignado a ${event.assignee.full_name ?? event.assignee.email}` : ""}
+                          </p>
+                          {event.note ? <p className="mt-1 text-sm text-on-surface-variant">{event.note}</p> : null}
+                          <p className="mt-1 text-[11px] text-on-surface-variant">
+                            {event.actor?.full_name ?? event.actor?.email ?? "Sistema"}
+                            {event.created_at ? ` | ${new Date(event.created_at).toLocaleString("es-MX")}` : ""}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </details>
+                ) : null}
+                    </>
+                  );
+                })()}
+              </article>
+            ))}
+          </div>
+        </section>
+      </div>
+    </div>
   );
 }

@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
+import type { Database } from "@plataforma/types";
 import { cookies } from "next/headers";
 import { type NextRequest } from "next/server";
 
@@ -18,7 +19,7 @@ export async function createSupabaseServerClient() {
   const cookieStore = await cookies();
   const { supabaseUrl, supabaseAnonKey } = getSupabaseEnv();
 
-  return createServerClient(supabaseUrl, supabaseAnonKey, {
+  return createServerClient<Database>(supabaseUrl, supabaseAnonKey, {
     cookies: {
       getAll() {
         return cookieStore.getAll();
@@ -42,7 +43,7 @@ export async function createSupabaseRequestClient(request: NextRequest) {
   if (token) {
     const { supabaseUrl, supabaseAnonKey } = getSupabaseEnv();
 
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
       global: {
         headers: {
           Authorization: `Bearer ${token}`,
