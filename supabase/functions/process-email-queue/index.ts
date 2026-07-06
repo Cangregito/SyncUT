@@ -93,6 +93,17 @@ Deno.serve(async (request) => {
     auth: { persistSession: false },
   });
 
+  const staleProcessingDate = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+  await supabase
+    .from("email_queue")
+    .update({
+      status: "failed",
+      last_error: "Processing timed out before delivery confirmation",
+      scheduled_at: new Date().toISOString(),
+    })
+    .eq("status", "processing")
+    .lt("scheduled_at", staleProcessingDate);
+
   const { data: rows, error } = await supabase
     .from("email_queue")
     .select("id, to_email, subject, template_slug, template_data, attempts, max_attempts")
@@ -113,10 +124,28 @@ Deno.serve(async (request) => {
   for (const row of ((rows ?? []) as EmailQueueRow[]).filter((item) => item.attempts < item.max_attempts)) {
     const attempt = row.attempts + 1;
 
-    await supabase
+    const { data: claimedRow, error: claimError } = await supabase
       .from("email_queue")
-      .update({ status: "processing", attempts: attempt, last_error: null })
-      .eq("id", row.id);
+      .update({
+        status: "processing",
+        attempts: attempt,
+        last_error: null,
+        scheduled_at: new Date().toISOString(),
+      })
+      .eq("id", row.id)
+      .eq("attempts", row.attempts)
+      .in("status", ["pending", "failed"])
+      .select("id")
+      .maybeSingle();
+
+    if (claimError || !claimedRow) {
+      results.push({
+        id: row.id,
+        status: "skipped",
+        error: claimError?.message ?? "Email was claimed by another worker",
+      });
+      continue;
+    }
 
     if (!resendApiKey) {
       const message = "RESEND_API_KEY is not configured";
