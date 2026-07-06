@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-07-06T16:41:05.936Z",
-  "headCommit": "e2ebb46d807a0672d286617f019f1ae55346c0cb",
+  "generatedAt": "2026-07-06T20:36:19.065Z",
+  "headCommit": "bc9f35285ffc0fca5f3682c2aad2e9368e3f30ab",
   "githubAvailable": true,
-  "totalCommits": 138,
+  "totalCommits": 140,
   "totalPRs": 22,
   "mergedPRs": 21,
   "openPRs": 0,
@@ -33,7 +33,7 @@
     },
     {
       "squad": "Admin (Dashboard Gobernanza)",
-      "progreso": 64
+      "progreso": 66
     }
   ],
   "prsBySquad": [
@@ -88,7 +88,7 @@
     },
     {
       "week": "Actual",
-      "commits": 45
+      "commits": 47
     }
   ],
   "moduleEvidence": [
@@ -257,8 +257,8 @@
       "href": "/admin",
       "description": "Consolida datos de Git/GitHub, Supabase, auditoria, despliegues y estado ejecutivo de la plataforma.",
       "evidence": "El modulo muestra evidencia de coordinacion, integracion de PRs, produccion y seguimiento del avance general.",
-      "totalInteractions": 67,
-      "commits": 64,
+      "totalInteractions": 69,
+      "commits": 66,
       "pullRequests": 3,
       "mergedPullRequests": 2,
       "openPullRequests": 0,
@@ -268,14 +268,38 @@
       ],
       "lastActivity": {
         "type": "commit",
-        "title": "feat: make header actions functional",
+        "title": "docs: document real role workflows",
         "date": "06 jul 2026",
-        "time": "10:30",
-        "iso": "2026-07-06T16:30:56.000Z"
+        "time": "14:26",
+        "iso": "2026-07-06T20:26:51.000Z"
       }
     }
   ],
   "recentActivities": [
+    {
+      "user": "Jassiel García",
+      "action": "validation",
+      "description": "docs: document real role workflows",
+      "module": "Dashboard Base",
+      "squad": "Admin Master",
+      "sprint": "Sprint 3",
+      "date": "06-jul",
+      "time": "14:26",
+      "status": "Completado",
+      "impact": "Medio"
+    },
+    {
+      "user": "Jassiel García",
+      "action": "validation",
+      "description": "feat: separate role workflows",
+      "module": "Dashboard Base",
+      "squad": "Admin Master",
+      "sprint": "Sprint 3",
+      "date": "06-jul",
+      "time": "14:23",
+      "status": "Completado",
+      "impact": "Alto"
+    },
     {
       "user": "Jassiel García",
       "action": "validation",
@@ -433,30 +457,6 @@
       "impact": "Alto"
     },
     {
-      "user": "Cesar Aaron Trejo Riojas",
-      "action": "validation",
-      "description": "Cargando el backend feature/squad-1-justifications",
-      "module": "Justificaciones",
-      "squad": "Squad 1",
-      "sprint": "Sprint 3",
-      "date": "01-jul",
-      "time": "16:08",
-      "status": "Completado",
-      "impact": "Alto"
-    },
-    {
-      "user": "Kevin Roman Sanchez Sequeda",
-      "action": "validation",
-      "description": "Prueba de push a rama feature/squad-4-notifications",
-      "module": "Notificaciones",
-      "squad": "Squad 4",
-      "sprint": "Sprint 3",
-      "date": "29-jun",
-      "time": "20:20",
-      "status": "Completado",
-      "impact": "Alto"
-    },
-    {
       "user": "Trejo342",
       "action": "approval",
       "description": "Pull Request #22: Feature/squad 1 justifications (Estado: CLOSED)",
@@ -522,9 +522,9 @@
       "name": "Jassiel García",
       "squad": "Admin Master",
       "role": "Project Lead",
-      "tasks": 111,
+      "tasks": 113,
       "progress": 100,
-      "weekly": "107 commits · 4 PRs",
+      "weekly": "109 commits · 4 PRs",
       "prs": 4,
       "status": "activo"
     },

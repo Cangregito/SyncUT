@@ -70,7 +70,7 @@ export const DEMO_ROLE_ACCOUNTS: Record<
   tutor: {
     email: "tutor@syncut.test",
     password: "SyncUT2026!",
-    fullName: "Mtra. Fernanda Ruiz",
+    fullName: "Mtra. Fernanda Ruiz Hernandez",
   },
   coordinator: {
     email: "coordinacion@syncut.test",

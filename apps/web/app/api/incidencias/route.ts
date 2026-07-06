@@ -12,9 +12,9 @@ const incidentQuerySchema = z.object({
 });
 
 const createIncidentSchema = z.object({
-  title: z.string().trim().min(3, "El titulo debe tener minimo 3 caracteres."),
-  area: z.string().trim().min(2, "El area es obligatoria."),
-  description: z.string().trim().min(10, "La descripcion debe tener minimo 10 caracteres."),
+  title: z.string().trim().min(5, "El titulo debe tener minimo 5 caracteres.").max(120),
+  area: z.string().trim().min(3, "El area debe tener minimo 3 caracteres.").max(120),
+  description: z.string().trim().min(15, "La descripcion debe tener minimo 15 caracteres."),
   priority: z.enum(["alta", "media", "baja"]).default("media"),
 });
 

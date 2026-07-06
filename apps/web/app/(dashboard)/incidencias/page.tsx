@@ -68,6 +68,10 @@ function getSlaState(dueAt: string | null, status: IncidentStatus) {
   return Date.parse(dueAt) < Date.now() ? "overdue" : "active";
 }
 
+function isUsefulText(value: string, minLength: number) {
+  return value.trim().replace(/\s+/g, " ").length >= minLength;
+}
+
 async function createIncident(formData: FormData) {
   "use server";
 
@@ -86,7 +90,7 @@ async function createIncident(formData: FormData) {
   const categoryValue = String(formData.get("category") ?? "academica");
   const category = isIncidentCategory(categoryValue) ? categoryValue : "academica";
 
-  if (!title || !area || !description) {
+  if (!isUsefulText(title, 5) || !isUsefulText(area, 3) || !isUsefulText(description, 15)) {
     return;
   }
 
@@ -218,7 +222,7 @@ async function updateIncidentStatus(formData: FormData) {
     return;
   }
 
-  if (["resuelta", "cerrada"].includes(status) && !resolutionSummary) {
+  if (["resuelta", "cerrada"].includes(status) && !isUsefulText(resolutionSummary, 15)) {
     return;
   }
 
@@ -480,11 +484,11 @@ export default async function IncidenciasPage({
           <div className="mt-4 space-y-3">
             <label className="block text-xs font-medium text-on-surface-variant">
               Titulo
-              <input name="title" required minLength={3} className="mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
+              <input name="title" required minLength={5} maxLength={120} className="mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
             </label>
             <label className="block text-xs font-medium text-on-surface-variant">
               Area afectada
-              <input name="area" required className="mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
+              <input name="area" required minLength={3} maxLength={120} className="mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
             </label>
             <label className="block text-xs font-medium text-on-surface-variant">
               Categoria
@@ -506,7 +510,7 @@ export default async function IncidenciasPage({
             </label>
             <label className="block text-xs font-medium text-on-surface-variant">
               Descripcion
-              <textarea name="description" required minLength={10} rows={4} className="mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
+              <textarea name="description" required minLength={15} rows={4} className="mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
             </label>
           </div>
           <button type="submit" className="mt-4 w-full rounded bg-primary-container px-4 py-2 text-sm font-semibold text-on-primary-container hover:bg-primary">
@@ -606,25 +610,33 @@ export default async function IncidenciasPage({
                   </form>
                   ) : null}
                   {canResolveIncident ? (
-                  <form action={updateIncidentStatus} className="flex flex-col gap-2">
-                    <input type="hidden" name="id" value={item.id} />
-                    <input
-                      name="resolution_summary"
-                      placeholder="Resumen de resolución requerido para resolver/cerrar"
-                      className="rounded border border-outline-variant bg-surface-container px-3 py-2 text-xs text-on-surface"
-                    />
-                    <div className="flex flex-wrap gap-2">
+                  <div className="space-y-2">
+                    <form action={updateIncidentStatus}>
+                      <input type="hidden" name="id" value={item.id} />
                       <button name="status" value="en_proceso" className="rounded border border-outline-variant px-3 py-2 text-xs font-semibold text-on-surface-variant">
                         En proceso
                       </button>
-                      <button name="status" value="resuelta" className="rounded border border-primary px-3 py-2 text-xs font-semibold text-primary">
-                        Resolver
-                      </button>
-                      <button name="status" value="cerrada" className="rounded border border-outline px-3 py-2 text-xs font-semibold text-on-surface-variant">
-                        Cerrar
-                      </button>
-                    </div>
-                  </form>
+                    </form>
+                    <form action={updateIncidentStatus} className="flex flex-col gap-2">
+                      <input type="hidden" name="id" value={item.id} />
+                      <textarea
+                        name="resolution_summary"
+                        required
+                        minLength={15}
+                        rows={3}
+                        placeholder="Resumen de resolucion requerido para resolver o cerrar"
+                        className="rounded border border-outline-variant bg-surface-container px-3 py-2 text-xs text-on-surface"
+                      />
+                      <div className="flex flex-wrap gap-2">
+                        <button name="status" value="resuelta" className="rounded border border-primary px-3 py-2 text-xs font-semibold text-primary">
+                          Resolver
+                        </button>
+                        <button name="status" value="cerrada" className="rounded border border-outline px-3 py-2 text-xs font-semibold text-on-surface-variant">
+                          Cerrar
+                        </button>
+                      </div>
+                    </form>
+                  </div>
                   ) : null}
                   </div>
                 ) : null}

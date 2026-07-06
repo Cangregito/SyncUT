@@ -22,7 +22,7 @@ SyncUT2026!
 | --- | --- | --- |
 | Estudiante | `estudiante@syncut.test` | Crear solicitudes y dar seguimiento a casos propios. |
 | Docente | `docente@syncut.test` | Aportar contexto academico y evidencia docente. |
-| Tutor | `tutor@syncut.test` | Gestionar tutorias, asistencia y seguimiento tutorial. |
+| Tutor | `tutor@syncut.test` | Mtra. Fernanda Ruiz Hernandez; gestiona tutorias, asistencia y seguimiento tutorial. |
 | Coordinacion | `coordinacion@syncut.test` | Resolver expedientes y asignar responsables. |
 | Administrador | `admin@syncut.test` | Gobernanza, auditoria y supervision completa. |
 

@@ -14,6 +14,7 @@ reglas de integración, seguridad y comandos de trabajo.
 Documentacion funcional reciente:
 
 - [Auditoria de roles y flujo real](docs/AUDITORIA_ROLES_FLUJO_REAL_2026-07-06.md): responsabilidades por rol, permisos refinados, cuentas demo y checklist de produccion.
+- [Auditoria de validaciones de formularios](docs/AUDITORIA_VALIDACIONES_FORMULARIOS_2026-07-06.md): reglas de modalidad, evidencia, incidencias y checks de base de datos.
 - [Auditoria de cambios de modulos en produccion](docs/AUDITORIA_CAMBIOS_MODULOS_PRODUCCION.md).
 - [Auditoria funcional de tutorias](docs/AUDITORIA_FUNCIONAL_MODULOS_TUTORIAS.md).
 

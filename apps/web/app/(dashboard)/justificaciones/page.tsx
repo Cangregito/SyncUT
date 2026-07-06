@@ -63,6 +63,10 @@ function statusClass(status: JustificationStatus) {
   return "bg-sky-100 text-sky-800 border-sky-200";
 }
 
+function hasCompleteEvidence(fileName: string, filePath: string) {
+  return (!fileName && !filePath) || (fileName.length >= 3 && filePath.length >= 3);
+}
+
 async function createJustification(formData: FormData) {
   "use server";
 
@@ -82,7 +86,14 @@ async function createJustification(formData: FormData) {
   const fileName = String(formData.get("file_name") ?? "").trim();
   const filePath = String(formData.get("file_path") ?? "").trim();
 
-  if (!title || !description || !startDate || !endDate || endDate < startDate) {
+  if (
+    title.length < 5 ||
+    description.length < 15 ||
+    !startDate ||
+    !endDate ||
+    endDate < startDate ||
+    !hasCompleteEvidence(fileName, filePath)
+  ) {
     return;
   }
 
@@ -429,7 +440,7 @@ export default async function JustificacionesPage({
           <form action={createJustification} className="rounded-lg border border-outline-variant bg-surface-container p-5">
             <h2 className="text-sm font-semibold uppercase text-on-surface-variant">Nueva solicitud</h2>
             <div className="mt-4 space-y-3">
-              <input name="title" required placeholder="Titulo de la justificacion" className="w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
+              <input name="title" required minLength={5} maxLength={120} placeholder="Titulo de la justificacion" className="w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
               <select name="category" className="w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface">
                 {Object.entries(categoryLabels).map(([value, label]) => (
                   <option key={value} value={value}>{label}</option>
@@ -445,9 +456,9 @@ export default async function JustificacionesPage({
                   <input name="end_date" required type="date" className="mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
                 </label>
               </div>
-              <textarea name="description" required rows={4} placeholder="Describe el motivo y el impacto academico" className="w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
-              <input name="file_name" placeholder="Nombre de evidencia" className="w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
-              <input name="file_path" placeholder="Ruta o referencia de evidencia" className="w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
+              <textarea name="description" required minLength={15} rows={4} placeholder="Describe el motivo y el impacto academico" className="w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
+              <input name="file_name" minLength={3} maxLength={160} placeholder="Nombre de evidencia (si aplica)" className="w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
+              <input name="file_path" minLength={3} maxLength={260} placeholder="Ruta o referencia de evidencia (si aplica)" className="w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
               <button className="w-full rounded bg-primary-container px-4 py-2 text-sm font-semibold text-on-primary-container">
                 Enviar justificacion
               </button>

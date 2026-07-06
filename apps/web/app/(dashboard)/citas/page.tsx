@@ -1,6 +1,7 @@
 import { revalidatePath } from "next/cache";
 import type { Tables } from "@plataforma/types";
 
+import { ModalityDetailsFields } from "@/components/appointments/modality-details-fields";
 import { requireProfile } from "@/lib/auth/session";
 import { hasPermission, type UserRole } from "@/lib/auth/roles";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -68,6 +69,37 @@ function isAttendanceStatus(value: string): value is AttendanceStatus {
   return ["attended", "no_show", "excused_absence"].includes(value);
 }
 
+function isHttpUrl(value: string) {
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+function getAppointmentModalityDetails(
+  modality: AppointmentModality,
+  location: string,
+  meetingUrl: string,
+) {
+  if (modality === "presencial") {
+    if (location.length < 3 || meetingUrl) return null;
+    return { location, meetingUrl: null };
+  }
+
+  if (!isHttpUrl(meetingUrl) || location) return null;
+  return { location: null, meetingUrl };
+}
+
+function getAvailabilityLocation(modality: AppointmentModality, location: string) {
+  if (modality === "presencial") {
+    return location.length >= 3 ? location : null;
+  }
+
+  return isHttpUrl(location) ? location : null;
+}
+
 function toMinutes(value: string) {
   const [hours, minutes] = value.split(":").map(Number);
   return hours * 60 + minutes;
@@ -125,8 +157,9 @@ async function createAppointment(formData: FormData) {
   const reason = String(formData.get("reason") ?? "").trim();
   const location = String(formData.get("location") ?? "").trim();
   const meetingUrl = String(formData.get("meeting_url") ?? "").trim();
+  const modalityDetails = getAppointmentModalityDetails(modality, location, meetingUrl);
 
-  if (!tutorId || !scheduledDate || !startsAt || !endsAt || !reason) {
+  if (!tutorId || !scheduledDate || !startsAt || !endsAt || reason.length < 10 || !modalityDetails) {
     return;
   }
 
@@ -178,8 +211,8 @@ async function createAppointment(formData: FormData) {
       ends_at: endsAt,
       modality,
       reason,
-      location: location || null,
-      meeting_url: meetingUrl || null,
+      location: modalityDetails.location,
+      meeting_url: modalityDetails.meetingUrl,
     })
     .select("id")
     .single();
@@ -292,8 +325,9 @@ async function createAvailability(formData: FormData) {
   const modalityValue = String(formData.get("modality") ?? "presencial");
   const modality = isAppointmentModality(modalityValue) ? modalityValue : "presencial";
   const location = String(formData.get("location") ?? "").trim();
+  const availabilityLocation = getAvailabilityLocation(modality, location);
 
-  if (dayOfWeek < 0 || dayOfWeek > 6 || !startsAt || !endsAt || toMinutes(startsAt) >= toMinutes(endsAt)) {
+  if (dayOfWeek < 0 || dayOfWeek > 6 || !startsAt || !endsAt || toMinutes(startsAt) >= toMinutes(endsAt) || !availabilityLocation) {
     return;
   }
 
@@ -303,7 +337,7 @@ async function createAvailability(formData: FormData) {
     starts_at: startsAt,
     ends_at: endsAt,
     modality,
-    location: location || null,
+    location: availabilityLocation,
   });
 
   revalidatePath("/citas");
@@ -642,13 +676,6 @@ export default async function CitasPage() {
                 </select>
               </label>
               <label className="block text-xs font-medium text-on-surface-variant">
-                Modalidad
-                <select name="modality" className="mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface">
-                  <option value="presencial">Presencial</option>
-                  <option value="virtual">Virtual</option>
-                </select>
-              </label>
-              <label className="block text-xs font-medium text-on-surface-variant">
                 Inicio
                 <input name="starts_at" type="time" required className="mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
               </label>
@@ -656,10 +683,9 @@ export default async function CitasPage() {
                 Fin
                 <input name="ends_at" type="time" required className="mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
               </label>
-              <label className="block text-xs font-medium text-on-surface-variant sm:col-span-2">
-                Lugar o enlace base
-                <input name="location" className="mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
-              </label>
+              <div className="sm:col-span-2">
+                <ModalityDetailsFields mode="availability" />
+              </div>
             </div>
             <button className="mt-4 w-full rounded bg-primary-container px-4 py-2 text-sm font-semibold text-on-primary-container hover:bg-primary">
               Guardar disponibilidad
@@ -710,24 +736,10 @@ export default async function CitasPage() {
               </label>
             </div>
 
-            <label className="block text-xs font-medium text-on-surface-variant">
-              Modalidad
-              <select name="modality" className="mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface">
-                <option value="presencial">Presencial</option>
-                <option value="virtual">Virtual</option>
-              </select>
-            </label>
-            <label className="block text-xs font-medium text-on-surface-variant">
-              Lugar o aula
-              <input name="location" className="mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
-            </label>
-            <label className="block text-xs font-medium text-on-surface-variant">
-              URL de reunion
-              <input name="meeting_url" type="url" className="mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
-            </label>
+            <ModalityDetailsFields mode="appointment" />
             <label className="block text-xs font-medium text-on-surface-variant">
               Motivo
-              <textarea name="reason" required rows={4} className="mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
+              <textarea name="reason" required minLength={10} rows={4} className="mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
             </label>
           </div>
           <button
