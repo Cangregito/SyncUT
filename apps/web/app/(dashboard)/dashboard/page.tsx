@@ -1,6 +1,15 @@
 import Link from "next/link";
 
 import { requireProfile } from "@/lib/auth/session";
+import {
+  DEMO_ROLE_ACCOUNTS,
+  getModulesForRole,
+  ROLE_DESCRIPTIONS,
+  ROLE_LABELS,
+  ROLE_PERMISSIONS,
+  type RolePermission,
+  type UserRole,
+} from "@/lib/auth/roles";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 type CountResult = {
@@ -46,6 +55,63 @@ function KpiCard({
     </Link>
   );
 }
+
+const permissionLabels: Record<RolePermission, string> = {
+  "dashboard:view": "Ver panel operativo",
+  "justifications:create": "Crear justificaciones",
+  "justifications:review": "Revisar justificaciones",
+  "appointments:create": "Solicitar citas",
+  "appointments:manage": "Gestionar agenda",
+  "notifications:view": "Consultar notificaciones",
+  "incidents:create": "Reportar incidencias",
+  "incidents:manage": "Atender incidencias",
+  "chatbot:use": "Usar asistente",
+  "chatbot:manage": "Administrar base FAQ",
+  "governance:view": "Gobernar plataforma",
+};
+
+const workflowByRole: Record<UserRole, { title: string; steps: string[] }> = {
+  student: {
+    title: "Flujo estudiante",
+    steps: [
+      "Solicita una cita con su tutor asignado.",
+      "Registra justificaciones con evidencia cuando falta.",
+      "Consulta notificaciones y da seguimiento a incidencias propias.",
+    ],
+  },
+  teacher: {
+    title: "Flujo docente",
+    steps: [
+      "Revisa solicitudes vinculadas a materias y asistencia.",
+      "Atiende incidencias academicas asignadas.",
+      "Registra notas de seguimiento y cierre operativo.",
+    ],
+  },
+  tutor: {
+    title: "Flujo tutor",
+    steps: [
+      "Publica disponibilidad y confirma citas.",
+      "Acompana estudiantes asignados y escala casos complejos.",
+      "Documenta sesiones, acuerdos y asistencia.",
+    ],
+  },
+  coordinator: {
+    title: "Flujo coordinacion",
+    steps: [
+      "Supervisa casos pendientes de justificacion, cita e incidencia.",
+      "Reasigna responsables y revisa vencimientos.",
+      "Administra contenidos del asistente institucional.",
+    ],
+  },
+  admin: {
+    title: "Flujo administrador",
+    steps: [
+      "Valida salud general de modulos y datos.",
+      "Gestiona roles por RPC auditada.",
+      "Revisa auditoria, seguridad y metricas ejecutivas.",
+    ],
+  },
+};
 
 export default async function DashboardOverviewPage() {
   const profile = await requireProfile();
@@ -101,41 +167,18 @@ export default async function DashboardOverviewPage() {
     upcomingAppointments.error ? "La tabla de citas aun no esta disponible en la base aplicada." : null,
   ].filter(Boolean);
 
-  const modules = [
-    {
-      href: "/citas",
-      icon: "calendar_month",
-      title: "Citas con Tutor",
-      text: "Solicitudes, agenda y seguimiento de sesiones de tutoria.",
-    },
-    {
-      href: "/justificaciones",
-      icon: "gavel",
-      title: "Justificaciones",
-      text: "Tramites de faltas con periodo, categoria, estatus y revision.",
-    },
-    {
-      href: "/notificaciones",
-      icon: "notifications",
-      title: "Notificaciones",
-      text: "Bandeja in-app basada en eventos reales del sistema.",
-    },
-    {
-      href: "/incidencias",
-      icon: "rule",
-      title: "Incidencias",
-      text: "Reportes operativos con prioridad, estado y seguimiento.",
-    },
-  ];
+  const modules = getModulesForRole(profile.role).filter((item) => item.href !== "/dashboard");
+  const roleWorkflow = workflowByRole[profile.role];
+  const demoAccount = DEMO_ROLE_ACCOUNTS[profile.role];
 
   return (
     <div className="flex flex-col gap-8 max-w-7xl mx-auto">
       <div>
         <h2 className="text-2xl md:text-3xl font-headline font-bold text-on-surface tracking-tight mb-1">
-          Panel de Control
+          Panel {ROLE_LABELS[profile.role]}
         </h2>
         <p className="text-sm text-on-surface-variant">
-          Datos reales visibles para {profile.email}.
+          {ROLE_DESCRIPTIONS[profile.role]}
         </p>
       </div>
 
@@ -149,7 +192,7 @@ export default async function DashboardOverviewPage() {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <section className="xl:col-span-2 flex flex-col gap-4">
           <h3 className="text-sm font-headline font-semibold text-on-surface-variant uppercase">
-            Modulos de tutorias
+            Modulos habilitados
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {modules.map((item) => (
@@ -164,8 +207,10 @@ export default async function DashboardOverviewPage() {
                   </span>
                 </div>
                 <div>
-                  <h4 className="font-medium text-on-surface mb-1">{item.title}</h4>
-                  <p className="text-xs text-on-surface-variant leading-relaxed">{item.text}</p>
+                  <h4 className="font-medium text-on-surface mb-1">{item.label}</h4>
+                  <p className="text-xs text-on-surface-variant leading-relaxed">
+                    {item.permissions.map((permission) => permissionLabels[permission]).join(" / ")}
+                  </p>
                 </div>
               </Link>
             ))}
@@ -174,9 +219,22 @@ export default async function DashboardOverviewPage() {
 
         <section className="flex flex-col gap-4">
           <h3 className="text-sm font-headline font-semibold text-on-surface-variant uppercase">
-            Atencion operativa
+            Trabajo del rol
           </h3>
           <div className="bg-surface-container border border-outline-variant rounded-lg p-5 space-y-4">
+            <div>
+              <p className="text-sm font-medium text-on-surface">{roleWorkflow.title}</p>
+              <ol className="mt-3 space-y-2">
+                {roleWorkflow.steps.map((step, index) => (
+                  <li key={step} className="flex gap-3 text-xs text-on-surface-variant leading-relaxed">
+                    <span className="w-5 h-5 rounded bg-primary-container text-on-primary-container flex items-center justify-center text-[10px] font-bold shrink-0">
+                      {index + 1}
+                    </span>
+                    {step}
+                  </li>
+                ))}
+              </ol>
+            </div>
             <div className="flex items-start gap-3">
               <span className="material-symbols-outlined text-primary text-[20px]">notifications</span>
               <div>
@@ -206,6 +264,26 @@ export default async function DashboardOverviewPage() {
           </div>
         </section>
       </div>
+
+      <section className="bg-surface-container-lowest border border-outline-variant rounded-lg p-5">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h3 className="text-sm font-headline font-semibold text-on-surface uppercase">
+              Cuenta demo de este rol
+            </h3>
+            <p className="mt-1 text-xs text-on-surface-variant">
+              {demoAccount.fullName} / {demoAccount.email} / contraseña {demoAccount.password}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {ROLE_PERMISSIONS[profile.role].map((permission) => (
+              <span key={permission} className="rounded bg-surface-container px-2.5 py-1 text-[11px] text-on-surface-variant border border-outline-variant">
+                {permissionLabels[permission]}
+              </span>
+            ))}
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

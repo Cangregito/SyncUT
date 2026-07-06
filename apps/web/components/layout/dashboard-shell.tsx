@@ -5,24 +5,11 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { createSupabaseBrowserClient } from "@plataforma/sdk/client";
 
-import type { UserRole } from "@/lib/auth/roles";
-
-type NavigationItem = {
-  href: string;
-  label: string;
-  icon: string;
-  squad?: string;
-};
-
-const navigationLinks: NavigationItem[] = [
-  { href: "/dashboard", label: "Dashboard", icon: "dashboard" },
-  { href: "/justificaciones", label: "Justificaciones", icon: "gavel", squad: "Squad 1" },
-  { href: "/citas", label: "Citas con Tutor", icon: "calendar_month", squad: "Squad 3" },
-  { href: "/notificaciones", label: "Notificaciones", icon: "notifications", squad: "Squad 4" },
-  { href: "/incidencias", label: "Reportes Incidencias", icon: "rule", squad: "Squad 5" },
-  { href: "/chatbot", label: "Asistente Chatbot", icon: "chat", squad: "Squad 6" },
-  { href: "/admin", label: "Panel Gobernanza", icon: "monitoring", squad: "Admin Master" },
-];
+import {
+  getModulesForRole,
+  ROLE_LABELS,
+  type UserRole,
+} from "@/lib/auth/roles";
 
 export function DashboardShell({
   children,
@@ -37,7 +24,8 @@ export function DashboardShell({
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
-  const isAdmin = role === "admin";
+  const navigationLinks = getModulesForRole(role);
+  const roleLabel = ROLE_LABELS[role];
 
   async function handleLogout() {
     setIsSigningOut(true);
@@ -65,7 +53,6 @@ export function DashboardShell({
         {/* Navigation Links */}
         <div className="flex-1 px-3 space-y-1">
           {navigationLinks
-            .filter((item) => item.href !== "/admin" || isAdmin)
             .map((item) => {
               const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
               return (
@@ -105,7 +92,7 @@ export function DashboardShell({
             </div>
             <div className="overflow-hidden">
               <p className="text-xs font-semibold text-on-surface truncate">{email}</p>
-              <p className="text-[9px] text-on-surface-variant">{role}</p>
+              <p className="text-[9px] text-on-surface-variant">{roleLabel}</p>
             </div>
           </div>
           <button
@@ -152,7 +139,6 @@ export function DashboardShell({
             {/* Links */}
             <div className="flex-1 space-y-1">
               {navigationLinks
-                .filter((item) => item.href !== "/admin" || isAdmin)
                 .map((item) => {
                   const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
                   return (
@@ -188,6 +174,7 @@ export function DashboardShell({
                 </div>
                 <div className="overflow-hidden">
                   <p className="text-xs font-semibold text-on-surface truncate">{email}</p>
+                  <p className="text-[9px] text-on-surface-variant">{roleLabel}</p>
                 </div>
               </div>
               <button

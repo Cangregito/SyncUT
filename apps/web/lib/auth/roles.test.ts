@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 
-import { canAccessAdmin, isUserRole, toUserRole } from "./roles";
+import {
+  canAccessAdmin,
+  canAccessModule,
+  getModulesForRole,
+  hasPermission,
+  isUserRole,
+  ROLE_MODULES,
+  toUserRole,
+} from "./roles";
 
 describe("role helpers", () => {
   it("accepts only platform roles", () => {
@@ -20,5 +28,21 @@ describe("role helpers", () => {
     expect(canAccessAdmin("admin")).toBe(true);
     expect(canAccessAdmin("coordinator")).toBe(false);
     expect(canAccessAdmin("student")).toBe(false);
+  });
+
+  it("maps role permissions to modules", () => {
+    expect(hasPermission("student", "justifications:create")).toBe(true);
+    expect(hasPermission("student", "governance:view")).toBe(false);
+    expect(hasPermission("coordinator", "chatbot:manage")).toBe(true);
+
+    const adminModule = ROLE_MODULES.find((module) => module.href === "/admin");
+    expect(adminModule).toBeDefined();
+    expect(canAccessModule("admin", adminModule!)).toBe(true);
+    expect(canAccessModule("tutor", adminModule!)).toBe(false);
+  });
+
+  it("returns only modules visible for each role", () => {
+    expect(getModulesForRole("student").some((module) => module.href === "/admin")).toBe(false);
+    expect(getModulesForRole("admin").some((module) => module.href === "/admin")).toBe(true);
   });
 });
