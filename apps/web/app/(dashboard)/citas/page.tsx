@@ -1,268 +1,980 @@
-"use client";
+import { revalidatePath } from "next/cache";
+import type { Tables } from "@plataforma/types";
 
-import Link from "next/link";
-import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { ModalityDetailsFields } from "@/components/appointments/modality-details-fields";
+import { requireProfile } from "@/lib/auth/session";
+import { hasPermission, type UserRole } from "@/lib/auth/roles";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-type AppointmentStatus = "pendiente" | "confirmada" | "cancelada" | "completada";
+type AppointmentStatus = Tables<"appointments">["status"];
+type AppointmentModality = Tables<"appointments">["modality"];
 
-type Appointment = {
-  id: string;
-  alumno: string;
-  tutor: string;
-  fecha: string;
-  horaInicio: string;
-  horaFin: string;
-  modalidad: "presencial" | "virtual";
-  motivo: string;
-  estado: AppointmentStatus;
+type ProfileSummary = {
+  full_name: string | null;
+  email: string;
 };
 
-const STORAGE_KEY = "syncut_beta_citas_v1";
+type AppointmentRow = Tables<"appointments"> & {
+  student: ProfileSummary | null;
+  tutor: ProfileSummary | null;
+};
 
-const seedData: Appointment[] = [
-  {
-    id: "CIT-1001",
-    alumno: "A. Hernandez",
-    tutor: "Mtro. Rivera",
-    fecha: "2026-06-06",
-    horaInicio: "10:00",
-    horaFin: "10:30",
-    modalidad: "virtual",
-    motivo: "Seguimiento de avance academico",
-    estado: "confirmada",
-  },
-  {
-    id: "CIT-1002",
-    alumno: "L. Gomez",
-    tutor: "Mtra. Karim",
-    fecha: "2026-06-07",
-    horaInicio: "12:00",
-    horaFin: "12:30",
-    modalidad: "presencial",
-    motivo: "Plan de regularizacion",
-    estado: "pendiente",
-  },
-];
+type AssignmentRow = Pick<Tables<"tutorship_assignments">, "tutor_id" | "student_id"> & {
+  tutor: ProfileSummary | null;
+};
 
-function toMinutes(value: string) {
-  const [h, m] = value.split(":").map(Number);
-  return h * 60 + m;
+type SessionNoteRow = Tables<"tutoring_session_notes"> & {
+  author: ProfileSummary | null;
+};
+
+type AvailabilityRow = Tables<"tutor_availability"> & {
+  tutor: ProfileSummary | null;
+};
+
+type AuditEventRow = Tables<"appointment_audit_events"> & {
+  actor: ProfileSummary | null;
+};
+
+type AttendanceStatus = Tables<"appointment_attendance">["status"];
+
+type AttendanceRow = Tables<"appointment_attendance"> & {
+  recorder: ProfileSummary | null;
+};
+
+const dayLabels = ["Domingo", "Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado"];
+
+const statusLabels: Record<AppointmentStatus, string> = {
+  pendiente: "Pendiente",
+  confirmada: "Confirmada",
+  cancelada: "Cancelada",
+  completada: "Completada",
+  no_asistio: "No asistio",
+};
+
+const attendanceLabels: Record<AttendanceStatus, string> = {
+  attended: "Asistio",
+  no_show: "No asistio",
+  excused_absence: "Ausencia justificada",
+};
+
+function isAppointmentModality(value: string): value is AppointmentModality {
+  return value === "presencial" || value === "virtual";
 }
 
-export default function CitasPage() {
-  const [appointments, setAppointments] = useState<Appointment[]>(seedData);
-  const [statusFilter, setStatusFilter] = useState<"todos" | AppointmentStatus>("todos");
-  const [form, setForm] = useState({
-    alumno: "",
-    tutor: "",
-    fecha: "",
-    horaInicio: "",
-    horaFin: "",
-    modalidad: "presencial" as "presencial" | "virtual",
-    motivo: "",
+function isAppointmentStatus(value: string): value is AppointmentStatus {
+  return ["pendiente", "confirmada", "cancelada", "completada", "no_asistio"].includes(value);
+}
+
+function isAttendanceStatus(value: string): value is AttendanceStatus {
+  return ["attended", "no_show", "excused_absence"].includes(value);
+}
+
+function isHttpUrl(value: string) {
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+function getAppointmentModalityDetails(
+  modality: AppointmentModality,
+  location: string,
+  meetingUrl: string,
+) {
+  if (modality === "presencial") {
+    if (location.length < 3 || meetingUrl) return null;
+    return { location, meetingUrl: null };
+  }
+
+  if (!isHttpUrl(meetingUrl) || location) return null;
+  return { location: null, meetingUrl };
+}
+
+function getAvailabilityLocation(modality: AppointmentModality, location: string) {
+  if (modality === "presencial") {
+    return location.length >= 3 ? location : null;
+  }
+
+  return isHttpUrl(location) ? location : null;
+}
+
+function toMinutes(value: string) {
+  const [hours, minutes] = value.split(":").map(Number);
+  return hours * 60 + minutes;
+}
+
+function getDayOfWeek(date: string) {
+  return new Date(`${date}T00:00:00`).getDay();
+}
+
+function isAllowedTransition(current: AppointmentStatus, next: AppointmentStatus) {
+  const allowed: Record<AppointmentStatus, AppointmentStatus[]> = {
+    pendiente: ["confirmada", "cancelada"],
+    confirmada: ["completada", "cancelada", "no_asistio"],
+    cancelada: [],
+    completada: [],
+    no_asistio: [],
+  };
+
+  return allowed[current].includes(next);
+}
+
+function canControlAppointment(
+  role: UserRole,
+  profileId: string,
+  appointment: Pick<Tables<"appointments">, "student_id" | "tutor_id">,
+  nextStatus: AppointmentStatus,
+) {
+  if (hasPermission(role, "appointments:oversight")) {
+    return true;
+  }
+
+  if (hasPermission(role, "appointments:confirm") && appointment.tutor_id === profileId) {
+    return ["confirmada", "completada", "cancelada", "no_asistio"].includes(nextStatus);
+  }
+
+  return nextStatus === "cancelada" && appointment.student_id === profileId;
+}
+
+async function createAppointment(formData: FormData) {
+  "use server";
+
+  const profile = await requireProfile();
+  if (profile.role !== "student") {
+    return;
+  }
+
+  const supabase = await createSupabaseServerClient();
+
+  const tutorId = String(formData.get("tutor_id") ?? "");
+  const scheduledDate = String(formData.get("scheduled_date") ?? "");
+  const startsAt = String(formData.get("starts_at") ?? "");
+  const endsAt = String(formData.get("ends_at") ?? "");
+  const modalityValue = String(formData.get("modality") ?? "presencial");
+  const modality = isAppointmentModality(modalityValue) ? modalityValue : "presencial";
+  const reason = String(formData.get("reason") ?? "").trim();
+  const location = String(formData.get("location") ?? "").trim();
+  const meetingUrl = String(formData.get("meeting_url") ?? "").trim();
+  const modalityDetails = getAppointmentModalityDetails(modality, location, meetingUrl);
+
+  if (!tutorId || !scheduledDate || !startsAt || !endsAt || reason.length < 10 || !modalityDetails) {
+    return;
+  }
+
+  const today = new Date().toISOString().slice(0, 10);
+  if (scheduledDate < today || toMinutes(startsAt) >= toMinutes(endsAt)) {
+    return;
+  }
+
+  if (profile.role === "student") {
+    const { data: assignment } = await supabase
+      .from("tutorship_assignments")
+      .select("id")
+      .eq("student_id", profile.id)
+      .eq("tutor_id", tutorId)
+      .eq("status", "active")
+      .maybeSingle();
+
+    if (!assignment) {
+      return;
+    }
+  }
+
+  const { data: availability } = await supabase
+    .from("tutor_availability")
+    .select("id, starts_at, ends_at, modality")
+    .eq("tutor_id", tutorId)
+    .eq("day_of_week", getDayOfWeek(scheduledDate))
+    .eq("active", true);
+
+  const hasAvailability = (availability ?? []).some((slot) => {
+    return (
+      slot.modality === modality &&
+      toMinutes(startsAt) >= toMinutes(slot.starts_at) &&
+      toMinutes(endsAt) <= toMinutes(slot.ends_at)
+    );
   });
-  const [feedback, setFeedback] = useState<string>("");
 
-  useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as Appointment[];
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setAppointments(parsed);
-        }
-      }
-    } catch {
-      setAppointments(seedData);
-    }
-  }, []);
-
-  useEffect(() => {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(appointments));
-  }, [appointments]);
-
-  const filteredAppointments = useMemo(() => {
-    if (statusFilter === "todos") return appointments;
-    return appointments.filter((item) => item.estado === statusFilter);
-  }, [appointments, statusFilter]);
-
-  function submitAppointment(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setFeedback("");
-
-    if (!form.alumno || !form.tutor || !form.fecha || !form.horaInicio || !form.horaFin || !form.motivo) {
-      setFeedback("Completa todos los campos para crear la cita.");
-      return;
-    }
-
-    if (toMinutes(form.horaInicio) >= toMinutes(form.horaFin)) {
-      setFeedback("La hora de fin debe ser mayor que la de inicio.");
-      return;
-    }
-
-    const hasCollision = appointments.some((item) => {
-      if (item.tutor !== form.tutor || item.fecha !== form.fecha || item.estado === "cancelada") {
-        return false;
-      }
-      return toMinutes(form.horaInicio) < toMinutes(item.horaFin) && toMinutes(form.horaFin) > toMinutes(item.horaInicio);
-    });
-
-    if (hasCollision) {
-      setFeedback("Ese tutor ya tiene una cita en ese rango horario.");
-      return;
-    }
-
-    const newItem: Appointment = {
-      id: `CIT-${Math.floor(Math.random() * 9000) + 1000}`,
-      alumno: form.alumno,
-      tutor: form.tutor,
-      fecha: form.fecha,
-      horaInicio: form.horaInicio,
-      horaFin: form.horaFin,
-      modalidad: form.modalidad,
-      motivo: form.motivo,
-      estado: "pendiente",
-    };
-
-    setAppointments((current) => [newItem, ...current]);
-    setForm({
-      alumno: "",
-      tutor: "",
-      fecha: "",
-      horaInicio: "",
-      horaFin: "",
-      modalidad: "presencial",
-      motivo: "",
-    });
-    setFeedback("Cita creada correctamente en modo beta.");
+  if (!hasAvailability) {
+    return;
   }
 
-  function updateStatus(id: string, estado: AppointmentStatus) {
-    setAppointments((current) => current.map((item) => (item.id === id ? { ...item, estado } : item)));
+  const { data: appointment } = await supabase
+    .from("appointments")
+    .insert({
+      student_id: profile.id,
+      tutor_id: tutorId,
+      scheduled_date: scheduledDate,
+      starts_at: startsAt,
+      ends_at: endsAt,
+      modality,
+      reason,
+      location: modalityDetails.location,
+      meeting_url: modalityDetails.meetingUrl,
+    })
+    .select("id")
+    .single();
+
+  if (appointment) {
+    await supabase.from("appointment_audit_events").insert({
+      appointment_id: appointment.id,
+      actor_id: profile.id,
+      event_type: "created",
+      to_status: "pendiente",
+      note: "Solicitud de cita creada desde el portal.",
+    });
+    await supabase.rpc("emit_notification", {
+      p_user_id: tutorId,
+      p_event_type: "appointment.created",
+      p_title: "Nueva solicitud de tutoría",
+      p_body: `${profile.fullName} solicitó una cita para el ${scheduledDate} de ${startsAt} a ${endsAt}.`,
+      p_metadata: {
+        appointment_id: appointment.id,
+        student_id: profile.id,
+        tutor_id: tutorId,
+      },
+      p_triggered_by: profile.id,
+    });
   }
+
+  revalidatePath("/citas");
+  revalidatePath("/dashboard");
+}
+
+async function updateAppointmentStatus(formData: FormData) {
+  "use server";
+
+  const profile = await requireProfile();
+  const supabase = await createSupabaseServerClient();
+  const id = String(formData.get("id") ?? "");
+  const status = String(formData.get("status") ?? "");
+
+  if (!id || !isAppointmentStatus(status)) {
+    return;
+  }
+
+  const { data: current } = await supabase
+    .from("appointments")
+    .select("student_id, tutor_id, status")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (!current || !isAllowedTransition(current.status, status)) {
+    return;
+  }
+
+  if (!canControlAppointment(profile.role, profile.id, current, status)) {
+    return;
+  }
+
+  const { error } = await supabase
+    .from("appointments")
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq("id", id);
+
+  if (!error) {
+    await supabase.from("appointment_audit_events").insert({
+      appointment_id: id,
+      actor_id: profile.id,
+      event_type: "status_changed",
+      from_status: current.status,
+      to_status: status,
+      note: `Cambio de estado: ${statusLabels[current.status]} a ${statusLabels[status]}.`,
+    });
+    const { data: appointment } = await supabase
+      .from("appointments")
+      .select("student_id, tutor_id, scheduled_date, starts_at, ends_at")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (appointment) {
+      const targetUserId = profile.id === appointment.student_id ? appointment.tutor_id : appointment.student_id;
+      await supabase.rpc("emit_notification", {
+        p_user_id: targetUserId,
+        p_event_type: status === "completada" ? "appointment.completed" : "appointment.status_changed",
+        p_title: `Cita ${statusLabels[status].toLowerCase()}`,
+        p_body: `La cita del ${appointment.scheduled_date} de ${appointment.starts_at.slice(0, 5)} a ${appointment.ends_at.slice(0, 5)} cambió a ${statusLabels[status]}.`,
+        p_metadata: {
+          appointment_id: id,
+          status,
+        },
+        p_triggered_by: profile.id,
+      });
+    }
+  }
+
+  revalidatePath("/citas");
+  revalidatePath("/dashboard");
+}
+
+async function createAvailability(formData: FormData) {
+  "use server";
+
+  const profile = await requireProfile();
+  const supabase = await createSupabaseServerClient();
+
+  if (!hasPermission(profile.role, "appointments:availability") || profile.role !== "tutor") {
+    return;
+  }
+
+  const dayOfWeek = Number(formData.get("day_of_week") ?? -1);
+  const startsAt = String(formData.get("starts_at") ?? "");
+  const endsAt = String(formData.get("ends_at") ?? "");
+  const modalityValue = String(formData.get("modality") ?? "presencial");
+  const modality = isAppointmentModality(modalityValue) ? modalityValue : "presencial";
+  const location = String(formData.get("location") ?? "").trim();
+  const availabilityLocation = getAvailabilityLocation(modality, location);
+
+  if (dayOfWeek < 0 || dayOfWeek > 6 || !startsAt || !endsAt || toMinutes(startsAt) >= toMinutes(endsAt) || !availabilityLocation) {
+    return;
+  }
+
+  await supabase.from("tutor_availability").insert({
+    tutor_id: profile.id,
+    day_of_week: dayOfWeek,
+    starts_at: startsAt,
+    ends_at: endsAt,
+    modality,
+    location: availabilityLocation,
+  });
+
+  revalidatePath("/citas");
+}
+
+async function deactivateAvailability(formData: FormData) {
+  "use server";
+
+  const profile = await requireProfile();
+  const supabase = await createSupabaseServerClient();
+  const id = String(formData.get("id") ?? "");
+
+  if (!id) {
+    return;
+  }
+
+  const { data: slot } = await supabase
+    .from("tutor_availability")
+    .select("tutor_id")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (!slot) {
+    return;
+  }
+
+  const canDeactivate =
+    slot.tutor_id === profile.id || hasPermission(profile.role, "appointments:oversight");
+
+  if (!canDeactivate) {
+    return;
+  }
+
+  await supabase.from("tutor_availability").update({ active: false }).eq("id", id);
+  revalidatePath("/citas");
+}
+
+async function createSessionNote(formData: FormData) {
+  "use server";
+
+  const profile = await requireProfile();
+  const supabase = await createSupabaseServerClient();
+  const appointmentId = String(formData.get("appointment_id") ?? "");
+  const observations = String(formData.get("observations") ?? "").trim();
+  const agreements = String(formData.get("agreements") ?? "").trim();
+  const recommendations = String(formData.get("recommendations") ?? "").trim();
+
+  if (!appointmentId || !observations) {
+    return;
+  }
+
+  const { data: appointment } = await supabase
+    .from("appointments")
+    .select("student_id, tutor_id")
+    .eq("id", appointmentId)
+    .maybeSingle();
+
+  const canWriteNote =
+    appointment &&
+    (
+      hasPermission(profile.role, "appointments:oversight") ||
+      (hasPermission(profile.role, "appointments:session_note") && appointment.tutor_id === profile.id)
+    );
+
+  if (!canWriteNote) {
+    return;
+  }
+
+  const { error } = await supabase.from("tutoring_session_notes").insert({
+    appointment_id: appointmentId,
+    author_id: profile.id,
+    observations,
+    agreements: agreements || null,
+    recommendations: recommendations || null,
+  });
+
+  if (!error) {
+    await supabase.from("appointment_audit_events").insert({
+      appointment_id: appointmentId,
+      actor_id: profile.id,
+      event_type: "note_added",
+      note: "Seguimiento de tutoría registrado.",
+    });
+    if (appointment) {
+      const targetUserId = profile.id === appointment.student_id ? appointment.tutor_id : appointment.student_id;
+      await supabase.rpc("emit_notification", {
+        p_user_id: targetUserId,
+        p_event_type: "appointment.note_added",
+        p_title: "Seguimiento de tutoría registrado",
+        p_body: "Se agregó seguimiento a una cita de tutoría.",
+        p_metadata: {
+          appointment_id: appointmentId,
+        },
+        p_triggered_by: profile.id,
+      });
+    }
+  }
+
+  revalidatePath("/citas");
+}
+
+async function recordAttendance(formData: FormData) {
+  "use server";
+
+  const profile = await requireProfile();
+  const supabase = await createSupabaseServerClient();
+
+  const appointmentId = String(formData.get("appointment_id") ?? "");
+  const statusValue = String(formData.get("attendance_status") ?? "");
+  const notes = String(formData.get("notes") ?? "").trim();
+
+  if (!appointmentId || !isAttendanceStatus(statusValue)) {
+    return;
+  }
+
+  const { data: appointment } = await supabase
+    .from("appointments")
+    .select("student_id, tutor_id, status, scheduled_date, starts_at, ends_at")
+    .eq("id", appointmentId)
+    .maybeSingle();
+
+  if (!appointment) {
+    return;
+  }
+
+  const canRecord =
+    hasPermission(profile.role, "appointments:oversight") ||
+    (hasPermission(profile.role, "appointments:attendance") && appointment.tutor_id === profile.id);
+
+  if (!canRecord) {
+    return;
+  }
+
+  const nextAppointmentStatus: AppointmentStatus =
+    statusValue === "attended" ? "completada" : statusValue === "no_show" ? "no_asistio" : "cancelada";
+
+  const { error } = await supabase.from("appointment_attendance").upsert({
+    appointment_id: appointmentId,
+    status: statusValue,
+    recorded_by: profile.id,
+    notes: notes || null,
+    updated_at: new Date().toISOString(),
+  }, {
+    onConflict: "appointment_id",
+  });
+
+  if (!error) {
+    await supabase
+      .from("appointments")
+      .update({
+        status: nextAppointmentStatus,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", appointmentId);
+
+    await supabase.from("appointment_audit_events").insert({
+      appointment_id: appointmentId,
+      actor_id: profile.id,
+      event_type: "attendance_recorded",
+      from_status: appointment.status,
+      to_status: nextAppointmentStatus,
+      note: `Asistencia registrada: ${attendanceLabels[statusValue]}.${notes ? ` ${notes}` : ""}`,
+    });
+
+    const targetUserId = profile.id === appointment.student_id ? appointment.tutor_id : appointment.student_id;
+    await supabase.rpc("emit_notification", {
+      p_user_id: targetUserId,
+      p_event_type: "appointment.attendance_recorded",
+      p_title: "Asistencia de tutoría registrada",
+      p_body: `La cita del ${appointment.scheduled_date} de ${appointment.starts_at.slice(0, 5)} a ${appointment.ends_at.slice(0, 5)} quedó como: ${attendanceLabels[statusValue]}.`,
+      p_metadata: {
+        appointment_id: appointmentId,
+        attendance_status: statusValue,
+      },
+      p_triggered_by: profile.id,
+    });
+  }
+
+  revalidatePath("/citas");
+  revalidatePath("/dashboard");
+}
+
+export default async function CitasPage() {
+  const profile = await requireProfile();
+  const supabase = await createSupabaseServerClient();
+  const canCreateAppointments = profile.role === "student";
+  const canManageOwnAvailability = profile.role === "tutor" && hasPermission(profile.role, "appointments:availability");
+  const canOverseeAppointments = hasPermission(profile.role, "appointments:oversight");
+
+  const [
+    { data: appointmentsData, error: appointmentsError },
+    { data: assignmentsData },
+    { data: notesData },
+    { data: availabilityData },
+    { data: auditData },
+    { data: attendanceData },
+  ] =
+    await Promise.all([
+      supabase
+        .from("appointments")
+        .select(`
+          id,
+          student_id,
+          tutor_id,
+          scheduled_date,
+          starts_at,
+          ends_at,
+          modality,
+          reason,
+          status,
+          location,
+          meeting_url,
+          created_at,
+          updated_at,
+          student:profiles!appointments_student_id_fkey(full_name,email),
+          tutor:profiles!appointments_tutor_id_fkey(full_name,email)
+        `)
+        .order("scheduled_date", { ascending: true })
+        .order("starts_at", { ascending: true }),
+      supabase
+        .from("tutorship_assignments")
+        .select("tutor_id, student_id, tutor:profiles!tutorship_assignments_tutor_id_fkey(full_name,email)")
+        .eq("student_id", profile.id)
+        .eq("status", "active"),
+      supabase
+        .from("tutoring_session_notes")
+        .select(`
+          id,
+          appointment_id,
+          author_id,
+          observations,
+          agreements,
+          recommendations,
+          created_at,
+          author:profiles!tutoring_session_notes_author_id_fkey(full_name,email)
+        `)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("tutor_availability")
+        .select(`
+          id,
+          tutor_id,
+          day_of_week,
+          starts_at,
+          ends_at,
+          modality,
+          location,
+          active,
+          created_at,
+          updated_at,
+          tutor:profiles!tutor_availability_tutor_id_fkey(full_name,email)
+        `)
+        .eq("active", true)
+        .order("day_of_week", { ascending: true })
+        .order("starts_at", { ascending: true }),
+      supabase
+        .from("appointment_audit_events")
+        .select(`
+          id,
+          appointment_id,
+          actor_id,
+          event_type,
+          from_status,
+          to_status,
+          note,
+          created_at,
+          actor:profiles!appointment_audit_events_actor_id_fkey(full_name,email)
+        `)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("appointment_attendance")
+        .select(`
+          id,
+          appointment_id,
+          status,
+          recorded_by,
+          notes,
+          recorded_at,
+          updated_at,
+          recorder:profiles!appointment_attendance_recorded_by_fkey(full_name,email)
+        `)
+        .order("recorded_at", { ascending: false }),
+    ]);
+
+  const appointments = (appointmentsData ?? []) as unknown as AppointmentRow[];
+  const assignments = (assignmentsData ?? []) as unknown as AssignmentRow[];
+  const notes = (notesData ?? []) as unknown as SessionNoteRow[];
+  const availability = (availabilityData ?? []) as unknown as AvailabilityRow[];
+  const auditEvents = (auditData ?? []) as unknown as AuditEventRow[];
+  const attendance = (attendanceData ?? []) as unknown as AttendanceRow[];
+  const notesByAppointment = new Map(notes.map((note) => [note.appointment_id, note]));
+  const attendanceByAppointment = new Map(attendance.map((item) => [item.appointment_id, item]));
+  const auditByAppointment = auditEvents.reduce<Map<string, AuditEventRow[]>>((acc, event) => {
+    const current = acc.get(event.appointment_id) ?? [];
+    current.push(event);
+    acc.set(event.appointment_id, current);
+    return acc;
+  }, new Map());
+  const availabilityByTutor = availability.reduce<Map<string, AvailabilityRow[]>>((acc, slot) => {
+    const current = acc.get(slot.tutor_id) ?? [];
+    current.push(slot);
+    acc.set(slot.tutor_id, current);
+    return acc;
+  }, new Map());
 
   return (
-    <main className="min-h-screen bg-slate-100 px-6 py-8 md:px-10">
-      <section className="mx-auto max-w-6xl space-y-6">
-        <header className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-          <p className="text-xs font-semibold uppercase tracking-wider text-indigo-600">Beta funcional - Squad 3</p>
-          <h1 className="mt-2 text-3xl font-black text-slate-900">Agenda de Citas</h1>
-          <p className="mt-2 text-sm text-slate-600">
-            Flujo de prueba con creacion, validacion de colisiones y gestion de estado.
-          </p>
-          <div className="mt-5 flex flex-wrap gap-3">
-            <Link href="/" className="rounded-xl bg-slate-900 px-4 py-2 text-xs font-semibold text-white">
-              Inicio
-            </Link>
-            <Link href="/notificaciones" className="rounded-xl border border-slate-300 px-4 py-2 text-xs font-semibold text-slate-700">
-              Ver notificaciones
-            </Link>
-          </div>
-        </header>
+    <div className="mx-auto flex max-w-6xl flex-col gap-6">
+      <header>
+        <p className="text-xs font-semibold uppercase tracking-wider text-primary">Squad 3</p>
+        <h1 className="mt-2 text-2xl md:text-3xl font-headline font-bold text-on-surface">
+          Agenda de Citas
+        </h1>
+        <p className="mt-2 text-sm text-on-surface-variant">
+          Solicitudes de tutoria registradas en Supabase. Sin citas de ejemplo ni almacenamiento local.
+        </p>
+      </header>
 
-        <div className="grid gap-6 lg:grid-cols-[1.2fr_1.8fr]">
-          <form onSubmit={submitAppointment} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-sm font-bold uppercase tracking-wide text-slate-700">Nueva cita</h2>
-            <div className="mt-4 space-y-3 text-sm">
-              <input
-                value={form.alumno}
-                onChange={(e) => setForm((prev) => ({ ...prev, alumno: e.target.value }))}
-                placeholder="Alumno"
-                className="w-full rounded-xl border border-slate-300 px-3 py-2"
-              />
-              <input
-                value={form.tutor}
-                onChange={(e) => setForm((prev) => ({ ...prev, tutor: e.target.value }))}
-                placeholder="Tutor"
-                className="w-full rounded-xl border border-slate-300 px-3 py-2"
-              />
-              <div className="grid grid-cols-2 gap-3">
-                <input
-                  type="date"
-                  value={form.fecha}
-                  onChange={(e) => setForm((prev) => ({ ...prev, fecha: e.target.value }))}
-                  className="rounded-xl border border-slate-300 px-3 py-2"
-                />
-                <select
-                  value={form.modalidad}
-                  onChange={(e) => setForm((prev) => ({ ...prev, modalidad: e.target.value as "presencial" | "virtual" }))}
-                  className="rounded-xl border border-slate-300 px-3 py-2"
-                >
-                  <option value="presencial">Presencial</option>
-                  <option value="virtual">Virtual</option>
+      {appointmentsError ? (
+        <div className="rounded-lg border border-error/40 bg-error-container/20 p-4 text-sm text-on-error-container">
+          No se pudo consultar `appointments`. Ejecuta la migracion de citas antes de usar este modulo. Detalle: {appointmentsError.message}
+        </div>
+      ) : null}
+
+      <div className="grid gap-6 lg:grid-cols-[1fr_1.6fr]">
+        <div className="space-y-6">
+        {canManageOwnAvailability ? (
+          <form action={createAvailability} className="rounded-lg border border-outline-variant bg-surface-container p-5">
+            <h2 className="text-sm font-semibold uppercase text-on-surface-variant">Mi disponibilidad</h2>
+            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <label className="block text-xs font-medium text-on-surface-variant">
+                Dia
+                <select name="day_of_week" className="mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface">
+                  {dayLabels.map((label, index) => (
+                    <option key={label} value={index}>{label}</option>
+                  ))}
                 </select>
+              </label>
+              <label className="block text-xs font-medium text-on-surface-variant">
+                Inicio
+                <input name="starts_at" type="time" required className="mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
+              </label>
+              <label className="block text-xs font-medium text-on-surface-variant">
+                Fin
+                <input name="ends_at" type="time" required className="mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
+              </label>
+              <div className="sm:col-span-2">
+                <ModalityDetailsFields mode="availability" />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <input
-                  type="time"
-                  value={form.horaInicio}
-                  onChange={(e) => setForm((prev) => ({ ...prev, horaInicio: e.target.value }))}
-                  className="rounded-xl border border-slate-300 px-3 py-2"
-                />
-                <input
-                  type="time"
-                  value={form.horaFin}
-                  onChange={(e) => setForm((prev) => ({ ...prev, horaFin: e.target.value }))}
-                  className="rounded-xl border border-slate-300 px-3 py-2"
-                />
-              </div>
-              <textarea
-                value={form.motivo}
-                onChange={(e) => setForm((prev) => ({ ...prev, motivo: e.target.value }))}
-                rows={3}
-                placeholder="Motivo"
-                className="w-full rounded-xl border border-slate-300 px-3 py-2"
-              />
             </div>
-            {feedback ? <p className="mt-3 text-xs font-semibold text-indigo-600">{feedback}</p> : null}
-            <button className="mt-4 w-full rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700" type="submit">
-              Crear cita
+            <button className="mt-4 w-full rounded bg-primary-container px-4 py-2 text-sm font-semibold text-on-primary-container hover:bg-primary">
+              Guardar disponibilidad
             </button>
           </form>
+        ) : null}
 
-          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <h2 className="text-sm font-bold uppercase tracking-wide text-slate-700">Citas registradas</h2>
+        {canCreateAppointments ? (
+        <form action={createAppointment} className="rounded-lg border border-outline-variant bg-surface-container p-5">
+          <h2 className="text-sm font-semibold uppercase text-on-surface-variant">Nueva cita</h2>
+
+          {assignments.length === 0 ? (
+            <p className="mt-4 rounded border border-outline-variant bg-surface p-3 text-sm text-on-surface-variant">
+              No hay tutor asignado visible para tu usuario. Crea una fila real en `tutorship_assignments` antes de agendar.
+            </p>
+          ) : null}
+
+          <div className="mt-4 space-y-3">
+            <label className="block text-xs font-medium text-on-surface-variant">
+              Tutor asignado
               <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as "todos" | AppointmentStatus)}
-                className="rounded-lg border border-slate-300 px-2 py-1 text-xs"
+                name="tutor_id"
+                required
+                disabled={assignments.length === 0}
+                className="mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface disabled:opacity-50"
               >
-                <option value="todos">Todos</option>
-                <option value="pendiente">Pendiente</option>
-                <option value="confirmada">Confirmada</option>
-                <option value="cancelada">Cancelada</option>
-                <option value="completada">Completada</option>
+                <option value="">Selecciona tutor</option>
+                {assignments.map((item) => (
+                  <option key={item.tutor_id} value={item.tutor_id}>
+                    {item.tutor?.full_name ?? item.tutor?.email ?? `Tutor ${item.tutor_id.slice(0, 8)}`}
+                  </option>
+                ))}
               </select>
+            </label>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <label className="block text-xs font-medium text-on-surface-variant">
+                Fecha
+                <input name="scheduled_date" type="date" required className="mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
+              </label>
+              <label className="block text-xs font-medium text-on-surface-variant">
+                Inicio
+                <input name="starts_at" type="time" required className="mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
+              </label>
+              <label className="block text-xs font-medium text-on-surface-variant">
+                Fin
+                <input name="ends_at" type="time" required className="mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
+              </label>
             </div>
-            <div className="mt-4 space-y-3">
-              {filteredAppointments.map((item) => (
-                <article key={item.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-sm font-semibold text-slate-900">{item.id} - {item.alumno}</p>
-                    <span className="rounded-full bg-slate-900 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-white">
-                      {item.estado}
-                    </span>
+
+            <ModalityDetailsFields mode="appointment" />
+            <label className="block text-xs font-medium text-on-surface-variant">
+              Motivo
+              <textarea name="reason" required minLength={10} rows={4} className="mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
+            </label>
+          </div>
+          <button
+            type="submit"
+            disabled={assignments.length === 0}
+            className="mt-4 w-full rounded bg-primary-container px-4 py-2 text-sm font-semibold text-on-primary-container hover:bg-primary disabled:opacity-50"
+          >
+            Solicitar cita
+          </button>
+        </form>
+        ) : (
+          <section className="rounded-lg border border-outline-variant bg-surface-container p-5">
+            <h2 className="text-sm font-semibold uppercase text-on-surface-variant">Rol en agenda</h2>
+            <p className="mt-3 text-sm text-on-surface-variant">
+              {profile.role === "tutor"
+                ? "Tu flujo es publicar disponibilidad, confirmar citas, registrar asistencia y dejar seguimiento."
+                : profile.role === "coordinator"
+                  ? "Tu flujo es supervisar agenda, validar estados y desactivar bloques cuando sea necesario."
+                  : profile.role === "teacher"
+                    ? "El docente no agenda tutorias; aporta contexto academico desde justificaciones e incidencias."
+                    : "El administrador conserva visibilidad operativa y auditoria de agenda."}
+            </p>
+          </section>
+        )}
+        </div>
+
+        <section className="rounded-lg border border-outline-variant bg-surface-container p-5">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-sm font-semibold uppercase text-on-surface-variant">Citas registradas</h2>
+            <span className="text-xs text-on-surface-variant">{appointments.length} visibles</span>
+          </div>
+
+          <div className="mt-4 space-y-3">
+            {appointments.length === 0 && !appointmentsError ? (
+              <p className="rounded border border-outline-variant bg-surface p-4 text-sm text-on-surface-variant">
+                No hay citas visibles para tu usuario.
+              </p>
+            ) : null}
+
+            {appointments.map((item) => (
+              <article key={item.id} className="rounded border border-outline-variant bg-surface p-4">
+                {(() => {
+                  const sessionNote = notesByAppointment.get(item.id);
+                  const attendanceRecord = attendanceByAppointment.get(item.id);
+                  const itemAudit = auditByAppointment.get(item.id) ?? [];
+                  return (
+                    <>
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div>
+                    <h3 className="text-sm font-semibold text-on-surface">
+                      {item.scheduled_date} | {item.starts_at.slice(0, 5)}-{item.ends_at.slice(0, 5)}
+                    </h3>
+                    <p className="mt-1 text-xs text-on-surface-variant">
+                      {item.tutor?.full_name ?? item.tutor?.email ?? `Tutor ${item.tutor_id.slice(0, 8)}`}
+                      {" | "}
+                      {item.student?.full_name ?? item.student?.email ?? `Estudiante ${item.student_id.slice(0, 8)}`}
+                    </p>
                   </div>
-                  <p className="mt-1 text-xs text-slate-600">Tutor: {item.tutor} | {item.fecha} | {item.horaInicio} - {item.horaFin}</p>
-                  <p className="mt-1 text-xs text-slate-600">{item.modalidad} | {item.motivo}</p>
-                  <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold">
-                    <button onClick={() => updateStatus(item.id, "confirmada")} className="rounded-lg border border-emerald-300 px-2 py-1 text-emerald-700">
-                      Confirmar
-                    </button>
-                    <button onClick={() => updateStatus(item.id, "completada")} className="rounded-lg border border-blue-300 px-2 py-1 text-blue-700">
-                      Completar
-                    </button>
-                    <button onClick={() => updateStatus(item.id, "cancelada")} className="rounded-lg border border-rose-300 px-2 py-1 text-rose-700">
+                  <span className="rounded bg-surface-container-highest px-2 py-1 text-[10px] font-semibold uppercase text-primary">
+                    {statusLabels[item.status]}
+                  </span>
+                </div>
+                <p className="mt-3 text-sm text-on-surface-variant">{item.reason}</p>
+                <p className="mt-2 text-xs text-on-surface-variant">
+                  {item.modality}
+                  {item.location ? ` | ${item.location}` : ""}
+                  {item.meeting_url ? ` | ${item.meeting_url}` : ""}
+                </p>
+                {(availabilityByTutor.get(item.tutor_id) ?? []).length > 0 ? (
+                  <div className="mt-3 rounded border border-outline-variant bg-surface-container p-3">
+                    <p className="text-xs font-semibold uppercase text-on-surface-variant">Disponibilidad del tutor</p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {(availabilityByTutor.get(item.tutor_id) ?? []).map((slot) => (
+                        <span key={slot.id} className="rounded bg-surface-container-highest px-2 py-1 text-[11px] text-on-surface-variant">
+                          {dayLabels[slot.day_of_week]} {slot.starts_at.slice(0, 5)}-{slot.ends_at.slice(0, 5)} · {slot.modality}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
+                {(canOverseeAppointments || item.tutor_id === profile.id || item.student_id === profile.id) ? (
+                  <form action={updateAppointmentStatus} className="mt-4 flex flex-wrap gap-2">
+                    <input type="hidden" name="id" value={item.id} />
+                    {(canOverseeAppointments || item.tutor_id === profile.id) ? (
+                      <>
+                        <button name="status" value="confirmada" className="rounded border border-primary px-3 py-2 text-xs font-semibold text-primary">
+                          Confirmar
+                        </button>
+                        <button name="status" value="completada" className="rounded border border-outline-variant px-3 py-2 text-xs font-semibold text-on-surface-variant">
+                          Completar
+                        </button>
+                      </>
+                    ) : null}
+                    <button name="status" value="cancelada" className="rounded border border-error px-3 py-2 text-xs font-semibold text-error">
                       Cancelar
                     </button>
+                  </form>
+                ) : null}
+                {attendanceRecord ? (
+                  <div className="mt-4 rounded border border-outline-variant bg-surface-container p-3">
+                    <p className="text-xs font-semibold uppercase text-on-surface-variant">Asistencia</p>
+                    <p className="mt-2 text-sm font-semibold text-on-surface">{attendanceLabels[attendanceRecord.status]}</p>
+                    {attendanceRecord.notes ? (
+                      <p className="mt-1 text-xs text-on-surface-variant">{attendanceRecord.notes}</p>
+                    ) : null}
+                    <p className="mt-2 text-[11px] text-on-surface-variant">
+                      Registro: {attendanceRecord.recorder?.full_name ?? attendanceRecord.recorder?.email ?? "Usuario visible por RLS"}
+                      {attendanceRecord.recorded_at ? ` | ${new Date(attendanceRecord.recorded_at).toLocaleString("es-MX")}` : ""}
+                    </p>
                   </div>
-                </article>
-              ))}
-            </div>
-          </section>
+                ) : (canOverseeAppointments || item.tutor_id === profile.id) && item.status === "confirmada" ? (
+                  <form action={recordAttendance} className="mt-4 rounded border border-outline-variant bg-surface-container p-3">
+                    <input type="hidden" name="appointment_id" value={item.id} />
+                    <p className="text-xs font-semibold uppercase text-on-surface-variant">Registrar asistencia</p>
+                    <div className="mt-3 grid gap-2 sm:grid-cols-[180px_1fr]">
+                      <select name="attendance_status" className="rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface">
+                        <option value="attended">Asistio</option>
+                        <option value="no_show">No asistio</option>
+                        <option value="excused_absence">Ausencia justificada</option>
+                      </select>
+                      <input
+                        name="notes"
+                        placeholder="Nota breve de asistencia"
+                        className="rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface"
+                      />
+                    </div>
+                    <button className="mt-3 rounded bg-primary-container px-3 py-2 text-xs font-semibold text-on-primary-container">
+                      Guardar asistencia
+                    </button>
+                  </form>
+                ) : null}
+                {sessionNote ? (
+                  <div className="mt-4 rounded border border-outline-variant bg-surface-container p-3">
+                    <p className="text-xs font-semibold uppercase text-on-surface-variant">Seguimiento</p>
+                    <p className="mt-2 text-sm text-on-surface-variant">{sessionNote.observations}</p>
+                    {sessionNote.agreements ? (
+                      <p className="mt-2 text-xs text-on-surface-variant">Acuerdos: {sessionNote.agreements}</p>
+                    ) : null}
+                    {sessionNote.recommendations ? (
+                      <p className="mt-1 text-xs text-on-surface-variant">Recomendaciones: {sessionNote.recommendations}</p>
+                    ) : null}
+                    <p className="mt-2 text-[11px] text-on-surface-variant">
+                      Capturo: {sessionNote.author?.full_name ?? sessionNote.author?.email ?? "Usuario visible por RLS"}
+                    </p>
+                  </div>
+                ) : (canOverseeAppointments || item.tutor_id === profile.id) && item.status === "completada" ? (
+                  <form action={createSessionNote} className="mt-4 rounded border border-outline-variant bg-surface-container p-3">
+                    <input type="hidden" name="appointment_id" value={item.id} />
+                    <p className="text-xs font-semibold uppercase text-on-surface-variant">Registrar seguimiento</p>
+                    <textarea
+                      name="observations"
+                      required
+                      rows={3}
+                      placeholder="Observaciones de la sesion"
+                      className="mt-3 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface"
+                    />
+                    <input
+                      name="agreements"
+                      placeholder="Acuerdos"
+                      className="mt-2 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface"
+                    />
+                    <input
+                      name="recommendations"
+                      placeholder="Recomendaciones"
+                      className="mt-2 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface"
+                    />
+                    <button className="mt-3 rounded bg-primary-container px-3 py-2 text-xs font-semibold text-on-primary-container">
+                      Guardar seguimiento
+                    </button>
+                  </form>
+                ) : null}
+                {itemAudit.length > 0 ? (
+                  <details className="mt-4 rounded border border-outline-variant bg-surface-container p-3">
+                    <summary className="cursor-pointer text-xs font-semibold uppercase text-on-surface-variant">
+                      Bitacora ({itemAudit.length})
+                    </summary>
+                    <div className="mt-3 space-y-2">
+                      {itemAudit.map((event) => (
+                        <div key={event.id} className="border-t border-outline-variant pt-2 first:border-t-0 first:pt-0">
+                          <p className="text-xs text-on-surface-variant">
+                            {event.event_type}
+                            {event.from_status && event.to_status ? ` · ${statusLabels[event.from_status]} -> ${statusLabels[event.to_status]}` : ""}
+                          </p>
+                          {event.note ? <p className="mt-1 text-sm text-on-surface-variant">{event.note}</p> : null}
+                          <p className="mt-1 text-[11px] text-on-surface-variant">
+                            {event.actor?.full_name ?? event.actor?.email ?? "Sistema"}
+                            {event.created_at ? ` | ${new Date(event.created_at).toLocaleString("es-MX")}` : ""}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </details>
+                ) : null}
+                    </>
+                  );
+                })()}
+              </article>
+            ))}
+          </div>
+        </section>
+      </div>
+
+      <section className="rounded-lg border border-outline-variant bg-surface-container p-5">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-sm font-semibold uppercase text-on-surface-variant">Disponibilidad visible</h2>
+          <span className="text-xs text-on-surface-variant">{availability.length} bloques activos</span>
+        </div>
+        <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {availability.length === 0 ? (
+            <p className="rounded border border-outline-variant bg-surface p-4 text-sm text-on-surface-variant md:col-span-2 xl:col-span-3">
+              No hay bloques de disponibilidad activos visibles. Un tutor debe registrar disponibilidad antes de recibir citas.
+            </p>
+          ) : null}
+          {availability.map((slot) => (
+            <article key={slot.id} className="rounded border border-outline-variant bg-surface p-4">
+              <p className="text-sm font-semibold text-on-surface">
+                {slot.tutor?.full_name ?? slot.tutor?.email ?? `Tutor ${slot.tutor_id.slice(0, 8)}`}
+              </p>
+              <p className="mt-1 text-xs text-on-surface-variant">
+                {dayLabels[slot.day_of_week]} | {slot.starts_at.slice(0, 5)}-{slot.ends_at.slice(0, 5)} | {slot.modality}
+              </p>
+              {slot.location ? <p className="mt-1 text-xs text-on-surface-variant">{slot.location}</p> : null}
+              {slot.tutor_id === profile.id || canOverseeAppointments ? (
+                <form action={deactivateAvailability} className="mt-3">
+                  <input type="hidden" name="id" value={slot.id} />
+                  <button className="rounded border border-error px-3 py-2 text-xs font-semibold text-error">
+                    Desactivar
+                  </button>
+                </form>
+              ) : null}
+            </article>
+          ))}
         </div>
       </section>
-    </main>
+    </div>
   );
 }

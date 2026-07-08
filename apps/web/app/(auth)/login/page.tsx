@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
 import { createSupabaseBrowserClient } from "@plataforma/sdk/client";
 
+import { DEMO_ROLE_ACCOUNTS, ROLE_LABELS, USER_ROLES, type UserRole } from "@/lib/auth/roles";
+
 export default function LoginPage() {
   const router = useRouter();
   const [username, setUsername] = useState("");
@@ -56,6 +58,13 @@ export default function LoginPage() {
     }
   }
 
+  function fillDemoAccount(role: UserRole) {
+    const account = DEMO_ROLE_ACCOUNTS[role];
+    setUsername(account.email);
+    setPassword(account.password);
+    setErrorMsg("");
+  }
+
   return (
     <div className="w-full max-w-[400px]">
       {/* Brand Header */}
@@ -71,6 +80,19 @@ export default function LoginPage() {
 
       {/* Login Box */}
       <div className="bg-surface-container border border-outline-variant rounded-lg p-6 sm:p-8">
+        <div className="mb-5 grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {USER_ROLES.map((role) => (
+            <button
+              key={role}
+              type="button"
+              onClick={() => fillDemoAccount(role)}
+              className="flex items-center justify-between rounded border border-outline-variant bg-surface px-3 py-2 text-left text-xs text-on-surface-variant hover:border-primary hover:text-on-surface focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              <span>{ROLE_LABELS[role]}</span>
+              <span className="material-symbols-outlined text-[16px]">login</span>
+            </button>
+          ))}
+        </div>
         <form className="space-y-5" onSubmit={handleLogin}>
           {/* Username */}
           <div>
@@ -99,12 +121,12 @@ export default function LoginPage() {
               <label className="block text-sm font-medium text-on-surface-variant" htmlFor="password">
                 Contraseña
               </label>
-              <a
+              <Link
                 className="text-xs text-primary hover:text-primary-fixed transition-colors font-medium focus:outline-none focus:underline focus:underline-offset-2"
-                href="#"
+                href="/forgot-password"
               >
                 ¿Olvidaste tu contraseña?
-              </a>
+              </Link>
             </div>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">

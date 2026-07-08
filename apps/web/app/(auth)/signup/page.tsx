@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
 import { createSupabaseBrowserClient } from "@plataforma/sdk/client";
+import { isUtcjStudentEmail, normalizeEmail } from "@/lib/auth/student-email";
+import { getAuthRedirectUrl } from "@/lib/auth/urls";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -22,8 +24,14 @@ export default function SignupPage() {
     setErrorMsg("");
     setSuccessMsg("");
 
-    if (!fullName || !email || !password || !confirmPassword) {
+    const cleanEmail = normalizeEmail(email);
+
+    if (!fullName || !cleanEmail || !password || !confirmPassword) {
       setErrorMsg("Completa todos los campos para continuar.");
+      return;
+    }
+    if (!isUtcjStudentEmail(cleanEmail)) {
+      setErrorMsg("El registro solo está disponible para alumnos con correo institucional tipo Al25320794@utcj.edu.mx.");
       return;
     }
     if (password.length < 8) {
@@ -44,13 +52,13 @@ export default function SignupPage() {
     try {
       const supabase = createSupabaseBrowserClient();
       const { data, error } = await supabase.auth.signUp({
-        email: email.trim(),
+        email: cleanEmail,
         password,
         options: {
           data: {
             full_name: fullName.trim(),
           },
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: getAuthRedirectUrl("/auth/callback"),
         },
       });
 
@@ -79,7 +87,6 @@ export default function SignupPage() {
     }
   }
 
-  // Basic calculation for password strength (mock matching the mockup styling)
   const isPasswordStrong = password.length >= 8;
 
   return (
@@ -92,7 +99,7 @@ export default function SignupPage() {
           </span>
         </div>
         <h1 className="font-headline text-2xl font-bold tracking-tight text-on-surface mb-2">Crear una cuenta</h1>
-        <p className="text-on-surface-variant text-sm">Regístrate en SyncUT para proteger tu identidad digital académica.</p>
+        <p className="text-on-surface-variant text-sm">Regístrate con tu correo institucional de alumno UTCJ.</p>
       </div>
 
       {/* Form Card */}
@@ -130,7 +137,7 @@ export default function SignupPage() {
               <input
                 className="block w-full pl-10 pr-3 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg text-on-surface placeholder:text-on-surface-variant/30 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all sm:text-sm"
                 id="email"
-                placeholder="nombre@universidad.edu.mx"
+                placeholder="Al25320794@utcj.edu.mx"
                 type="email"
                 autoComplete="email"
                 value={email}

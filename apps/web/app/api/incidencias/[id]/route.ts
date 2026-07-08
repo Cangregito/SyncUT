@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
+import { hasPermission, toUserRole } from "@/lib/auth/roles";
 import { createSupabaseRequestClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -13,6 +14,7 @@ type IncidentUpdatePayload = {
   priority?: "alta" | "media" | "baja";
   status?: "abierta" | "en_proceso" | "resuelta" | "cerrada";
   assigned_to?: string | null;
+  resolution_summary?: string | null;
   updated_at: string;
   resolved_at?: string | null;
 };
@@ -22,6 +24,11 @@ const updateIncidentSchema = z
     priority: z.enum(["alta", "media", "baja"]).optional(),
     status: z.enum(["abierta", "en_proceso", "resuelta", "cerrada"]).optional(),
     assigned_to: z.string().uuid().nullable().optional(),
+    resolution_summary: z.string().trim().min(15).nullable().optional(),
+  })
+  .refine((value) => !["resuelta", "cerrada"].includes(value.status ?? "") || Boolean(value.resolution_summary), {
+    message: "Resolver o cerrar requiere un resumen de al menos 15 caracteres.",
+    path: ["resolution_summary"],
   })
   .refine((value) => Object.keys(value).length > 0, {
     message: "Debes enviar al menos un campo para actualizar.",
@@ -38,7 +45,8 @@ const incidentSelect = `
   status,
   created_at,
   updated_at,
-  resolved_at
+  resolved_at,
+  resolution_summary
 `;
 
 async function getIncidentId(context: RouteContext) {
@@ -46,7 +54,7 @@ async function getIncidentId(context: RouteContext) {
   return params.id;
 }
 
-async function requireStaff(
+async function requireIncidentResolver(
   supabase: Awaited<ReturnType<typeof createSupabaseRequestClient>>["supabase"],
   userId: string,
 ) {
@@ -60,7 +68,7 @@ async function requireStaff(
     return false;
   }
 
-  return ["admin", "coordinator", "tutor", "teacher"].includes(data.role);
+  return hasPermission(toUserRole(data.role), "incidents:resolve");
 }
 
 function validationError(error: z.ZodError) {
@@ -145,12 +153,12 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     );
   }
 
-  const isStaff = await requireStaff(supabase, user.id);
+  const canResolveIncident = await requireIncidentResolver(supabase, user.id);
 
-  if (!isStaff) {
+  if (!canResolveIncident) {
     return NextResponse.json(
       {
-        error: "Solo staff puede actualizar incidencias",
+        error: "Solo coordinacion o administracion puede resolver incidencias",
       },
       { status: 403 },
     );
@@ -171,6 +179,9 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   if (parsed.data.status) {
     updatePayload.resolved_at = ["resuelta", "cerrada"].includes(parsed.data.status)
       ? new Date().toISOString()
+      : null;
+    updatePayload.resolution_summary = ["resuelta", "cerrada"].includes(parsed.data.status)
+      ? parsed.data.resolution_summary ?? null
       : null;
   }
 

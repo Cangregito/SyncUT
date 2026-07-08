@@ -5,24 +5,11 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { createSupabaseBrowserClient } from "@plataforma/sdk/client";
 
-import type { UserRole } from "@/lib/auth/roles";
-
-type NavigationItem = {
-  href: string;
-  label: string;
-  icon: string;
-  squad?: string;
-};
-
-const navigationLinks: NavigationItem[] = [
-  { href: "/dashboard", label: "Dashboard", icon: "dashboard" },
-  { href: "/justificaciones", label: "Justificaciones", icon: "gavel", squad: "Squad 1" },
-  { href: "/citas", label: "Citas con Tutor", icon: "calendar_month", squad: "Squad 3" },
-  { href: "/notificaciones", label: "Notificaciones", icon: "notifications", squad: "Squad 4" },
-  { href: "/incidencias", label: "Reportes Incidencias", icon: "rule", squad: "Squad 5" },
-  { href: "/chatbot", label: "Asistente Chatbot", icon: "chat", squad: "Squad 6" },
-  { href: "/admin", label: "Panel Gobernanza", icon: "monitoring", squad: "Admin Master" },
-];
+import {
+  getModulesForRole,
+  ROLE_LABELS,
+  type UserRole,
+} from "@/lib/auth/roles";
 
 export function DashboardShell({
   children,
@@ -37,10 +24,16 @@ export function DashboardShell({
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
-  const isAdmin = role === "admin";
+  const [activeHeaderMenu, setActiveHeaderMenu] = useState<
+    "settings" | "profile" | null
+  >(null);
+  const navigationLinks = getModulesForRole(role);
+  const roleLabel = ROLE_LABELS[role];
+  const initials = email ? email.substring(0, 2).toUpperCase() : "US";
 
   async function handleLogout() {
     setIsSigningOut(true);
+    setActiveHeaderMenu(null);
     const supabase = createSupabaseBrowserClient();
     await supabase.auth.signOut();
     router.replace("/login");
@@ -65,7 +58,6 @@ export function DashboardShell({
         {/* Navigation Links */}
         <div className="flex-1 px-3 space-y-1">
           {navigationLinks
-            .filter((item) => item.href !== "/admin" || isAdmin)
             .map((item) => {
               const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
               return (
@@ -105,7 +97,7 @@ export function DashboardShell({
             </div>
             <div className="overflow-hidden">
               <p className="text-xs font-semibold text-on-surface truncate">{email}</p>
-              <p className="text-[9px] text-on-surface-variant">{role}</p>
+              <p className="text-[9px] text-on-surface-variant">{roleLabel}</p>
             </div>
           </div>
           <button
@@ -152,7 +144,6 @@ export function DashboardShell({
             {/* Links */}
             <div className="flex-1 space-y-1">
               {navigationLinks
-                .filter((item) => item.href !== "/admin" || isAdmin)
                 .map((item) => {
                   const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
                   return (
@@ -188,6 +179,7 @@ export function DashboardShell({
                 </div>
                 <div className="overflow-hidden">
                   <p className="text-xs font-semibold text-on-surface truncate">{email}</p>
+                  <p className="text-[9px] text-on-surface-variant">{roleLabel}</p>
                 </div>
               </div>
               <button
@@ -225,6 +217,16 @@ export function DashboardShell({
 
           {/* Right Actions */}
           <div className="flex items-center gap-4">
+            {activeHeaderMenu ? (
+              <button
+                type="button"
+                aria-label="Cerrar menu superior"
+                className="fixed inset-0 z-40 cursor-default"
+                onClick={() => setActiveHeaderMenu(null)}
+                tabIndex={-1}
+              />
+            ) : null}
+
             {/* Search */}
             <div className="relative hidden sm:block">
               <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">
@@ -238,19 +240,128 @@ export function DashboardShell({
             </div>
 
             {/* Notifications */}
-            <button className="text-on-surface-variant hover:text-on-surface transition-colors duration-200 cursor-pointer relative">
+            <Link
+              href="/notificaciones?estado=no-leidas"
+              aria-label="Abrir notificaciones no leidas"
+              title="Notificaciones"
+              className="text-on-surface-variant hover:text-on-surface transition-colors duration-200 cursor-pointer relative focus:outline-none focus:ring-2 focus:ring-primary rounded-full p-1"
+            >
               <span className="material-symbols-outlined">notifications</span>
               <span className="absolute top-0 right-0 w-2 h-2 bg-primary rounded-full"></span>
-            </button>
+            </Link>
 
             {/* Settings */}
-            <button className="text-on-surface-variant hover:text-on-surface transition-colors duration-200 cursor-pointer">
-              <span className="material-symbols-outlined">settings</span>
-            </button>
+            <div className="relative">
+              <button
+                type="button"
+                aria-label="Abrir configuracion"
+                aria-expanded={activeHeaderMenu === "settings"}
+                title="Configuracion"
+                onClick={() =>
+                  setActiveHeaderMenu((current) =>
+                    current === "settings" ? null : "settings"
+                  )
+                }
+                className="text-on-surface-variant hover:text-on-surface transition-colors duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary rounded-full p-1"
+              >
+                <span className="material-symbols-outlined">settings</span>
+              </button>
+
+              {activeHeaderMenu === "settings" ? (
+                <div className="absolute right-0 top-10 z-50 w-72 rounded-lg border border-outline-variant bg-surface-container shadow-xl overflow-hidden">
+                  <div className="px-4 py-3 border-b border-outline-variant">
+                    <p className="text-sm font-semibold text-on-surface">Configuracion rapida</p>
+                    <p className="text-xs text-on-surface-variant">
+                      Accesos directos del portal.
+                    </p>
+                  </div>
+                  <div className="p-2">
+                    <Link
+                      href="/notificaciones#preferencias"
+                      onClick={() => setActiveHeaderMenu(null)}
+                      className="flex items-center gap-3 rounded px-3 py-2 text-sm text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">tune</span>
+                      Preferencias de notificaciones
+                    </Link>
+                    <Link
+                      href="/dashboard"
+                      onClick={() => setActiveHeaderMenu(null)}
+                      className="flex items-center gap-3 rounded px-3 py-2 text-sm text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">dashboard_customize</span>
+                      Panel de mi rol
+                    </Link>
+                    <Link
+                      href="/chatbot"
+                      onClick={() => setActiveHeaderMenu(null)}
+                      className="flex items-center gap-3 rounded px-3 py-2 text-sm text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">support_agent</span>
+                      Ayuda institucional
+                    </Link>
+                  </div>
+                </div>
+              ) : null}
+            </div>
 
             {/* Profile Avatar */}
-            <div className="w-8 h-8 rounded-full overflow-hidden border border-outline-variant ml-2 bg-surface-container-highest flex items-center justify-center text-xs font-bold text-primary">
-              {email ? email.substring(0, 2).toUpperCase() : "US"}
+            <div className="relative">
+              <button
+                type="button"
+                aria-label="Abrir menu de perfil"
+                aria-expanded={activeHeaderMenu === "profile"}
+                title="Perfil"
+                onClick={() =>
+                  setActiveHeaderMenu((current) =>
+                    current === "profile" ? null : "profile"
+                  )
+                }
+                className="w-8 h-8 rounded-full overflow-hidden border border-outline-variant ml-2 bg-surface-container-highest flex items-center justify-center text-xs font-bold text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+              >
+                {initials}
+              </button>
+
+              {activeHeaderMenu === "profile" ? (
+                <div className="absolute right-0 top-10 z-50 w-80 rounded-lg border border-outline-variant bg-surface-container shadow-xl overflow-hidden">
+                  <div className="px-4 py-4 border-b border-outline-variant flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-surface-container-highest border border-outline-variant flex items-center justify-center text-sm font-bold text-primary">
+                      {initials}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-on-surface truncate">{email}</p>
+                      <p className="text-xs text-on-surface-variant">{roleLabel}</p>
+                    </div>
+                  </div>
+                  <div className="p-2">
+                    <Link
+                      href="/dashboard"
+                      onClick={() => setActiveHeaderMenu(null)}
+                      className="flex items-center gap-3 rounded px-3 py-2 text-sm text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">account_circle</span>
+                      Ver mi panel
+                    </Link>
+                    <Link
+                      href="/notificaciones"
+                      onClick={() => setActiveHeaderMenu(null)}
+                      className="flex items-center gap-3 rounded px-3 py-2 text-sm text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">notifications</span>
+                      Mis notificaciones
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      disabled={isSigningOut}
+                      className="w-full flex items-center gap-3 rounded px-3 py-2 text-sm text-error hover:bg-error-container/20 text-left disabled:opacity-60"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">logout</span>
+                      {isSigningOut ? "Cerrando..." : "Cerrar sesion"}
+                    </button>
+                  </div>
+                </div>
+              ) : null}
             </div>
           </div>
         </header>
