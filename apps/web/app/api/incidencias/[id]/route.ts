@@ -57,6 +57,8 @@ async function getIncidentId(context: RouteContext) {
 async function requireIncidentResolver(
   supabase: Awaited<ReturnType<typeof createSupabaseRequestClient>>["supabase"],
   userId: string,
+  incidentId: string,
+  nextStatus?: IncidentUpdatePayload["status"],
 ) {
   const { data, error } = await supabase
     .from("profiles")
@@ -68,7 +70,34 @@ async function requireIncidentResolver(
     return false;
   }
 
-  return hasPermission(toUserRole(data.role), "incidents:resolve");
+  const role = toUserRole(data.role);
+  if (hasPermission(role, "incidents:resolve")) {
+    return true;
+  }
+
+  if (role !== "tutor" || nextStatus !== "cerrada") {
+    return false;
+  }
+
+  const { data: incident } = await supabase
+    .from("incidents")
+    .select("reported_by")
+    .eq("id", incidentId)
+    .maybeSingle();
+
+  if (!incident) {
+    return false;
+  }
+
+  const { data: assignment } = await supabase
+    .from("tutorship_assignments")
+    .select("id")
+    .eq("tutor_id", userId)
+    .eq("student_id", incident.reported_by)
+    .eq("status", "active")
+    .maybeSingle();
+
+  return Boolean(assignment);
 }
 
 function validationError(error: z.ZodError) {
@@ -153,22 +182,22 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     );
   }
 
-  const canResolveIncident = await requireIncidentResolver(supabase, user.id);
-
-  if (!canResolveIncident) {
-    return NextResponse.json(
-      {
-        error: "Solo coordinacion o administracion puede resolver incidencias",
-      },
-      { status: 403 },
-    );
-  }
-
   const body = await request.json().catch(() => null);
   const parsed = updateIncidentSchema.safeParse(body);
 
   if (!parsed.success) {
     return validationError(parsed.error);
+  }
+
+  const canResolveIncident = await requireIncidentResolver(supabase, user.id, id, parsed.data.status);
+
+  if (!canResolveIncident) {
+    return NextResponse.json(
+      {
+        error: "Solo coordinacion, administracion o el tutor directo puede cerrar incidencias de su alumno",
+      },
+      { status: 403 },
+    );
   }
 
   const updatePayload: IncidentUpdatePayload = {

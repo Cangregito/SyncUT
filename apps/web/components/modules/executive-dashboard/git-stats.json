@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-07-09T00:13:07.187Z",
-  "headCommit": "564c796262f8a0978ac71af232c00fbbd3cb7af1",
+  "generatedAt": "2026-07-09T00:39:28.767Z",
+  "headCommit": "3a66cad704f4b195ec519b34b151f83730fce7e5",
   "githubAvailable": true,
-  "totalCommits": 144,
-  "totalPRs": 22,
+  "totalCommits": 145,
+  "totalPRs": 23,
   "mergedPRs": 21,
-  "openPRs": 0,
+  "openPRs": 1,
   "commitsBySquad": [
     {
       "squad": "S1 (Justificaciones)",
@@ -33,7 +33,7 @@
     },
     {
       "squad": "Admin (Dashboard Gobernanza)",
-      "progreso": 70
+      "progreso": 71
     }
   ],
   "prsBySquad": [
@@ -44,7 +44,7 @@
     },
     {
       "squad": "S2 (Autenticación)",
-      "total": 5,
+      "total": 6,
       "closed": 5
     },
     {
@@ -88,7 +88,7 @@
     },
     {
       "week": "Actual",
-      "commits": 15
+      "commits": 16
     }
   ],
   "moduleEvidence": [
@@ -127,11 +127,11 @@
       "href": "/login",
       "description": "Controla acceso, registro, recuperacion de contrasena, perfiles y proteccion de rutas por rol.",
       "evidence": "El modulo acredita apoyo en identidad, acceso seguro, flujos de login/signup y recuperacion con Supabase Auth.",
-      "totalInteractions": 29,
+      "totalInteractions": 30,
       "commits": 24,
-      "pullRequests": 5,
+      "pullRequests": 6,
       "mergedPullRequests": 5,
-      "openPullRequests": 0,
+      "openPullRequests": 1,
       "contributors": [
         "Alan79238",
         "Jassiel García",
@@ -139,11 +139,11 @@
         "Ángel Zataráin"
       ],
       "lastActivity": {
-        "type": "commit",
-        "title": "fix: normalize seeded auth users",
-        "date": "06 jul 2026",
-        "time": "10:16",
-        "iso": "2026-07-06T16:16:19.000Z"
+        "type": "pull_request_open",
+        "title": "PR #23: Feature/squad 2 authentication",
+        "date": "08 jul 2026",
+        "time": "18:28",
+        "iso": "2026-07-09T00:28:30.000Z"
       }
     },
     {
@@ -257,8 +257,8 @@
       "href": "/admin",
       "description": "Consolida datos de Git/GitHub, Supabase, auditoria, despliegues y estado ejecutivo de la plataforma.",
       "evidence": "El modulo muestra evidencia de coordinacion, integracion de PRs, produccion y seguimiento del avance general.",
-      "totalInteractions": 73,
-      "commits": 70,
+      "totalInteractions": 74,
+      "commits": 71,
       "pullRequests": 3,
       "mergedPullRequests": 2,
       "openPullRequests": 0,
@@ -268,14 +268,26 @@
       ],
       "lastActivity": {
         "type": "commit",
-        "title": "fix: restore tutor teacher operational visibility",
-        "date": "07 jul 2026",
-        "time": "08:39",
-        "iso": "2026-07-07T14:39:52.000Z"
+        "title": "test: add role visibility smoke check",
+        "date": "08 jul 2026",
+        "time": "18:15",
+        "iso": "2026-07-09T00:15:10.000Z"
       }
     }
   ],
   "recentActivities": [
+    {
+      "user": "Jassiel García",
+      "action": "test",
+      "description": "test: add role visibility smoke check",
+      "module": "Dashboard Base",
+      "squad": "Admin Master",
+      "sprint": "Sprint 3",
+      "date": "08-jul",
+      "time": "18:15",
+      "status": "Completado",
+      "impact": "Medio"
+    },
     {
       "user": "Jassiel García",
       "action": "hotfix",
@@ -445,15 +457,15 @@
       "impact": "Alto"
     },
     {
-      "user": "Jassiel García",
-      "action": "merge",
-      "description": "Merge remote-tracking branch 'origin/feature/squad-1-justifications'",
-      "module": "Justificaciones",
-      "squad": "Squad 1",
+      "user": "Langostin",
+      "action": "approval",
+      "description": "Pull Request #23: Feature/squad 2 authentication (Estado: OPEN)",
+      "module": "Autenticación",
+      "squad": "Squad 2",
       "sprint": "Sprint 3",
-      "date": "03-jul",
-      "time": "18:14",
-      "status": "Completado",
+      "date": "08-jul",
+      "time": "18:28",
+      "status": "Abierto",
       "impact": "Alto"
     },
     {
@@ -503,18 +515,6 @@
       "time": "19:29",
       "status": "Fusionado",
       "impact": "Alto"
-    },
-    {
-      "user": "karlaclp",
-      "action": "approval",
-      "description": "Pull Request #18: Prueba de push en Front End (Estado: CLOSED)",
-      "module": "Justificaciones",
-      "squad": "Squad 1",
-      "sprint": "Sprint 3",
-      "date": "29-jun",
-      "time": "19:09",
-      "status": "Fusionado",
-      "impact": "Alto"
     }
   ],
   "owners": [
@@ -522,9 +522,9 @@
       "name": "Jassiel García",
       "squad": "Admin Master",
       "role": "Project Lead",
-      "tasks": 117,
+      "tasks": 118,
       "progress": 100,
-      "weekly": "113 commits · 4 PRs",
+      "weekly": "114 commits · 4 PRs",
       "prs": 4,
       "status": "activo"
     },
@@ -552,10 +552,10 @@
       "name": "Langostin",
       "squad": "Squad 2",
       "role": "Developer Autenticación",
-      "tasks": 7,
-      "progress": 70,
-      "weekly": "4 commits · 3 PRs",
-      "prs": 3,
+      "tasks": 8,
+      "progress": 80,
+      "weekly": "4 commits · 4 PRs",
+      "prs": 4,
       "status": "activo"
     },
     {

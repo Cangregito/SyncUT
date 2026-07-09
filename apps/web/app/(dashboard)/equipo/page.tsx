@@ -2,6 +2,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { Tables } from "@plataforma/types";
 
+import { SubmitButton } from "@/components/forms/submit-button";
 import { requireProfile } from "@/lib/auth/session";
 import { ROLE_LABELS } from "@/lib/auth/roles";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -139,6 +140,7 @@ export default async function EquipoTutorialPage({
 
   const teams = (teamsData ?? []) as unknown as TutorTeam[];
   const activeTeam = teams.find((team) => team.is_active) ?? teams[0] ?? null;
+  const studentTeam = profile.role === "student" ? activeTeam : null;
 
   const { data: teacherDirectoryData } = canSendTeacherMessages
     ? await supabase.rpc("get_teacher_directory")
@@ -188,7 +190,23 @@ export default async function EquipoTutorialPage({
 
       {profile.role === "student" ? (
         <section className="rounded-lg border border-outline-variant bg-surface-container p-5">
-          <h2 className="text-sm font-semibold uppercase text-on-surface-variant">Unirse por código</h2>
+          <h2 className="text-sm font-semibold uppercase text-on-surface-variant">Mi equipo tutorial</h2>
+          {studentTeam ? (
+            <div className="mt-4 rounded border border-outline-variant bg-surface p-4">
+              <p className="text-base font-semibold text-on-surface">{studentTeam.name}</p>
+              <p className="mt-1 text-sm text-on-surface-variant">
+                Tutor: {studentTeam.tutor?.full_name ?? studentTeam.tutor?.email ?? studentTeam.tutor_id}
+              </p>
+              <p className="mt-3 text-xs text-on-surface-variant">
+                Desde este equipo se conectan tus citas, justificaciones y avisos tutoriales.
+              </p>
+            </div>
+          ) : (
+            <p className="mt-4 rounded border border-outline-variant bg-surface p-3 text-sm text-on-surface-variant">
+              Todavía no perteneces a un equipo. Ingresa el código que te compartió tu tutor.
+            </p>
+          )}
+          <h3 className="mt-5 text-xs font-semibold uppercase text-on-surface-variant">Unirse por código</h3>
           <form action={joinTeam} className="mt-4 flex flex-col gap-3 sm:flex-row">
             <input
               name="join_code"
@@ -197,9 +215,9 @@ export default async function EquipoTutorialPage({
               maxLength={6}
               required
             />
-            <button className="rounded bg-primary px-4 py-2 text-sm font-bold text-on-primary">
+            <SubmitButton className="rounded bg-primary px-4 py-2 text-sm font-bold text-on-primary disabled:opacity-60" pendingLabel="Entrando...">
               Entrar al equipo
-            </button>
+            </SubmitButton>
           </form>
         </section>
       ) : null}
@@ -213,9 +231,9 @@ export default async function EquipoTutorialPage({
               className="w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface sm:max-w-md"
               placeholder="Equipo TSU Desarrollo de Software"
             />
-            <button className="rounded bg-primary px-4 py-2 text-sm font-bold text-on-primary">
+            <SubmitButton className="rounded bg-primary px-4 py-2 text-sm font-bold text-on-primary disabled:opacity-60" pendingLabel="Generando...">
               Generar código
-            </button>
+            </SubmitButton>
           </form>
         </section>
       ) : null}
@@ -305,9 +323,9 @@ export default async function EquipoTutorialPage({
               />
             </div>
             <div className="md:col-span-2">
-              <button className="rounded bg-primary px-4 py-2 text-sm font-bold text-on-primary">
+              <SubmitButton className="rounded bg-primary px-4 py-2 text-sm font-bold text-on-primary disabled:opacity-60" pendingLabel="Enviando...">
                 Enviar notificación
-              </button>
+              </SubmitButton>
             </div>
           </form>
         </section>

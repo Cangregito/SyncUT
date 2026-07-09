@@ -218,7 +218,19 @@ async function updateIncidentStatus(formData: FormData) {
     return;
   }
 
-  if (!hasPermission(profile.role, "incidents:resolve")) {
+  const canResolveByPermission = hasPermission(profile.role, "incidents:resolve");
+  const { data: tutorAssignment } = profile.role === "tutor"
+    ? await supabase
+        .from("tutorship_assignments")
+        .select("id")
+        .eq("tutor_id", profile.id)
+        .eq("student_id", incident.reported_by)
+        .eq("status", "active")
+        .maybeSingle()
+    : { data: null };
+  const canCloseAsDirectTutor = profile.role === "tutor" && status === "cerrada" && Boolean(tutorAssignment);
+
+  if (!canResolveByPermission && !canCloseAsDirectTutor) {
     return;
   }
 
@@ -405,7 +417,7 @@ export default async function IncidenciasPage({
         .order("created_at", { ascending: true })
     : { data: [] };
   const comments = (commentsData ?? []) as unknown as IncidentCommentRow[];
-  const [{ data: staffData }, { data: auditData }] = await Promise.all([
+  const [{ data: staffData }, { data: auditData }, { data: tutorAssignmentsData }] = await Promise.all([
     supabase
       .from("profiles")
       .select("id, full_name, email, role")
@@ -432,9 +444,17 @@ export default async function IncidenciasPage({
           .in("incident_id", incidents.map((item) => item.id))
           .order("created_at", { ascending: false })
       : Promise.resolve({ data: [] }),
+    profile.role === "tutor"
+      ? supabase
+          .from("tutorship_assignments")
+          .select("student_id")
+          .eq("tutor_id", profile.id)
+          .eq("status", "active")
+      : Promise.resolve({ data: [] }),
   ]);
   const staff = (staffData ?? []) as StaffProfile[];
   const auditEvents = (auditData ?? []) as unknown as IncidentAuditRow[];
+  const directTutorStudentIds = new Set((tutorAssignmentsData ?? []).map((item) => item.student_id));
   const commentsByIncident = comments.reduce<Map<string, IncidentCommentRow[]>>((acc, comment) => {
     const current = acc.get(comment.incident_id) ?? [];
     current.push(comment);
@@ -526,7 +546,7 @@ export default async function IncidenciasPage({
                 : profile.role === "teacher"
                   ? "Comenta incidencias academicas asignadas con evidencia docente."
                   : profile.role === "tutor"
-                    ? "Aporta seguimiento tutorial y contexto del estudiante en casos visibles."
+                    ? "Aporta seguimiento tutorial y puede cerrar incidencias de alumnos de su equipo."
                     : "Supervisa la bitacora completa y puede cerrar casos criticos."}
             </p>
           </section>
@@ -591,7 +611,7 @@ export default async function IncidenciasPage({
                   </p>
                 ) : null}
 
-                {(canAssignIncident || canResolveIncident) ? (
+                {(canAssignIncident || canResolveIncident || directTutorStudentIds.has(item.reported_by)) ? (
                   <div className="mt-4 space-y-3">
                   {canAssignIncident ? (
                   <form action={assignIncident} className="flex flex-col gap-2 sm:flex-row">
@@ -609,14 +629,16 @@ export default async function IncidenciasPage({
                     </button>
                   </form>
                   ) : null}
-                  {canResolveIncident ? (
+                  {(canResolveIncident || directTutorStudentIds.has(item.reported_by)) ? (
                   <div className="space-y-2">
+                    {canResolveIncident ? (
                     <form action={updateIncidentStatus}>
                       <input type="hidden" name="id" value={item.id} />
                       <button name="status" value="en_proceso" className="rounded border border-outline-variant px-3 py-2 text-xs font-semibold text-on-surface-variant">
                         En proceso
                       </button>
                     </form>
+                    ) : null}
                     <form action={updateIncidentStatus} className="flex flex-col gap-2">
                       <input type="hidden" name="id" value={item.id} />
                       <textarea
@@ -628,9 +650,11 @@ export default async function IncidenciasPage({
                         className="rounded border border-outline-variant bg-surface-container px-3 py-2 text-xs text-on-surface"
                       />
                       <div className="flex flex-wrap gap-2">
+                        {canResolveIncident ? (
                         <button name="status" value="resuelta" className="rounded border border-primary px-3 py-2 text-xs font-semibold text-primary">
                           Resolver
                         </button>
+                        ) : null}
                         <button name="status" value="cerrada" className="rounded border border-outline px-3 py-2 text-xs font-semibold text-on-surface-variant">
                           Cerrar
                         </button>

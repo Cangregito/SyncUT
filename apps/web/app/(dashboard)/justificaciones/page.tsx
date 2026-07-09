@@ -1,6 +1,8 @@
 import { revalidatePath } from "next/cache";
 import type { Tables } from "@plataforma/types";
 
+import { SubmitButton } from "@/components/forms/submit-button";
+import { JustificationForm } from "@/components/justifications/justification-form";
 import { requireProfile } from "@/lib/auth/session";
 import { hasPermission } from "@/lib/auth/roles";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -61,101 +63,6 @@ function statusClass(status: JustificationStatus) {
   if (status === "rejected") return "bg-rose-100 text-rose-800 border-rose-200";
   if (status === "requires_more_info") return "bg-amber-100 text-amber-800 border-amber-200";
   return "bg-sky-100 text-sky-800 border-sky-200";
-}
-
-function hasCompleteEvidence(fileName: string, filePath: string) {
-  return (!fileName && !filePath) || (fileName.length >= 3 && filePath.length >= 3);
-}
-
-async function createJustification(formData: FormData) {
-  "use server";
-
-  const profile = await requireProfile();
-  if (profile.role !== "student") {
-    return;
-  }
-
-  const supabase = await createSupabaseServerClient();
-
-  const categoryValue = String(formData.get("category") ?? "personal");
-  const category = isCategory(categoryValue) ? categoryValue : "personal";
-  const title = String(formData.get("title") ?? "").trim();
-  const description = String(formData.get("description") ?? "").trim();
-  const startDate = String(formData.get("start_date") ?? "");
-  const endDate = String(formData.get("end_date") ?? "");
-  const fileName = String(formData.get("file_name") ?? "").trim();
-  const filePath = String(formData.get("file_path") ?? "").trim();
-
-  if (
-    title.length < 5 ||
-    description.length < 15 ||
-    !startDate ||
-    !endDate ||
-    endDate < startDate ||
-    !hasCompleteEvidence(fileName, filePath)
-  ) {
-    return;
-  }
-
-  const dueDate = new Date(`${endDate}T00:00:00`);
-  dueDate.setDate(dueDate.getDate() + 3);
-
-  const { data: justification } = await supabase
-    .from("justifications")
-    .insert({
-      student_id: profile.id,
-      category,
-      title,
-      description,
-      start_date: startDate,
-      end_date: endDate,
-      due_date: dueDate.toISOString().slice(0, 10),
-      folio: `JUS-${Date.now().toString(36).toUpperCase()}`,
-      status: "pending",
-    })
-    .select("id")
-    .single();
-
-  if (!justification) {
-    return;
-  }
-
-  await supabase.from("justification_audit_events").insert({
-    justification_id: justification.id,
-    actor_id: profile.id,
-    event_type: "submitted",
-    to_status: "pending",
-    note: "Solicitud enviada desde el portal.",
-  });
-
-  if (fileName && filePath) {
-    await supabase.from("justification_files").insert({
-      justification_id: justification.id,
-      file_name: fileName,
-      file_path: filePath,
-      content_type: "application/octet-stream",
-      file_size_bytes: 0,
-    });
-
-    await supabase.from("justification_audit_events").insert({
-      justification_id: justification.id,
-      actor_id: profile.id,
-      event_type: "file_added",
-      note: `Evidencia registrada: ${fileName}.`,
-    });
-  }
-
-  await supabase.rpc("emit_notification", {
-    p_user_id: profile.id,
-    p_event_type: "justification.submitted",
-    p_title: "Justificacion enviada",
-    p_body: `Tu solicitud "${title}" quedo pendiente de revision.`,
-    p_metadata: { justification_id: justification.id },
-    p_triggered_by: profile.id,
-  });
-
-  revalidatePath("/justificaciones");
-  revalidatePath("/dashboard");
 }
 
 async function updateJustificationStatus(formData: FormData) {
@@ -430,40 +337,14 @@ export default async function JustificacionesPage({
                   <option key={value} value={value}>{label}</option>
                 ))}
               </select>
-              <button className="w-full rounded bg-primary-container px-4 py-2 text-sm font-semibold text-on-primary-container">
+              <SubmitButton className="w-full rounded bg-primary-container px-4 py-2 text-sm font-semibold text-on-primary-container" pendingLabel="Filtrando...">
                 Aplicar filtros
-              </button>
+              </SubmitButton>
             </div>
           </form>
 
           {canCreateJustification ? (
-          <form action={createJustification} className="rounded-lg border border-outline-variant bg-surface-container p-5">
-            <h2 className="text-sm font-semibold uppercase text-on-surface-variant">Nueva solicitud</h2>
-            <div className="mt-4 space-y-3">
-              <input name="title" required minLength={5} maxLength={120} placeholder="Titulo de la justificacion" className="w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
-              <select name="category" className="w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface">
-                {Object.entries(categoryLabels).map(([value, label]) => (
-                  <option key={value} value={value}>{label}</option>
-                ))}
-              </select>
-              <div className="grid grid-cols-2 gap-3">
-                <label className="text-xs font-medium text-on-surface-variant">
-                  Inicio
-                  <input name="start_date" required type="date" className="mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
-                </label>
-                <label className="text-xs font-medium text-on-surface-variant">
-                  Fin
-                  <input name="end_date" required type="date" className="mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
-                </label>
-              </div>
-              <textarea name="description" required minLength={15} rows={4} placeholder="Describe el motivo y el impacto academico" className="w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
-              <input name="file_name" minLength={3} maxLength={160} placeholder="Nombre de evidencia (si aplica)" className="w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
-              <input name="file_path" minLength={3} maxLength={260} placeholder="Ruta o referencia de evidencia (si aplica)" className="w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
-              <button className="w-full rounded bg-primary-container px-4 py-2 text-sm font-semibold text-on-primary-container">
-                Enviar justificacion
-              </button>
-            </div>
-          </form>
+          <JustificationForm />
           ) : (
             <section className="rounded-lg border border-outline-variant bg-surface-container p-5">
               <h2 className="text-sm font-semibold uppercase text-on-surface-variant">Rol en justificaciones</h2>
@@ -571,19 +452,19 @@ export default async function JustificacionesPage({
                         <textarea name="review_notes" rows={3} placeholder="Nota para el alumno" className="mt-3 w-full rounded border border-outline-variant bg-surface-container px-3 py-2 text-sm text-on-surface" />
                         <div className="mt-3 grid grid-cols-1 gap-2">
                           {canResolveJustifications ? (
-                            <button name="status" value="approved" className="rounded border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800">
+                            <SubmitButton name="status" value="approved" className="rounded border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800" pendingLabel="Aprobando...">
                               Aprobar
-                            </button>
+                            </SubmitButton>
                           ) : null}
                           {canRequestMoreInfo ? (
-                            <button name="status" value="requires_more_info" className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800">
+                            <SubmitButton name="status" value="requires_more_info" className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800" pendingLabel="Enviando...">
                               Solicitar informacion
-                            </button>
+                            </SubmitButton>
                           ) : null}
                           {canResolveJustifications ? (
-                            <button name="status" value="rejected" className="rounded border border-rose-300 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-800">
+                            <SubmitButton name="status" value="rejected" className="rounded border border-rose-300 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-800" pendingLabel="Rechazando...">
                               Rechazar
-                            </button>
+                            </SubmitButton>
                           ) : null}
                         </div>
                       </form>
@@ -594,9 +475,9 @@ export default async function JustificacionesPage({
                       <input type="hidden" name="id" value={item.id} />
                       <h3 className="text-xs font-semibold uppercase text-on-surface-variant">Agregar nota</h3>
                       <textarea name="note" rows={3} required placeholder="Comentario interno o seguimiento" className="mt-3 w-full rounded border border-outline-variant bg-surface-container px-3 py-2 text-sm text-on-surface" />
-                      <button className="mt-3 w-full rounded bg-surface-container-highest px-3 py-2 text-xs font-semibold text-on-surface">
+                      <SubmitButton className="mt-3 w-full rounded bg-surface-container-highest px-3 py-2 text-xs font-semibold text-on-surface" pendingLabel="Guardando...">
                         Guardar nota
-                      </button>
+                      </SubmitButton>
                     </form>
                     ) : null}
                   </div>

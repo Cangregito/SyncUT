@@ -2,6 +2,7 @@ import { revalidatePath } from "next/cache";
 import type { Tables } from "@plataforma/types";
 
 import { ModalityDetailsFields } from "@/components/appointments/modality-details-fields";
+import { SubmitButton } from "@/components/forms/submit-button";
 import { requireProfile } from "@/lib/auth/session";
 import { hasPermission, type UserRole } from "@/lib/auth/roles";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -687,9 +688,9 @@ export default async function CitasPage() {
                 <ModalityDetailsFields mode="availability" />
               </div>
             </div>
-            <button className="mt-4 w-full rounded bg-primary-container px-4 py-2 text-sm font-semibold text-on-primary-container hover:bg-primary">
+            <SubmitButton className="mt-4 w-full rounded bg-primary-container px-4 py-2 text-sm font-semibold text-on-primary-container hover:bg-primary disabled:opacity-60" pendingLabel="Guardando...">
               Guardar disponibilidad
-            </button>
+            </SubmitButton>
           </form>
         ) : null}
 
@@ -742,13 +743,13 @@ export default async function CitasPage() {
               <textarea name="reason" required minLength={10} rows={4} className="mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
             </label>
           </div>
-          <button
-            type="submit"
+          <SubmitButton
             disabled={assignments.length === 0}
+            pendingLabel="Solicitando..."
             className="mt-4 w-full rounded bg-primary-container px-4 py-2 text-sm font-semibold text-on-primary-container hover:bg-primary disabled:opacity-50"
           >
             Solicitar cita
-          </button>
+          </SubmitButton>
         </form>
         ) : (
           <section className="rounded-lg border border-outline-variant bg-surface-container p-5">
@@ -826,17 +827,17 @@ export default async function CitasPage() {
                     <input type="hidden" name="id" value={item.id} />
                     {(canOverseeAppointments || item.tutor_id === profile.id) ? (
                       <>
-                        <button name="status" value="confirmada" className="rounded border border-primary px-3 py-2 text-xs font-semibold text-primary">
+                        <SubmitButton name="status" value="confirmada" className="rounded border border-primary px-3 py-2 text-xs font-semibold text-primary disabled:opacity-60" pendingLabel="Confirmando...">
                           Confirmar
-                        </button>
-                        <button name="status" value="completada" className="rounded border border-outline-variant px-3 py-2 text-xs font-semibold text-on-surface-variant">
+                        </SubmitButton>
+                        <SubmitButton name="status" value="completada" className="rounded border border-outline-variant px-3 py-2 text-xs font-semibold text-on-surface-variant disabled:opacity-60" pendingLabel="Completando...">
                           Completar
-                        </button>
+                        </SubmitButton>
                       </>
                     ) : null}
-                    <button name="status" value="cancelada" className="rounded border border-error px-3 py-2 text-xs font-semibold text-error">
+                    <SubmitButton name="status" value="cancelada" className="rounded border border-error px-3 py-2 text-xs font-semibold text-error disabled:opacity-60" pendingLabel="Cancelando...">
                       Cancelar
-                    </button>
+                    </SubmitButton>
                   </form>
                 ) : null}
                 {attendanceRecord ? (
@@ -867,9 +868,9 @@ export default async function CitasPage() {
                         className="rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface"
                       />
                     </div>
-                    <button className="mt-3 rounded bg-primary-container px-3 py-2 text-xs font-semibold text-on-primary-container">
+                    <SubmitButton className="mt-3 rounded bg-primary-container px-3 py-2 text-xs font-semibold text-on-primary-container disabled:opacity-60" pendingLabel="Guardando...">
                       Guardar asistencia
-                    </button>
+                    </SubmitButton>
                   </form>
                 ) : null}
                 {sessionNote ? (
@@ -907,9 +908,9 @@ export default async function CitasPage() {
                       placeholder="Recomendaciones"
                       className="mt-2 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface"
                     />
-                    <button className="mt-3 rounded bg-primary-container px-3 py-2 text-xs font-semibold text-on-primary-container">
+                    <SubmitButton className="mt-3 rounded bg-primary-container px-3 py-2 text-xs font-semibold text-on-primary-container disabled:opacity-60" pendingLabel="Guardando...">
                       Guardar seguimiento
-                    </button>
+                    </SubmitButton>
                   </form>
                 ) : null}
                 {itemAudit.length > 0 ? (
@@ -966,9 +967,9 @@ export default async function CitasPage() {
               {slot.tutor_id === profile.id || canOverseeAppointments ? (
                 <form action={deactivateAvailability} className="mt-3">
                   <input type="hidden" name="id" value={slot.id} />
-                  <button className="rounded border border-error px-3 py-2 text-xs font-semibold text-error">
+                  <SubmitButton className="rounded border border-error px-3 py-2 text-xs font-semibold text-error disabled:opacity-60" pendingLabel="Desactivando...">
                     Desactivar
-                  </button>
+                  </SubmitButton>
                 </form>
               ) : null}
             </article>
