@@ -16,6 +16,7 @@
     "@plataforma/ui": "workspace:*",
     "@plataforma/config": "workspace:*",
     "@plataforma/types": "workspace:*",
+    "xlsx": "^0.18.1",
     "@radix-ui/react-avatar": "^1.1.11",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-select": "^2.2.6",
