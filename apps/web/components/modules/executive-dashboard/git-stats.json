@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-07-09T00:39:28.767Z",
-  "headCommit": "3a66cad704f4b195ec519b34b151f83730fce7e5",
+  "generatedAt": "2026-07-11T00:20:25.370Z",
+  "headCommit": "0fca8a769a8b3dc3fe9eeb5c8431d7d5bdadb6c2",
   "githubAvailable": true,
-  "totalCommits": 145,
+  "totalCommits": 146,
   "totalPRs": 23,
   "mergedPRs": 21,
   "openPRs": 1,
@@ -33,7 +33,7 @@
     },
     {
       "squad": "Admin (Dashboard Gobernanza)",
-      "progreso": 71
+      "progreso": 72
     }
   ],
   "prsBySquad": [
@@ -76,19 +76,19 @@
   "commitsByWeek": [
     {
       "week": "W-3",
-      "commits": 7
-    },
-    {
-      "week": "W-2",
       "commits": 10
     },
     {
+      "week": "W-2",
+      "commits": 13
+    },
+    {
       "week": "W-1",
-      "commits": 42
+      "commits": 39
     },
     {
       "week": "Actual",
-      "commits": 16
+      "commits": 14
     }
   ],
   "moduleEvidence": [
@@ -257,8 +257,8 @@
       "href": "/admin",
       "description": "Consolida datos de Git/GitHub, Supabase, auditoria, despliegues y estado ejecutivo de la plataforma.",
       "evidence": "El modulo muestra evidencia de coordinacion, integracion de PRs, produccion y seguimiento del avance general.",
-      "totalInteractions": 74,
-      "commits": 71,
+      "totalInteractions": 75,
+      "commits": 72,
       "pullRequests": 3,
       "mergedPullRequests": 2,
       "openPullRequests": 0,
@@ -268,14 +268,26 @@
       ],
       "lastActivity": {
         "type": "commit",
-        "title": "test: add role visibility smoke check",
+        "title": "fix: harden tutor flow submissions and storage",
         "date": "08 jul 2026",
-        "time": "18:15",
-        "iso": "2026-07-09T00:15:10.000Z"
+        "time": "18:40",
+        "iso": "2026-07-09T00:40:40.000Z"
       }
     }
   ],
   "recentActivities": [
+    {
+      "user": "Jassiel García",
+      "action": "hotfix",
+      "description": "fix: harden tutor flow submissions and storage",
+      "module": "Dashboard Base",
+      "squad": "Admin Master",
+      "sprint": "Sprint 3",
+      "date": "08-jul",
+      "time": "18:40",
+      "status": "Completado",
+      "impact": "Medio"
+    },
     {
       "user": "Jassiel García",
       "action": "test",
@@ -445,18 +457,6 @@
       "impact": "Medio"
     },
     {
-      "user": "Jassiel García",
-      "action": "merge",
-      "description": "Merge remote-tracking branch 'origin/feature/squad-4-notifications'",
-      "module": "Notificaciones",
-      "squad": "Squad 4",
-      "sprint": "Sprint 3",
-      "date": "03-jul",
-      "time": "18:14",
-      "status": "Completado",
-      "impact": "Alto"
-    },
-    {
       "user": "Langostin",
       "action": "approval",
       "description": "Pull Request #23: Feature/squad 2 authentication (Estado: OPEN)",
@@ -522,9 +522,9 @@
       "name": "Jassiel García",
       "squad": "Admin Master",
       "role": "Project Lead",
-      "tasks": 118,
+      "tasks": 119,
       "progress": 100,
-      "weekly": "114 commits · 4 PRs",
+      "weekly": "115 commits · 4 PRs",
       "prs": 4,
       "status": "activo"
     },

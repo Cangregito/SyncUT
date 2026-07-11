@@ -1,3 +1,5 @@
+const PRODUCTION_APP_URL = "https://sync-ut.vercel.app";
+
 export function getPublicAppUrl(): string {
   const configuredUrl = process.env.NEXT_PUBLIC_APP_URL?.trim();
 
@@ -5,11 +7,17 @@ export function getPublicAppUrl(): string {
     return configuredUrl.replace(/\/+$/, "");
   }
 
+  const vercelUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim() || process.env.VERCEL_URL?.trim();
+
+  if (vercelUrl) {
+    return `https://${vercelUrl.replace(/^https?:\/\//, "").replace(/\/+$/, "")}`;
+  }
+
   if (typeof window !== "undefined") {
     return window.location.origin;
   }
 
-  return "http://localhost:3000";
+  return PRODUCTION_APP_URL;
 }
 
 export function getAuthRedirectUrl(path = "/auth/callback"): string {
