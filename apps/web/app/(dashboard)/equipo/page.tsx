@@ -313,6 +313,13 @@ export default async function EquipoTutorialPage({
         </p>
       ) : null}
 
+      {requestedTeam ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-outline-variant bg-surface-container p-4">
+          <div className="flex items-center gap-3"><Link href="/equipo" className="grid h-9 w-9 place-items-center rounded-full border border-outline-variant text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface" aria-label="Volver a mis equipos"><span className="material-symbols-outlined">arrow_back</span></Link><div><p className="text-[10px] font-semibold uppercase text-primary">Espacio de trabajo</p><p className="font-bold text-on-surface">{requestedTeam.name}</p></div></div>
+          <span className="rounded-full bg-tertiary-container px-3 py-1 text-xs font-semibold text-on-tertiary-container">Equipo activo</span>
+        </div>
+      ) : <>
+
       <section className="grid gap-4 md:grid-cols-3">
         <div className="rounded-lg border border-outline-variant bg-surface-container p-5">
           <p className="text-xs uppercase text-on-surface-variant">Rol actual</p>
@@ -430,15 +437,16 @@ export default async function EquipoTutorialPage({
                   </div>
                 ))}
               </div>
-              <Link href={`/equipo?team=${team.id}#panel-equipo`} className={`mt-4 flex w-full items-center justify-center gap-2 rounded px-4 py-2.5 text-sm font-bold transition ${activeTeam?.id === team.id ? "bg-primary-container text-on-primary-container" : "border border-primary text-primary hover:bg-primary-container hover:text-on-primary-container"}`}>
+              <Link href={`/equipo?team=${team.id}`} className="mt-4 flex w-full items-center justify-center gap-2 rounded border border-primary px-4 py-2.5 text-sm font-bold text-primary transition hover:bg-primary-container hover:text-on-primary-container">
                 <span className="material-symbols-outlined text-[18px]">groups</span>
-                {activeTeam?.id === team.id ? "Equipo abierto" : "Entrar al equipo"}
+                Abrir espacio de trabajo
               </Link>
             </article>
             );
           })}
         </div>
       </section>
+      </>}
 
       {activeTeam ? (
         <section id="panel-equipo" className="scroll-mt-20 rounded-lg border border-primary/40 bg-surface-container p-5">
