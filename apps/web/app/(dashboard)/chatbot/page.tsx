@@ -3,6 +3,7 @@ import type { Tables } from "@plataforma/types";
 
 import { requireProfile } from "@/lib/auth/session";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { generateAiAnswer } from "@/lib/chatbot/ai";
 
 type ConversationRow = Tables<"chatbot_conversations">;
 type MessageRow = Tables<"chatbot_messages">;
@@ -52,7 +53,7 @@ async function startConversation() {
       conversation_id: conversation.id,
       sender_type: "system",
       sender_ref: "syncut",
-      content: "Conversacion iniciada. Las respuestas se basan en FAQ publicadas en la base de datos.",
+      content: "¡Hola! Soy Lumi, el asistente virtual de SyncUT. Puedo orientarte sobre tutorías, citas, justificaciones e incidencias. ¿En qué te ayudo?",
     });
   }
 
@@ -87,10 +88,43 @@ async function sendMessage(formData: FormData) {
     .select("id, category, question, answer, keywords, priority, status, source, requires_handoff, version, created_at, updated_at")
     .eq("status", "published");
 
+  const { data: history } = await supabase
+    .from("chatbot_messages")
+    .select("sender_type, content")
+    .eq("conversation_id", conversationId)
+    .order("created_at", { ascending: false })
+    .limit(8);
+
   const match = findFaqMatch(content, (faqs ?? []) as FaqRow[]);
   const now = new Date().toISOString();
 
-  if (match) {
+  const aiAnswer = await generateAiAnswer({
+    question: content,
+    history: [...(history ?? [])].reverse().slice(0, -1),
+    knowledge: (faqs ?? []) as FaqRow[],
+    userName: profile.fullName,
+  });
+
+  if (aiAnswer) {
+    await supabase.from("chatbot_messages").insert({
+      conversation_id: conversationId,
+      sender_type: "bot",
+      sender_ref: aiAnswer.model,
+      content: aiAnswer.content,
+      intent_detected: match?.category ?? "ai_conversation",
+      faq_entry_id: match?.id ?? null,
+      confidence_score: match ? 0.9 : 0.72,
+      payload: { provider: "groq", model: aiAnswer.model },
+    });
+
+    await supabase.from("chatbot_conversations").update({
+      current_topic: match?.category ?? "orientacion_general",
+      resolution_type: match ? "faq" : null,
+      confidence_score: match ? 0.9 : 0.72,
+      last_message_at: now,
+      updated_at: now,
+    }).eq("id", conversationId);
+  } else if (match) {
     await supabase.from("chatbot_messages").insert({
       conversation_id: conversationId,
       sender_type: "bot",
@@ -286,30 +320,39 @@ export default async function ChatbotPage() {
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-6">
       <header>
-        <p className="text-xs font-semibold uppercase tracking-wider text-primary">Squad 6</p>
+        <div className="flex items-center gap-3">
+          <span className="grid h-11 w-11 place-items-center rounded-2xl bg-primary-container text-xl text-on-primary-container">✦</span>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-primary">Lumi · Asistente con IA</p>
         <h1 className="mt-2 text-2xl md:text-3xl font-headline font-bold text-on-surface">
-          Asistente de Tutorias
+          Asistente de Tutorías
         </h1>
+          </div>
+        </div>
         <p className="mt-2 text-sm text-on-surface-variant">
-          Conversaciones, mensajes, FAQ y escalamiento guardados en Supabase.
+          Pregunta con tus propias palabras. Lumi usa IA y conocimiento oficial de SyncUT; puede equivocarse, así que las decisiones académicas siempre las confirma tu tutor.
         </p>
       </header>
 
       <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
-        <section className="rounded-lg border border-outline-variant bg-surface-container p-5">
+        <section className="overflow-hidden rounded-2xl border border-outline-variant bg-surface-container shadow-sm">
+          <div className="border-b border-outline-variant bg-gradient-to-r from-primary-container/70 to-tertiary-container/40 p-5">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="text-sm font-semibold uppercase text-on-surface-variant">Conversacion</h2>
+            <h2 className="text-sm font-semibold text-on-surface">Lumi está disponible</h2>
             {conversation ? (
               <span className="rounded bg-surface-container-highest px-2 py-1 text-[10px] font-semibold uppercase text-primary">
                 {conversation.status}
               </span>
             ) : null}
           </div>
+          </div>
+
+          <div className="p-5">
 
           {!conversation ? (
             <form action={startConversation} className="mt-4">
               <p className="rounded border border-outline-variant bg-surface p-4 text-sm text-on-surface-variant">
-                No hay una conversacion activa para tu usuario.
+                Inicia una conversación para recibir orientación personalizada.
               </p>
               <button className="mt-4 rounded bg-primary-container px-4 py-2 text-sm font-semibold text-on-primary-container">
                 Iniciar conversacion
@@ -317,18 +360,18 @@ export default async function ChatbotPage() {
             </form>
           ) : (
             <>
-              <div className="mt-4 max-h-[520px] space-y-3 overflow-y-auto pr-1">
+              <div className="mt-4 flex max-h-[560px] flex-col gap-4 overflow-y-auto pr-1">
                 {messages.map((message) => (
                   <div
                     key={message.id}
-                    className={`rounded border border-outline-variant p-3 ${
+                    className={`max-w-[88%] rounded-2xl px-4 py-3 ${
                       message.sender_type === "user"
-                        ? "bg-primary-container text-on-primary-container"
-                        : "bg-surface text-on-surface"
+                        ? "ml-auto rounded-br-sm bg-primary text-on-primary"
+                        : "mr-auto rounded-bl-sm border border-outline-variant bg-surface text-on-surface shadow-sm"
                     }`}
                   >
-                    <p className="text-xs font-semibold uppercase opacity-75">{message.sender_type}</p>
-                    <p className="mt-1 text-sm">{message.content}</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-wider opacity-70">{message.sender_type === "user" ? "Tú" : message.sender_type === "system" ? "SyncUT" : "Lumi · IA"}</p>
+                    <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed">{message.content}</p>
                   </div>
                 ))}
               </div>
@@ -339,11 +382,12 @@ export default async function ChatbotPage() {
                   <input
                     name="content"
                     required
-                    placeholder="Escribe tu consulta"
-                    className="min-w-0 flex-1 rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface"
+                    placeholder="Pregúntale algo a Lumi…"
+                    maxLength={1200}
+                    className="min-w-0 flex-1 rounded-2xl border border-outline-variant bg-surface px-4 py-3 text-sm text-on-surface shadow-inner"
                   />
-                  <button className="rounded bg-primary-container px-4 py-2 text-sm font-semibold text-on-primary-container">
-                    Enviar
+                  <button className="rounded-2xl bg-primary px-5 py-3 text-sm font-semibold text-on-primary">
+                    Enviar ↑
                   </button>
                 </form>
               ) : null}
@@ -372,11 +416,12 @@ export default async function ChatbotPage() {
               </form>
             </>
           )}
+          </div>
         </section>
 
         <aside className="space-y-6">
           <section className="rounded-lg border border-outline-variant bg-surface-container p-5">
-            <h2 className="text-sm font-semibold uppercase text-on-surface-variant">FAQ publicadas</h2>
+            <h2 className="text-sm font-semibold uppercase text-on-surface-variant">Temas que conozco</h2>
             <div className="mt-4 space-y-3">
               {faqs.length === 0 ? (
                 <p className="rounded border border-outline-variant bg-surface p-3 text-sm text-on-surface-variant">
