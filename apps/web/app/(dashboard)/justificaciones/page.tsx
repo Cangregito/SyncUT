@@ -1,4 +1,5 @@
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import type { Tables } from "@plataforma/types";
 
 import { SubmitButton } from "@/components/forms/submit-button";
@@ -170,6 +171,7 @@ export default async function JustificacionesPage({
   searchParams: Promise<{ estado?: string; categoria?: string; q?: string }>;
 }) {
   const profile = await requireProfile();
+  if (profile.role === "teacher") redirect("/docente");
   const params = await searchParams;
   const supabase = await createSupabaseServerClient();
   const canCreateJustification = profile.role === "student";
@@ -356,9 +358,7 @@ export default async function JustificacionesPage({
             <section className="rounded-lg border border-outline-variant bg-surface-container p-5">
               <h2 className="text-sm font-semibold uppercase text-on-surface-variant">Rol en justificaciones</h2>
               <p className="mt-3 text-sm text-on-surface-variant">
-                {profile.role === "teacher"
-                  ? "Aporta contexto de materia, asistencia y evidencia academica. No aprueba ni rechaza."
-                  : profile.role === "tutor"
+                {profile.role === "tutor"
                     ? "Da seguimiento al estudiante y puede solicitar informacion adicional antes de escalar."
                     : "Tutor o administracion resuelven el expediente con aprobacion, rechazo o solicitud de informacion."}
               </p>

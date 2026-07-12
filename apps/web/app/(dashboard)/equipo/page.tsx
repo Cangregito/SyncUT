@@ -159,6 +159,10 @@ async function sendTeacherMessage(formData: FormData) {
   redirect("/equipo?sent=true");
 }
 
+async function linkTeacher(formData: FormData) { "use server"; const profile=await requireProfile(); if(!["tutor","admin"].includes(profile.role)) redirect("/equipo?error=forbidden"); const teamId=String(formData.get("team_id")??""); const teacherId=String(formData.get("teacher_id")??""); const supabase=await createSupabaseServerClient(); const {error}=await supabase.rpc("link_teacher_to_tutor_team" as "get_teacher_directory",{p_team_id:teamId,p_teacher_id:teacherId} as never); if(error) redirect(`/equipo?team=${teamId}&error=${encodeURIComponent(error.message)}`); revalidatePath("/equipo"); redirect(`/equipo?team=${teamId}&linked=true`); }
+
+async function deliverJustification(formData: FormData) { "use server"; const profile=await requireProfile(); if(!["tutor","admin"].includes(profile.role)) redirect("/equipo?error=forbidden"); const teamId=String(formData.get("team_id")??""); const teacherId=String(formData.get("teacher_id")??""); const justificationId=String(formData.get("justification_id")??""); const supabase=await createSupabaseServerClient(); const {error}=await supabase.rpc("deliver_approved_justification" as "get_teacher_directory",{p_team_id:teamId,p_teacher_id:teacherId,p_justification_id:justificationId} as never); if(error) redirect(`/equipo?team=${teamId}&error=${encodeURIComponent(error.message)}`); revalidatePath("/equipo"); redirect(`/equipo?team=${teamId}&delivered=true`); }
+
 async function sendTeamAnnouncement(formData: FormData) {
   "use server";
   const profile = await requireProfile();
@@ -210,9 +214,10 @@ async function scheduleStudentAppointment(formData: FormData) {
 export default async function EquipoTutorialPage({
   searchParams,
 }: {
-  searchParams: Promise<{ team?: string; created?: string; joined?: string; sent?: string; announced?: string; scheduled?: string; published?: string; error?: string }>;
+  searchParams: Promise<{ team?: string; created?: string; joined?: string; sent?: string; announced?: string; scheduled?: string; published?: string; linked?: string; delivered?: string; error?: string }>;
 }) {
   const profile = await requireProfile();
+  if (profile.role === "teacher") redirect("/docente");
   const params = await searchParams;
   const supabase = await createSupabaseServerClient();
   const canManageTeam = ["tutor", "admin"].includes(profile.role);
@@ -286,6 +291,13 @@ export default async function EquipoTutorialPage({
     ? await supabase.rpc("get_teacher_directory")
     : { data: [] };
   const teacherDirectory = (teacherDirectoryData ?? []) as TeacherDirectoryRow[];
+  const activeStudentIds=(activeTeam?.tutor_team_members??[]).filter((member)=>member.status==='active').map((member)=>member.student_id);
+  const [{data:linkedTeacherData},{data:approvedData}]=activeTeam&&canManageTeam?await Promise.all([
+    supabase.from("tutor_team_teachers" as "notifications").select("teacher_id,teacher:profiles!tutor_team_teachers_teacher_id_fkey(full_name,email)").eq("team_id" as "id",activeTeam.id),
+    activeStudentIds.length?supabase.from("justifications").select("id,folio,title,student_id,student:profiles!justifications_student_id_fkey(full_name,email)").in("student_id",activeStudentIds).eq("status","approved") : Promise.resolve({data:[]}),
+  ]):[{data:[]},{data:[]}];
+  const linkedTeachers=(linkedTeacherData??[]) as unknown as Array<{teacher_id:string;teacher:{full_name:string|null;email:string}|null}>;
+  const approvedJustifications=(approvedData??[]) as unknown as Array<{id:string;folio:string;title:string;student_id:string;student:{full_name:string|null;email:string}|null}>;
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-6">
@@ -301,9 +313,9 @@ export default async function EquipoTutorialPage({
         </p>
       </header>
 
-      {params.created || params.joined || params.sent || params.announced || params.scheduled || params.published ? (
+      {params.created || params.joined || params.sent || params.announced || params.scheduled || params.published || params.linked || params.delivered ? (
         <p className="rounded border border-tertiary/40 bg-tertiary-container/20 p-3 text-sm font-semibold text-on-tertiary-container">
-          {params.created ? "Equipo creado correctamente." : params.joined ? "Te uniste al equipo tutorial." : params.published ? "Publicación agregada al canal y notificada por correo." : params.announced ? 'Aviso enviado al grupo y agregado a la cola de correo.' : params.scheduled ? 'Cita agendada y notificada al alumno.' : "Notificación enviada al docente."}
+          {params.created ? "Equipo creado correctamente." : params.joined ? "Te uniste al equipo tutorial." : params.linked ? "Docente vinculado al grupo." : params.delivered ? "Justificante enviado al docente para confirmar recepción." : params.published ? "Publicación agregada al canal y notificada por correo." : params.announced ? 'Aviso enviado al grupo y agregado a la cola de correo.' : params.scheduled ? 'Cita agendada y notificada al alumno.' : "Notificación enviada al docente."}
         </p>
       ) : null}
 
@@ -421,9 +433,9 @@ export default async function EquipoTutorialPage({
                 <p className="mt-1 text-[11px] opacity-80">Indicador orientativo para priorizar seguimiento; revisa el contexto individual antes de intervenir.</p>
               </div> : null}
               <div className="mt-4 space-y-2">
-                {(team.tutor_team_members ?? []).length === 0 ? (
+                {(team.tutor_team_members ?? []).filter((member) => member.status === "active").length === 0 ? (
                   <p className="rounded border border-outline-variant bg-surface-container p-3 text-xs text-on-surface-variant">
-                    Sin alumnos unidos todavía.
+                    Sin alumnos activos en este equipo.
                   </p>
                 ) : null}
                 {(team.tutor_team_members ?? []).map((member) => (
@@ -432,7 +444,7 @@ export default async function EquipoTutorialPage({
                       {member.student?.profile?.full_name ?? member.student?.profile?.email ?? member.student_id}
                     </p>
                     <p className="mt-1 text-xs text-on-surface-variant">
-                      Matrícula {member.student?.student_code ?? "pendiente"} · {member.status}
+                      Matrícula {member.student?.student_code ?? "pendiente"} · {member.status === "active" ? "Activo" : "Retirado del equipo"}
                     </p>
                   </div>
                 ))}
@@ -489,7 +501,7 @@ export default async function EquipoTutorialPage({
               return <article key={item.id} className="rounded border border-outline-variant bg-surface p-4"><div className="flex items-start justify-between gap-2"><h4 className="font-bold text-on-surface">{item.title}</h4>{overdue ? <span className="rounded bg-error-container px-2 py-1 text-[10px] font-bold text-on-error-container">Vencida</span> : null}</div><p className="mt-2 text-sm text-on-surface-variant">{item.body}</p>{item.due_at ? <p className="mt-3 text-xs font-semibold text-primary">Entrega: {new Date(item.due_at).toLocaleString('es-MX')}</p> : null}{canManageTeam ? <p className="mt-3 text-xs text-on-surface-variant">Completada por {completedCount} alumno(s).</p> : <form action={updateAssignmentProgress} className="mt-3"><input type="hidden" name="item_id" value={item.id}/><input type="hidden" name="team_id" value={activeTeam.id}/><input type="hidden" name="completed" value={String(!completedByMe)}/><SubmitButton className={`rounded px-3 py-2 text-xs font-bold ${completedByMe ? 'border border-tertiary text-tertiary' : 'bg-primary-container text-on-primary-container'}`} pendingLabel="Guardando...">{completedByMe ? 'Marcar como pendiente' : 'Marcar como completada'}</SubmitButton></form>}</article>;
             })}</div>
           </div>
-          <div id="integrantes" className="mt-8 scroll-mt-20 border-t border-outline-variant pt-5"><p className="text-xs font-semibold uppercase text-primary">Directorio</p><h3 className="mt-1 text-lg font-bold text-on-surface">Integrantes</h3><div className="mt-4 grid gap-2 sm:grid-cols-2"><div className="rounded border border-outline-variant bg-surface p-3"><p className="text-sm font-bold text-on-surface">{activeTeam.tutor?.full_name ?? activeTeam.tutor?.email}</p><p className="text-xs text-on-surface-variant">Tutor · Responsable del equipo</p></div>{(activeTeam.tutor_team_members ?? []).filter((member) => member.status === 'active').map((member) => <div key={member.id} className="rounded border border-outline-variant bg-surface p-3"><p className="text-sm font-bold text-on-surface">{member.student?.profile?.full_name ?? member.student?.profile?.email}</p><p className="text-xs text-on-surface-variant">Alumno · {member.student?.student_code ?? 'Sin matrícula'}</p></div>)}</div></div>
+          <div id="integrantes" className="mt-8 scroll-mt-20 border-t border-outline-variant pt-5"><p className="text-xs font-semibold uppercase text-primary">Directorio</p><h3 className="mt-1 text-lg font-bold text-on-surface">Integrantes</h3><div className="mt-4 grid gap-2 sm:grid-cols-2"><div className="rounded border border-outline-variant bg-surface p-3"><p className="text-sm font-bold text-on-surface">{activeTeam.tutor?.full_name ?? activeTeam.tutor?.email}</p><p className="text-xs text-on-surface-variant">Tutor · Responsable del equipo</p></div>{(activeTeam.tutor_team_members ?? []).map((member) => <div key={member.id} className={`rounded border p-3 ${member.status === 'active' ? 'border-outline-variant bg-surface' : 'border-outline-variant bg-surface-container-high opacity-60'}`}><p className="text-sm font-bold text-on-surface">{member.student?.profile?.full_name ?? member.student?.profile?.email}</p><p className="text-xs text-on-surface-variant">Alumno · {member.student?.student_code ?? 'Sin matrícula'} · {member.status === 'active' ? 'Activo' : 'Retirado'}</p></div>)}</div></div>
         </section>
       ) : null}
 
@@ -511,7 +523,11 @@ export default async function EquipoTutorialPage({
               {(activeTeam.tutor_team_members ?? []).filter((member) => member.status === 'active').map((member) => (
                 <option key={member.id} value={member.student_id}>{member.student?.profile?.full_name ?? member.student?.profile?.email ?? member.student_id}</option>
               ))}
+              {(activeTeam.tutor_team_members ?? []).filter((member) => member.status !== 'active').map((member) => (
+                <option key={member.id} value="" disabled>{member.student?.profile?.full_name ?? member.student?.profile?.email ?? member.student_id} · retirado</option>
+              ))}
             </select>
+            {(activeTeam.tutor_team_members ?? []).some((member) => member.status !== 'active') ? <p className="mt-2 text-[11px] text-on-surface-variant">Los alumnos retirados se muestran como referencia, pero no se puede agendar una cita hasta que vuelvan a unirse a este equipo.</p> : null}
             <div className="mt-3 grid grid-cols-3 gap-2">
               <input name="scheduled_date" type="date" min={new Date().toISOString().slice(0,10)} required className="rounded border border-outline-variant bg-surface px-2 py-2 text-xs text-on-surface" />
               <input name="starts_at" type="time" required className="rounded border border-outline-variant bg-surface px-2 py-2 text-xs text-on-surface" />
@@ -520,6 +536,13 @@ export default async function EquipoTutorialPage({
             <textarea name="reason" required minLength={5} rows={3} placeholder="Motivo y objetivo de la cita" className="mt-3 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
             <SubmitButton className="mt-3 rounded bg-primary px-4 py-2 text-sm font-bold text-on-primary" pendingLabel="Agendando...">Agendar y notificar</SubmitButton>
           </form>
+        </section>
+      ) : null}
+
+      {canSendTeacherMessages && activeTeam ? (
+        <section className="grid gap-6 lg:grid-cols-2">
+          <form action={linkTeacher} className="rounded-lg border border-outline-variant bg-surface-container p-5"><input type="hidden" name="team_id" value={activeTeam.id}/><h2 className="text-sm font-semibold uppercase text-on-surface-variant">Docentes del grupo</h2><p className="mt-2 text-xs text-on-surface-variant">Relaciona únicamente a docentes que atienden este grupo.</p><select name="teacher_id" required className="mt-4 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface"><option value="">Selecciona docente</option>{teacherDirectory.filter((teacher)=>!linkedTeachers.some((linked)=>linked.teacher_id===teacher.id)).map((teacher)=><option key={teacher.id} value={teacher.id}>{teacher.full_name} · {teacher.department}</option>)}</select><SubmitButton className="mt-3 rounded bg-primary-container px-4 py-2 text-sm font-bold text-on-primary-container" pendingLabel="Vinculando...">Vincular al grupo</SubmitButton><div className="mt-4 flex flex-wrap gap-2">{linkedTeachers.map((linked)=><span key={linked.teacher_id} className="rounded-full bg-surface px-3 py-1 text-xs text-on-surface">{linked.teacher?.full_name??linked.teacher?.email}</span>)}</div></form>
+          <form action={deliverJustification} className="rounded-lg border border-outline-variant bg-surface-container p-5"><input type="hidden" name="team_id" value={activeTeam.id}/><h2 className="text-sm font-semibold uppercase text-on-surface-variant">Enviar justificante aprobado</h2><p className="mt-2 text-xs text-on-surface-variant">El docente deberá confirmar recepción para cerrar la entrega.</p><select name="justification_id" required className="mt-4 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface"><option value="">Selecciona justificante</option>{approvedJustifications.map((item)=><option key={item.id} value={item.id}>{item.folio} · {item.student?.full_name??item.student?.email} · {item.title}</option>)}</select><select name="teacher_id" required className="mt-3 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface"><option value="">Selecciona docente vinculado</option>{linkedTeachers.map((linked)=><option key={linked.teacher_id} value={linked.teacher_id}>{linked.teacher?.full_name??linked.teacher?.email}</option>)}</select><SubmitButton className="mt-3 rounded bg-primary-container px-4 py-2 text-sm font-bold text-on-primary-container" pendingLabel="Enviando...">Enviar para recepción</SubmitButton></form>
         </section>
       ) : null}
 

@@ -1,4 +1,5 @@
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import type { Tables } from "@plataforma/types";
 
 import { requireProfile } from "@/lib/auth/session";
@@ -355,6 +356,7 @@ export default async function IncidenciasPage({
   searchParams: Promise<{ priority?: string; status?: string; sla?: string }>;
 }) {
   const profile = await requireProfile();
+  if (profile.role === "teacher") redirect("/docente");
   const params = await searchParams;
   const supabase = await createSupabaseServerClient();
   const canCreateIncident = profile.role === "student";
@@ -543,9 +545,7 @@ export default async function IncidenciasPage({
             <p className="mt-3 text-sm text-on-surface-variant">
               {profile.role === "tutor"
                 ? "Asigna responsables, da seguimiento tutorial y a SLA, y resuelve incidencias institucionales de sus alumnos."
-                : profile.role === "teacher"
-                  ? "Comenta incidencias academicas asignadas con evidencia docente."
-                  : "Supervisa la bitacora completa y puede cerrar casos criticos."}
+                : "Supervisa la bitacora completa y puede cerrar casos criticos."}
             </p>
           </section>
         )}

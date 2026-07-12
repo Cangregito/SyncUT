@@ -1,4 +1,5 @@
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import type { Tables } from "@plataforma/types";
 
 import { ModalityDetailsFields } from "@/components/appointments/modality-details-fields";
@@ -537,6 +538,7 @@ async function recordAttendance(formData: FormData) {
 
 export default async function CitasPage() {
   const profile = await requireProfile();
+  if (profile.role === "teacher") redirect("/docente");
   const supabase = await createSupabaseServerClient();
   const canCreateAppointments = profile.role === "student";
   const canManageOwnAvailability = profile.role === "tutor" && hasPermission(profile.role, "appointments:availability");
@@ -749,9 +751,7 @@ export default async function CitasPage() {
             <p className="mt-3 text-sm text-on-surface-variant">
               {profile.role === "tutor"
                 ? "Tu flujo es publicar disponibilidad, confirmar citas, registrar asistencia, supervisar agenda y desactivar bloques cuando sea necesario."
-                  : profile.role === "teacher"
-                    ? "El docente no agenda tutorias; aporta contexto academico desde justificaciones e incidencias."
-                    : "El administrador conserva visibilidad operativa y auditoria de agenda."}
+                : "El administrador conserva visibilidad operativa y auditoria de agenda."}
             </p>
           </section>
         )}

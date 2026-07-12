@@ -1,4 +1,5 @@
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import type { Tables } from "@plataforma/types";
 
 import { requireProfile } from "@/lib/auth/session";
@@ -278,6 +279,7 @@ async function createFaqEntry(formData: FormData) {
 
 export default async function ChatbotPage() {
   const profile = await requireProfile();
+  if (profile.role === "teacher") redirect("/docente");
   const supabase = await createSupabaseServerClient();
   const canManageFaq = ["admin", "tutor"].includes(profile.role);
 

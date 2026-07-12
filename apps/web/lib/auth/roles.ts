@@ -46,7 +46,7 @@ export const ROLE_LABELS: Record<UserRole, string> = {
 
 export const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
   student: "Solicita citas, registra justificaciones y da seguimiento a sus reportes.",
-  teacher: "Valida contexto academico, aporta evidencia docente y comenta incidencias asignadas.",
+  teacher: "Recibe justificantes aprobados, citatorios y notificaciones; confirma su recepción.",
   tutor: "Gestiona tutorias, resuelve justificaciones, asigna incidencias y supervisa el flujo institucional.",
   admin: "Gobierna roles, datos, seguridad, auditoria y salud completa de la plataforma.",
 };
@@ -88,10 +88,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, readonly RolePermission[]> = {
   ],
   teacher: [
     "dashboard:view",
-    "justifications:academic_note",
     "notifications:view",
-    "incidents:comment",
-    "chatbot:use",
   ],
   tutor: [
     "dashboard:view",
@@ -167,5 +164,6 @@ export function canAccessModule(role: UserRole, module: RoleModule): boolean {
 }
 
 export function getModulesForRole(role: UserRole): RoleModule[] {
+  if (role === "teacher") return [ROLE_MODULES[0], { href: "/docente", label: "Bandeja docente", icon: "inbox", squad: "Recepción", permissions: ["dashboard:view"] }, ROLE_MODULES.find((item) => item.href === "/notificaciones")!];
   return ROLE_MODULES.filter((module) => canAccessModule(role, module));
 }
