@@ -10,6 +10,16 @@ type NotificationPreferenceRow = Tables<"notification_preferences">;
 type EmailQueueSummaryRow =
   Database["public"]["Functions"]["get_email_queue_summary"]["Returns"][number];
 
+const teacherEventTypes = ["tutor.teacher_message", "justification.teacher_delivery"];
+
+const fallbackEventLabels: Record<string, string> = {
+  "tutor.teacher_message": "Mensaje de tutoría",
+  "justification.teacher_delivery": "Justificante enviado por el tutor",
+  "justification.teacher_received": "Justificante recibido por el docente",
+  "incident.assigned": "Incidencia asignada",
+  "appointment.created": "Nueva cita de tutoría",
+};
+
 async function toggleNotificationRead(formData: FormData) {
   "use server";
 
@@ -93,6 +103,10 @@ export default async function NotificacionesPage({
     .eq("user_id", profile.id)
     .order("created_at", { ascending: false });
 
+  if (profile.role === "teacher") {
+    query = query.in("event_type", teacherEventTypes);
+  }
+
   if (params.estado === "no-leidas") {
     query = query.eq("is_read", false);
   }
@@ -115,7 +129,8 @@ export default async function NotificacionesPage({
       .select("id, user_id, event_type, in_app, email, updated_at")
       .eq("user_id", profile.id),
   ]);
-  const allEventTypes = (allEventTypesData ?? []) as NotificationEventTypeRow[];
+  const allEventTypes = ((allEventTypesData ?? []) as NotificationEventTypeRow[]).filter((eventType) => profile.role !== "teacher" || teacherEventTypes.includes(eventType.slug));
+  const eventLabels = new Map(allEventTypes.map((eventType) => [eventType.slug, eventType.label]));
   const preferences = (preferencesData ?? []) as NotificationPreferenceRow[];
   const preferencesByEvent = new Map(preferences.map((preference) => [preference.event_type, preference]));
   let queueSummary: EmailQueueSummaryRow[] = [];
@@ -180,7 +195,7 @@ export default async function NotificacionesPage({
                 href={`/notificaciones?evento=${encodeURIComponent(eventType)}`}
                 className="rounded border border-outline-variant px-2 py-1 text-[11px] font-semibold text-on-surface-variant hover:border-primary hover:text-primary"
               >
-                {eventType}
+                {eventLabels.get(eventType) ?? fallbackEventLabels[eventType] ?? "Notificación institucional"}
               </a>
             ))}
           </div>
@@ -205,7 +220,7 @@ export default async function NotificacionesPage({
                 <div>
                   <h3 className="text-sm font-semibold text-on-surface">{item.title}</h3>
                   <p className="mt-1 text-xs text-on-surface-variant">
-                    {item.event_type} | {new Date(item.created_at).toLocaleString("es-MX")}
+                    {eventLabels.get(item.event_type) ?? fallbackEventLabels[item.event_type] ?? "Notificación institucional"} · {new Date(item.created_at).toLocaleString("es-MX")}
                   </p>
                 </div>
                 <span className={`rounded px-2 py-1 text-[10px] font-semibold uppercase ${item.is_read ? "bg-surface-container-highest text-on-surface-variant" : "bg-primary-container text-on-primary-container"}`}>
@@ -241,7 +256,7 @@ export default async function NotificacionesPage({
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold text-on-surface">{eventType.label}</p>
-                    <p className="mt-1 text-xs text-on-surface-variant">{eventType.slug} · {eventType.channel}</p>
+                    <p className="mt-1 text-xs text-on-surface-variant">Entrega en plataforma{eventType.channel === "both" ? " y correo" : ""}</p>
                     {eventType.description ? (
                       <p className="mt-2 text-xs text-on-surface-variant">{eventType.description}</p>
                     ) : null}

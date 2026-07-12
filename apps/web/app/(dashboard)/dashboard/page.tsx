@@ -120,11 +120,16 @@ export default async function DashboardOverviewPage() {
         .in("status", ["pendiente", "confirmada"]),
     ),
     countFrom(
-      supabase
+      (profile.role === "teacher" ? supabase
         .from("notifications")
         .select("id", { count: "exact", head: true })
         .eq("user_id", profile.id)
-        .eq("is_read", false),
+        .eq("is_read", false)
+        .in("event_type", ["tutor.teacher_message", "justification.teacher_delivery"]) : supabase
+        .from("notifications")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", profile.id)
+        .eq("is_read", false)),
     ),
     countFrom(
       supabase
