@@ -60,7 +60,7 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  if (user && profile?.role === "admin" && request.nextUrl.pathname !== "/admin") {
+  if (user && profile?.role === "admin" && !request.nextUrl.pathname.startsWith("/admin")) {
     if (isProtected || isAuthRoute || request.nextUrl.pathname === "/") {
       const adminUrl = request.nextUrl.clone();
       adminUrl.pathname = "/admin";

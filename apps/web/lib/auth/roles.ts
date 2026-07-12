@@ -142,6 +142,7 @@ export const ROLE_MODULES: readonly RoleModule[] = [
   { href: "/incidencias", label: "Reportes Incidencias", icon: "rule", squad: "Squad 5", permissions: ["incidents:create", "incidents:comment", "incidents:assign", "incidents:resolve"] },
   { href: "/chatbot", label: "Asistente Chatbot", icon: "chat", squad: "Squad 6", permissions: ["chatbot:use", "chatbot:manage"] },
   { href: "/admin", label: "Panel Gobernanza", icon: "monitoring", squad: "Admin Master", permissions: ["governance:view"] },
+  { href: "/admin/proyecto", label: "Avance del Proyecto", icon: "analytics", squad: "Observatorio", permissions: ["governance:view"] },
 ];
 
 export function isUserRole(value: unknown): value is UserRole {

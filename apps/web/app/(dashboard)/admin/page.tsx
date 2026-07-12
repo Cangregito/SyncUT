@@ -2,7 +2,6 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { Activity, ArrowUpRight, GraduationCap, KeyRound, ShieldCheck, UserPlus, Users } from "lucide-react";
 
-import { ExecutiveDashboardPage } from "@/components/modules/executive-dashboard/executive-dashboard-page";
 import { requireRole } from "@/lib/auth/session";
 import { ROLE_LABELS, USER_ROLES, type UserRole } from "@/lib/auth/roles";
 import { getAuthRedirectUrl } from "@/lib/auth/urls";
@@ -107,8 +106,8 @@ function relativeDate(value: string) {
 export default async function AdminRoutePage({ searchParams }: { searchParams: Promise<{ success?: string; error?: string; q?: string; role?: string }> }) {
   const current = await requireRole(["admin"]);
   const params = await searchParams;
-  const db = createSupabaseServiceRoleClient();
-  const [{ data: profileRows }, { data: logRows }] = await Promise.all([
+  const db = await createSupabaseServerClient();
+  const [{ data: profileRows, error: profilesError }, { data: logRows, error: logsError }] = await Promise.all([
     db.from("profiles").select("id,email,full_name,role,account_status,status_reason,created_at,updated_at").order("created_at", { ascending: false }),
     db.from("audit_logs").select("id,user_id,action,table_name,record_id,old_values,new_values,created_at,result,reason,severity").order("created_at", { ascending: false }).limit(60),
   ]);
@@ -127,6 +126,7 @@ export default async function AdminRoutePage({ searchParams }: { searchParams: P
   ];
 
   return <main className="mx-auto flex max-w-[1500px] flex-col gap-6 pb-12">
+    {(profilesError || logsError) && <div className="rounded-xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-sm font-medium text-red-300">No fue posible cargar {profilesError ? 'los usuarios' : 'la bitácora'}: {(profilesError ?? logsError)?.message}</div>}
     <section className="relative overflow-hidden rounded-2xl border border-violet-400/15 bg-[radial-gradient(circle_at_top_right,rgba(124,58,237,.2),transparent_40%),linear-gradient(135deg,#15131b,#0d0d10)] p-6 md:p-8">
       <div className="relative flex flex-wrap items-end justify-between gap-6">
         <div><div className="mb-4 inline-flex items-center gap-2 rounded-full border border-violet-400/20 bg-violet-400/10 px-3 py-1 text-xs font-bold uppercase tracking-[.18em] text-violet-300"><ShieldCheck size={14}/> Centro de gobernanza</div>
@@ -175,13 +175,5 @@ export default async function AdminRoutePage({ searchParams }: { searchParams: P
       <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-3">{logs.map(log => { const values = (log.new_values ?? {}) as Record<string, unknown>; return <article key={log.id} className="rounded-xl border border-white/[.06] bg-black/20 p-4"><div className="flex items-start justify-between gap-3"><div className="flex gap-2"><span className="rounded-md bg-white/[.06] px-2 py-1 text-[10px] font-bold tracking-wider text-zinc-300">{log.action.replaceAll('_',' ')}</span><span className={`rounded-md px-2 py-1 text-[10px] font-bold ${log.severity === 'critical' ? 'bg-red-400/10 text-red-300' : log.severity === 'warning' ? 'bg-amber-400/10 text-amber-300' : 'bg-emerald-400/10 text-emerald-300'}`}>{log.result.toUpperCase()}</span></div><time className="text-[11px] text-zinc-600">{relativeDate(log.created_at)}</time></div><p className="mt-3 text-sm font-semibold text-zinc-200">{String(values.full_name ?? values.email ?? log.table_name)}</p><p className="mt-1 text-xs text-zinc-500">Realizado por {names.get(log.user_id ?? '') ?? 'Sistema'} · {log.table_name}</p>{values.role ? <p className="mt-3 text-xs text-zinc-400">Nuevo rol: <span className="font-semibold text-violet-300">{ROLE_LABELS[values.role as UserRole] ?? String(values.role)}</span></p> : null}{log.reason ? <p className="mt-2 border-l-2 border-white/10 pl-2 text-xs text-zinc-400">{log.reason}</p> : null}</article>})}{logs.length===0 && <p className="col-span-full py-8 text-center text-sm text-zinc-500">Aún no hay eventos registrados.</p>}</div>
     </section>
 
-    <section className="border-t border-white/[.08] pt-8">
-      <div className="mb-5">
-        <p className="text-xs font-semibold uppercase tracking-[.18em] text-violet-300">Observatorio del proyecto</p>
-        <h2 className="mt-2 text-2xl font-bold text-white">Avance, commits y estado técnico</h2>
-        <p className="mt-2 max-w-3xl text-sm text-zinc-400">Panel ejecutivo histórico con progreso por módulo, actividad Git/GitHub, Pull Requests, responsables, salud de Supabase y logs anteriores del proyecto.</p>
-      </div>
-      <ExecutiveDashboardPage />
-    </section>
   </main>;
 }

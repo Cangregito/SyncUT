@@ -59,7 +59,7 @@ export function DashboardShell({
         <div className="flex-1 px-3 space-y-1">
           {navigationLinks
             .map((item) => {
-              const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
+              const isActive = pathname === item.href || (!["/dashboard", "/admin"].includes(item.href) && pathname.startsWith(item.href));
               return (
                 <Link
                   key={item.href}
@@ -145,7 +145,7 @@ export function DashboardShell({
             <div className="flex-1 space-y-1">
               {navigationLinks
                 .map((item) => {
-                  const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
+                  const isActive = pathname === item.href || (!["/dashboard", "/admin"].includes(item.href) && pathname.startsWith(item.href));
                   return (
                     <Link
                       key={item.href}
