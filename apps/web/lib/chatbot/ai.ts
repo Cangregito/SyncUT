@@ -6,6 +6,40 @@ type GroqResponse = {
 };
 
 export type AiAnswer = { content: string; model: string } | null;
+export type AiProviderStatus = {
+  configured: boolean;
+  ok: boolean;
+  model: string;
+  error?: string;
+};
+
+export async function checkAiProvider(): Promise<AiProviderStatus> {
+  const apiKey = process.env.GROQ_API_KEY?.trim();
+  const model = process.env.GROQ_MODEL?.trim() || "openai/gpt-oss-20b";
+  if (!apiKey) return { configured: false, ok: false, model, error: "missing_api_key" };
+
+  try {
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model,
+        messages: [{ role: "user", content: "Responde solamente: OK" }],
+        temperature: 0,
+        max_completion_tokens: 16,
+      }),
+      signal: AbortSignal.timeout(12_000),
+      cache: "no-store",
+    });
+    if (!response.ok) {
+      const body = (await response.json().catch(() => null)) as { error?: { message?: string } } | null;
+      return { configured: true, ok: false, model, error: body?.error?.message || `groq_http_${response.status}` };
+    }
+    return { configured: true, ok: true, model };
+  } catch (error) {
+    return { configured: true, ok: false, model, error: error instanceof Error ? error.message : "groq_unreachable" };
+  }
+}
 
 export async function generateAiAnswer({
   question,
@@ -18,7 +52,7 @@ export async function generateAiAnswer({
   knowledge: KnowledgeEntry[];
   userName: string;
 }): Promise<AiAnswer> {
-  const apiKey = process.env.GROQ_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY?.trim();
   if (!apiKey) return null;
 
   const model = process.env.GROQ_MODEL || "openai/gpt-oss-20b";
