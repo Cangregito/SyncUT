@@ -34,6 +34,16 @@ function addCalendarDays(date: string, days: number) {
   return value.toISOString().slice(0, 10);
 }
 
+function localDateValue(daysFromToday = 0) {
+  const value = new Date();
+  value.setHours(12, 0, 0, 0);
+  value.setDate(value.getDate() + daysFromToday);
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, "0");
+  const day = String(value.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 function inclusiveCalendarDays(startDate: string, endDate: string) {
   const start = Date.parse(`${startDate}T00:00:00Z`);
   const end = Date.parse(`${endDate}T00:00:00Z`);
@@ -46,6 +56,8 @@ export function JustificationForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [startDate, setStartDate] = useState("");
+  const minimumAllowedDate = localDateValue(-3);
+  const maximumAllowedDate = localDateValue(3);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -67,6 +79,17 @@ export function JustificationForm() {
 
       if (title.length < 5 || description.length < 15 || !startDate || !endDate || endDate < startDate) {
         setMessage("Revisa titulo, descripcion y rango de fechas.");
+        return;
+      }
+
+
+      if (
+        startDate < minimumAllowedDate ||
+        startDate > maximumAllowedDate ||
+        endDate < minimumAllowedDate ||
+        endDate > maximumAllowedDate
+      ) {
+        setMessage("Las fechas deben estar dentro de los 3 dias anteriores o posteriores a hoy.");
         return;
       }
 
@@ -178,14 +201,14 @@ export function JustificationForm() {
         <div className="grid grid-cols-2 gap-3">
           <label className="text-xs font-medium text-on-surface-variant">
             Inicio
-            <input name="start_date" required type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} className="mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
+            <input name="start_date" required type="date" min={minimumAllowedDate} max={maximumAllowedDate} value={startDate} onChange={(event) => setStartDate(event.target.value)} className="date-input-dark mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
           </label>
           <label className="text-xs font-medium text-on-surface-variant">
             Fin
-            <input name="end_date" required type="date" min={startDate || undefined} max={addCalendarDays(startDate, 2)} className="mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
+            <input name="end_date" required type="date" min={startDate || minimumAllowedDate} max={startDate ? addCalendarDays(startDate, 2) : maximumAllowedDate} className="date-input-dark mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
           </label>
         </div>
-        <p className="text-[11px] text-on-surface-variant">Maximo 3 dias naturales por solicitud. Si necesitas mas dias, registra otra justificacion.</p>
+        <p className="text-[11px] text-on-surface-variant">Solo puedes seleccionar fechas entre 3 dias antes y 3 dias despues de hoy. Maximo 3 dias naturales por solicitud.</p>
         <textarea name="description" required minLength={15} rows={4} placeholder="Describe el motivo y el impacto academico" className="w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
         <label className="block text-xs font-medium text-on-surface-variant">
           Evidencia

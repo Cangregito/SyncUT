@@ -83,3 +83,13 @@ body {
 * {
   border-color: rgb(63 63 70 / 0.18);
 }
+
+.date-input-dark {
+  color-scheme: dark;
+}
+
+.date-input-dark::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: invert(1);
+  opacity: 0.85;
+}

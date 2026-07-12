@@ -26,6 +26,42 @@ type TeacherDirectoryRow = {
   id: string;
 };
 
+type ChannelItem = {
+  id: string; team_id: string; author_id: string; kind: "comment" | "assignment" | "reminder";
+  title: string | null; body: string; due_at: string | null; created_at: string;
+  author?: Pick<Tables<"profiles">, "full_name" | "email"> | null;
+};
+
+async function publishChannelItem(formData: FormData) {
+  "use server";
+  const profile = await requireProfile();
+  const teamId = String(formData.get("team_id") ?? "");
+  const kind = String(formData.get("kind") ?? "comment") as ChannelItem["kind"];
+  const title = String(formData.get("title") ?? "").trim();
+  const body = String(formData.get("body") ?? "").trim();
+  const dueAt = String(formData.get("due_at") ?? "");
+  if (!teamId || !["comment", "assignment", "reminder"].includes(kind) || body.length < 2) redirect("/equipo?error=Revisa la publicación.");
+  if (kind !== "comment" && !["tutor", "admin"].includes(profile.role)) redirect("/equipo?error=forbidden");
+  if (kind !== "comment" && title.length < 3) redirect("/equipo?error=Escribe un título.");
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.from("tutor_team_channel_items" as "notifications").insert({
+    team_id: teamId, author_id: profile.id, kind, title: title || null, body,
+    due_at: dueAt ? new Date(dueAt).toISOString() : null,
+  } as never);
+  if (error) redirect(`/equipo?error=${encodeURIComponent(error.message)}`);
+  const { data: members } = await supabase.from("tutor_team_members").select("student_id").eq("team_id", teamId).eq("status", "active");
+  const eventType = kind === "assignment" ? "tutor_team.assignment" : kind === "reminder" ? "tutor_team.reminder" : "tutor_team.channel_post";
+  const recipients = new Set((members ?? []).map((member) => member.student_id));
+  const { data: team } = await supabase.from("tutor_teams").select("tutor_id").eq("id", teamId).maybeSingle();
+  if (team?.tutor_id !== profile.id) recipients.add(team?.tutor_id ?? "");
+  await Promise.all([...recipients].filter(Boolean).map((userId) => supabase.rpc("emit_notification", {
+    p_user_id: userId, p_event_type: eventType, p_title: title || "Nuevo comentario en General",
+    p_body: body, p_metadata: { team_id: teamId, kind }, p_triggered_by: profile.id,
+  })));
+  revalidatePath("/equipo"); revalidatePath("/notificaciones");
+  redirect("/equipo?published=true");
+}
+
 async function createTeam(formData: FormData) {
   "use server";
 
@@ -153,7 +189,7 @@ async function scheduleStudentAppointment(formData: FormData) {
 export default async function EquipoTutorialPage({
   searchParams,
 }: {
-  searchParams: Promise<{ created?: string; joined?: string; sent?: string; announced?: string; scheduled?: string; error?: string }>;
+  searchParams: Promise<{ created?: string; joined?: string; sent?: string; announced?: string; scheduled?: string; published?: string; error?: string }>;
 }) {
   const profile = await requireProfile();
   const params = await searchParams;
@@ -190,7 +226,14 @@ export default async function EquipoTutorialPage({
   const activeTeam = teams.find((team) => team.is_active) ?? teams[0] ?? null;
   const studentTeam = profile.role === "student" ? activeTeam : null;
 
-  const memberIds = [...new Set(teams.flatMap((team) => (team.tutor_team_members ?? []).filter((member) => member.status === 'active').map((member) => member.student_id)))];
+  const { data: channelData } = activeTeam
+    ? await supabase.from("tutor_team_channel_items" as "notifications").select("id,team_id,author_id,kind,title,body,due_at,created_at,author:profiles!tutor_team_channel_items_author_id_fkey(full_name,email)").eq("team_id" as "id", activeTeam.id).order("created_at", { ascending: false }).limit(50)
+    : { data: [] };
+  const channelItems = (channelData ?? []) as unknown as ChannelItem[];
+
+  const memberIds = canManageTeam ? [...new Set(teams.flatMap((team) => (team.tutor_team_members ?? []).filter((member) => member.status === 'active').map((member) => member.student_id)))] : [];
+  // This server-rendered value defines the rolling reporting window for tutors.
+  // eslint-disable-next-line react-hooks/purity
   const since = new Date(Date.now() - 30 * 86_400_000).toISOString();
   const [{ data: incidentSignals }, { data: justificationSignals }, { data: attendanceSignals }] = memberIds.length
     ? await Promise.all([
@@ -229,9 +272,9 @@ export default async function EquipoTutorialPage({
         </p>
       </header>
 
-      {params.created || params.joined || params.sent || params.announced || params.scheduled ? (
+      {params.created || params.joined || params.sent || params.announced || params.scheduled || params.published ? (
         <p className="rounded border border-tertiary/40 bg-tertiary-container/20 p-3 text-sm font-semibold text-on-tertiary-container">
-          {params.created ? "Equipo creado correctamente." : params.joined ? "Te uniste al equipo tutorial." : params.announced ? 'Aviso enviado al grupo y agregado a la cola de correo.' : params.scheduled ? 'Cita agendada y notificada al alumno.' : "Notificación enviada al docente."}
+          {params.created ? "Equipo creado correctamente." : params.joined ? "Te uniste al equipo tutorial." : params.published ? "Publicación agregada al canal y notificada por correo." : params.announced ? 'Aviso enviado al grupo y agregado a la cola de correo.' : params.scheduled ? 'Cita agendada y notificada al alumno.' : "Notificación enviada al docente."}
         </p>
       ) : null}
 
@@ -336,11 +379,11 @@ export default async function EquipoTutorialPage({
                   <p className="font-mono text-lg font-black tracking-widest text-on-primary-container">{team.join_code}</p>
                 </div>
               </div>
-              <div className={`mt-4 rounded border p-3 ${healthStyle}`}>
+              {canManageTeam ? <div className={`mt-4 rounded border p-3 ${healthStyle}`}>
                 <div className="flex items-center justify-between gap-3"><p className="text-sm font-bold">Salud del grupo: {health.level === 'red' ? 'Requiere atención' : health.level === 'yellow' ? 'En observación' : 'Estable'}</p><span className="text-xl">●</span></div>
                 <p className="mt-2 text-xs">Últimos 30 días · {health.incidents} incidencias · {health.justifications} justificantes · {health.absences} inasistencias a tutoría</p>
                 <p className="mt-1 text-[11px] opacity-80">Indicador orientativo para priorizar seguimiento; revisa el contexto individual antes de intervenir.</p>
-              </div>
+              </div> : null}
               <div className="mt-4 space-y-2">
                 {(team.tutor_team_members ?? []).length === 0 ? (
                   <p className="rounded border border-outline-variant bg-surface-container p-3 text-xs text-on-surface-variant">
@@ -363,6 +406,33 @@ export default async function EquipoTutorialPage({
           })}
         </div>
       </section>
+
+      {activeTeam ? (
+        <section className="rounded-lg border border-outline-variant bg-surface-container p-5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div><p className="text-xs font-semibold uppercase text-primary">Canal</p><h2 className="mt-1 text-xl font-bold text-on-surface">General · {activeTeam.name}</h2></div>
+            <span className="rounded-full bg-primary-container px-3 py-1 text-xs text-on-primary-container">{channelItems.length} publicaciones</span>
+          </div>
+          <form action={publishChannelItem} className="mt-5 rounded border border-outline-variant bg-surface p-4">
+            <input type="hidden" name="team_id" value={activeTeam.id} />
+            <select name="kind" className="rounded border border-outline-variant bg-surface-container px-3 py-2 text-sm text-on-surface">
+              <option value="comment">Comentario</option>
+              {canManageTeam ? <><option value="assignment">Asignación</option><option value="reminder">Recordatorio</option></> : null}
+            </select>
+            {canManageTeam ? <div className="mt-3 grid gap-3 sm:grid-cols-2"><input name="title" placeholder="Título (para asignación o recordatorio)" className="rounded border border-outline-variant bg-surface-container px-3 py-2 text-sm text-on-surface" /><input name="due_at" type="datetime-local" className="date-input-dark rounded border border-outline-variant bg-surface-container px-3 py-2 text-sm text-on-surface" /></div> : null}
+            <textarea name="body" required minLength={2} rows={3} placeholder="Escribe en el canal General..." className="mt-3 w-full rounded border border-outline-variant bg-surface-container px-3 py-2 text-sm text-on-surface" />
+            <SubmitButton className="mt-3 rounded bg-primary px-4 py-2 text-sm font-bold text-on-primary" pendingLabel="Publicando...">Publicar y notificar</SubmitButton>
+          </form>
+          <div className="mt-5 space-y-3">
+            {channelItems.length === 0 ? <p className="rounded border border-outline-variant bg-surface p-4 text-sm text-on-surface-variant">Todavía no hay publicaciones en General.</p> : null}
+            {channelItems.map((item) => <article key={item.id} className="rounded border border-outline-variant bg-surface p-4">
+              <div className="flex flex-wrap items-center gap-2"><span className="rounded-full bg-primary-container/40 px-2 py-1 text-[10px] font-bold uppercase text-primary">{item.kind === "assignment" ? "Asignación" : item.kind === "reminder" ? "Recordatorio" : "Comentario"}</span><span className="text-xs text-on-surface-variant">{item.author?.full_name ?? item.author?.email ?? "Integrante"} · {new Date(item.created_at).toLocaleString("es-MX")}</span></div>
+              {item.title ? <h3 className="mt-3 font-bold text-on-surface">{item.title}</h3> : null}<p className="mt-2 whitespace-pre-wrap text-sm text-on-surface">{item.body}</p>
+              {item.due_at ? <p className="mt-3 text-xs font-semibold text-primary">Fecha límite: {new Date(item.due_at).toLocaleString("es-MX")}</p> : null}
+            </article>)}
+          </div>
+        </section>
+      ) : null}
 
       {canManageTeam && activeTeam ? (
         <section className="grid gap-6 lg:grid-cols-2">

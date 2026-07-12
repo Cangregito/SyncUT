@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-07-11T00:20:25.370Z",
-  "headCommit": "0fca8a769a8b3dc3fe9eeb5c8431d7d5bdadb6c2",
+  "generatedAt": "2026-07-12T21:29:54.783Z",
+  "headCommit": "1e6a38c1d011e4cbc0b00fbcbe3c87053cc356a5",
   "githubAvailable": true,
-  "totalCommits": 146,
+  "totalCommits": 157,
   "totalPRs": 23,
   "mergedPRs": 21,
   "openPRs": 1,
   "commitsBySquad": [
     {
       "squad": "S1 (Justificaciones)",
-      "progreso": 11
+      "progreso": 13
     },
     {
       "squad": "S2 (Autenticación)",
@@ -33,7 +33,7 @@
     },
     {
       "squad": "Admin (Dashboard Gobernanza)",
-      "progreso": 72
+      "progreso": 81
     }
   ],
   "prsBySquad": [
@@ -76,11 +76,11 @@
   "commitsByWeek": [
     {
       "week": "W-3",
-      "commits": 10
+      "commits": 13
     },
     {
       "week": "W-2",
-      "commits": 13
+      "commits": 7
     },
     {
       "week": "W-1",
@@ -88,7 +88,7 @@
     },
     {
       "week": "Actual",
-      "commits": 14
+      "commits": 25
     }
   ],
   "moduleEvidence": [
@@ -99,8 +99,8 @@
       "href": "/justificaciones",
       "description": "Gestiona solicitudes de faltas con folio, evidencia, vencimiento, revision administrativa y auditoria.",
       "evidence": "El modulo demuestra trabajo en tramites academicos, carga de evidencias, bitacora y notificaciones de estado.",
-      "totalInteractions": 15,
-      "commits": 11,
+      "totalInteractions": 17,
+      "commits": 13,
       "pullRequests": 4,
       "mergedPullRequests": 4,
       "openPullRequests": 0,
@@ -114,10 +114,10 @@
       ],
       "lastActivity": {
         "type": "commit",
-        "title": "Merge remote-tracking branch 'origin/feature/squad-1-justifications'",
-        "date": "03 jul 2026",
-        "time": "18:14",
-        "iso": "2026-07-04T00:14:26.000Z"
+        "title": "fix: cerrar estados finales de justificaciones",
+        "date": "12 jul 2026",
+        "time": "15:29",
+        "iso": "2026-07-12T21:29:12.000Z"
       }
     },
     {
@@ -257,8 +257,8 @@
       "href": "/admin",
       "description": "Consolida datos de Git/GitHub, Supabase, auditoria, despliegues y estado ejecutivo de la plataforma.",
       "evidence": "El modulo muestra evidencia de coordinacion, integracion de PRs, produccion y seguimiento del avance general.",
-      "totalInteractions": 75,
-      "commits": 72,
+      "totalInteractions": 84,
+      "commits": 81,
       "pullRequests": 3,
       "mergedPullRequests": 2,
       "openPullRequests": 0,
@@ -268,14 +268,146 @@
       ],
       "lastActivity": {
         "type": "commit",
-        "title": "fix: harden tutor flow submissions and storage",
-        "date": "08 jul 2026",
-        "time": "18:40",
-        "iso": "2026-07-09T00:40:40.000Z"
+        "title": "feat: agregar salud y gestion operativa de equipos",
+        "date": "12 jul 2026",
+        "time": "15:20",
+        "iso": "2026-07-12T21:20:45.000Z"
       }
     }
   ],
   "recentActivities": [
+    {
+      "user": "Jassiel García",
+      "action": "hotfix",
+      "description": "fix: cerrar estados finales de justificaciones",
+      "module": "Justificaciones",
+      "squad": "Squad 1",
+      "sprint": "Sprint 3",
+      "date": "12-jul",
+      "time": "15:29",
+      "status": "Completado",
+      "impact": "Medio"
+    },
+    {
+      "user": "Jassiel García",
+      "action": "validation",
+      "description": "feat: agregar salud y gestion operativa de equipos",
+      "module": "Dashboard Base",
+      "squad": "Admin Master",
+      "sprint": "Sprint 3",
+      "date": "12-jul",
+      "time": "15:20",
+      "status": "Completado",
+      "impact": "Alto"
+    },
+    {
+      "user": "Jassiel García",
+      "action": "hotfix",
+      "description": "fix: resolver union de alumnos a equipos",
+      "module": "Dashboard Base",
+      "squad": "Admin Master",
+      "sprint": "Sprint 3",
+      "date": "12-jul",
+      "time": "15:15",
+      "status": "Completado",
+      "impact": "Medio"
+    },
+    {
+      "user": "Jassiel García",
+      "action": "hotfix",
+      "description": "fix: autorizar creacion de equipos para tutores",
+      "module": "Dashboard Base",
+      "squad": "Admin Master",
+      "sprint": "Sprint 3",
+      "date": "12-jul",
+      "time": "15:11",
+      "status": "Completado",
+      "impact": "Medio"
+    },
+    {
+      "user": "Jassiel García",
+      "action": "hotfix",
+      "description": "fix: completar flujos de tutorias y justificaciones",
+      "module": "Justificaciones",
+      "squad": "Squad 1",
+      "sprint": "Sprint 3",
+      "date": "12-jul",
+      "time": "14:56",
+      "status": "Completado",
+      "impact": "Medio"
+    },
+    {
+      "user": "Jassiel García",
+      "action": "validation",
+      "description": "chore: habilitar monitoreo de disponibilidad IA",
+      "module": "Dashboard Base",
+      "squad": "Admin Master",
+      "sprint": "Sprint 3",
+      "date": "12-jul",
+      "time": "14:25",
+      "status": "Completado",
+      "impact": "Medio"
+    },
+    {
+      "user": "Jassiel García",
+      "action": "validation",
+      "description": "chore: agregar diagnostico seguro para IA",
+      "module": "Dashboard Base",
+      "squad": "Admin Master",
+      "sprint": "Sprint 3",
+      "date": "12-jul",
+      "time": "14:22",
+      "status": "Completado",
+      "impact": "Medio"
+    },
+    {
+      "user": "Jassiel García",
+      "action": "validation",
+      "description": "chore: establecer syncut.click como dominio canonico",
+      "module": "Dashboard Base",
+      "squad": "Admin Master",
+      "sprint": "Sprint 3",
+      "date": "12-jul",
+      "time": "14:07",
+      "status": "Completado",
+      "impact": "Medio"
+    },
+    {
+      "user": "Jassiel García",
+      "action": "validation",
+      "description": "feat: integrar asistente IA con respaldo FAQ",
+      "module": "Dashboard Base",
+      "squad": "Admin Master",
+      "sprint": "Sprint 3",
+      "date": "12-jul",
+      "time": "13:37",
+      "status": "Completado",
+      "impact": "Alto"
+    },
+    {
+      "user": "Jassiel García",
+      "action": "validation",
+      "description": "refactor: unificar coordinacion en rol tutor",
+      "module": "Dashboard Base",
+      "squad": "Admin Master",
+      "sprint": "Sprint 3",
+      "date": "12-jul",
+      "time": "13:20",
+      "status": "Completado",
+      "impact": "Medio"
+    },
+    {
+      "user": "Jassiel García",
+      "action": "hotfix",
+      "description": "fix: stabilize email redirect urls",
+      "module": "Dashboard Base",
+      "squad": "Admin Master",
+      "sprint": "Sprint 3",
+      "date": "10-jul",
+      "time": "18:22",
+      "status": "Completado",
+      "impact": "Medio"
+    },
     {
       "user": "Jassiel García",
       "action": "hotfix",
@@ -323,138 +455,6 @@
       "time": "08:27",
       "status": "Completado",
       "impact": "Alto"
-    },
-    {
-      "user": "Jassiel García",
-      "action": "validation",
-      "description": "Configure email queue processing",
-      "module": "Dashboard Base",
-      "squad": "Admin Master",
-      "sprint": "Sprint 3",
-      "date": "06-jul",
-      "time": "16:21",
-      "status": "Completado",
-      "impact": "Medio"
-    },
-    {
-      "user": "Jassiel García",
-      "action": "validation",
-      "description": "feat: validate forms by workflow",
-      "module": "Dashboard Base",
-      "squad": "Admin Master",
-      "sprint": "Sprint 3",
-      "date": "06-jul",
-      "time": "14:38",
-      "status": "Completado",
-      "impact": "Alto"
-    },
-    {
-      "user": "Jassiel García",
-      "action": "validation",
-      "description": "docs: document real role workflows",
-      "module": "Dashboard Base",
-      "squad": "Admin Master",
-      "sprint": "Sprint 3",
-      "date": "06-jul",
-      "time": "14:26",
-      "status": "Completado",
-      "impact": "Medio"
-    },
-    {
-      "user": "Jassiel García",
-      "action": "validation",
-      "description": "feat: separate role workflows",
-      "module": "Dashboard Base",
-      "squad": "Admin Master",
-      "sprint": "Sprint 3",
-      "date": "06-jul",
-      "time": "14:23",
-      "status": "Completado",
-      "impact": "Alto"
-    },
-    {
-      "user": "Jassiel García",
-      "action": "validation",
-      "description": "feat: make header actions functional",
-      "module": "Dashboard Base",
-      "squad": "Admin Master",
-      "sprint": "Sprint 3",
-      "date": "06-jul",
-      "time": "10:30",
-      "status": "Completado",
-      "impact": "Alto"
-    },
-    {
-      "user": "Jassiel García",
-      "action": "validation",
-      "description": "feat: seed UTCJ chatbot FAQ",
-      "module": "Chatbot",
-      "squad": "Squad 6",
-      "sprint": "Sprint 3",
-      "date": "06-jul",
-      "time": "10:24",
-      "status": "Completado",
-      "impact": "Alto"
-    },
-    {
-      "user": "Jassiel García",
-      "action": "hotfix",
-      "description": "fix: normalize seeded auth users",
-      "module": "Autenticación",
-      "squad": "Squad 2",
-      "sprint": "Sprint 3",
-      "date": "06-jul",
-      "time": "10:16",
-      "status": "Completado",
-      "impact": "Medio"
-    },
-    {
-      "user": "Jassiel García",
-      "action": "hotfix",
-      "description": "fix: align incident comment seed with schema",
-      "module": "Incidencias",
-      "squad": "Squad 5",
-      "sprint": "Sprint 3",
-      "date": "06-jul",
-      "time": "10:05",
-      "status": "Completado",
-      "impact": "Medio"
-    },
-    {
-      "user": "Jassiel García",
-      "action": "hotfix",
-      "description": "fix: qualify pgcrypto functions in seed migration",
-      "module": "Dashboard Base",
-      "squad": "Admin Master",
-      "sprint": "Sprint 3",
-      "date": "06-jul",
-      "time": "10:04",
-      "status": "Completado",
-      "impact": "Medio"
-    },
-    {
-      "user": "Jassiel García",
-      "action": "validation",
-      "description": "feat: add role workflows and premium modules",
-      "module": "Dashboard Base",
-      "squad": "Admin Master",
-      "sprint": "Sprint 3",
-      "date": "06-jul",
-      "time": "10:01",
-      "status": "Completado",
-      "impact": "Alto"
-    },
-    {
-      "user": "Jassiel García",
-      "action": "validation",
-      "description": "chore: integrate squad branches and refresh admin dashboard",
-      "module": "Dashboard Base",
-      "squad": "Admin Master",
-      "sprint": "Sprint 3",
-      "date": "03-jul",
-      "time": "18:18",
-      "status": "Completado",
-      "impact": "Medio"
     },
     {
       "user": "Langostin",
@@ -522,9 +522,9 @@
       "name": "Jassiel García",
       "squad": "Admin Master",
       "role": "Project Lead",
-      "tasks": 119,
+      "tasks": 130,
       "progress": 100,
-      "weekly": "115 commits · 4 PRs",
+      "weekly": "126 commits · 4 PRs",
       "prs": 4,
       "status": "activo"
     },
