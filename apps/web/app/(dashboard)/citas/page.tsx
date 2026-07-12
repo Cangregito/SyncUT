@@ -756,9 +756,7 @@ export default async function CitasPage() {
             <h2 className="text-sm font-semibold uppercase text-on-surface-variant">Rol en agenda</h2>
             <p className="mt-3 text-sm text-on-surface-variant">
               {profile.role === "tutor"
-                ? "Tu flujo es publicar disponibilidad, confirmar citas, registrar asistencia y dejar seguimiento."
-                : profile.role === "coordinator"
-                  ? "Tu flujo es supervisar agenda, validar estados y desactivar bloques cuando sea necesario."
+                ? "Tu flujo es publicar disponibilidad, confirmar citas, registrar asistencia, supervisar agenda y desactivar bloques cuando sea necesario."
                   : profile.role === "teacher"
                     ? "El docente no agenda tutorias; aporta contexto academico desde justificaciones e incidencias."
                     : "El administrador conserva visibilidad operativa y auditoria de agenda."}

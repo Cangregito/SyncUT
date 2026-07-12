@@ -72,7 +72,7 @@ async function sendTeacherMessage(formData: FormData) {
   "use server";
 
   const profile = await requireProfile();
-  if (!["tutor", "admin", "coordinator"].includes(profile.role)) {
+  if (!["tutor", "admin"].includes(profile.role)) {
     redirect("/equipo?error=forbidden");
   }
 
@@ -111,7 +111,7 @@ export default async function EquipoTutorialPage({
   const params = await searchParams;
   const supabase = await createSupabaseServerClient();
   const canManageTeam = ["tutor", "admin"].includes(profile.role);
-  const canSendTeacherMessages = ["tutor", "admin", "coordinator"].includes(profile.role);
+  const canSendTeacherMessages = ["tutor", "admin"].includes(profile.role);
 
   const { data: teamsData, error: teamsError } = await supabase
     .from("tutor_teams")

@@ -7,7 +7,7 @@ import { ROLE_LABELS, USER_ROLES, type UserRole } from "@/lib/auth/roles";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/server";
 import { getAuthRedirectUrl } from "@/lib/auth/urls";
 
-const STAFF_ROLES = ["coordinator", "teacher", "tutor"] as const;
+const STAFF_ROLES = ["teacher", "tutor"] as const;
 type StaffRole = (typeof STAFF_ROLES)[number];
 
 function isStaffRole(value: unknown): value is StaffRole {
@@ -139,7 +139,7 @@ export default async function AdminRoutePage({
             <p className="text-xs font-semibold uppercase tracking-wider text-primary">Gobernanza de cuentas</p>
             <h1 className="mt-2 text-2xl font-headline font-bold text-on-surface">Alta institucional de staff</h1>
             <p className="mt-2 max-w-3xl text-sm text-on-surface-variant">
-              Coordinadores, docentes y tutores se agregan desde aquí. El registro público queda reservado para alumnos con correo institucional.
+              Docentes y tutores se agregan desde aquí. El registro público queda reservado para alumnos con correo institucional.
             </p>
           </div>
           <span className="rounded border border-outline-variant px-3 py-2 text-xs font-semibold text-on-surface-variant">

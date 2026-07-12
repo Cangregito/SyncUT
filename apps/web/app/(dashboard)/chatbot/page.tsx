@@ -213,7 +213,7 @@ async function createFaqEntry(formData: FormData) {
   "use server";
 
   const profile = await requireProfile();
-  if (!["admin", "coordinator"].includes(profile.role)) {
+  if (!["admin", "tutor"].includes(profile.role)) {
     return;
   }
 
@@ -245,7 +245,7 @@ async function createFaqEntry(formData: FormData) {
 export default async function ChatbotPage() {
   const profile = await requireProfile();
   const supabase = await createSupabaseServerClient();
-  const canManageFaq = ["admin", "coordinator"].includes(profile.role);
+  const canManageFaq = ["admin", "tutor"].includes(profile.role);
 
   const { data: conversationData } = await supabase
     .from("chatbot_conversations")

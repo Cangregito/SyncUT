@@ -3,7 +3,6 @@ export const USER_ROLES = [
   "teacher",
   "tutor",
   "admin",
-  "coordinator",
 ] as const;
 
 export type UserRole = (typeof USER_ROLES)[number];
@@ -42,15 +41,13 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   student: "Estudiante",
   teacher: "Docente",
   tutor: "Tutor",
-  coordinator: "Coordinacion",
   admin: "Administrador",
 };
 
 export const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
   student: "Solicita citas, registra justificaciones y da seguimiento a sus reportes.",
   teacher: "Valida contexto academico, aporta evidencia docente y comenta incidencias asignadas.",
-  tutor: "Gestiona disponibilidad, confirma tutorias, registra asistencia y acompana estudiantes.",
-  coordinator: "Resuelve justificaciones, asigna incidencias y supervisa el flujo institucional.",
+  tutor: "Gestiona tutorias, resuelve justificaciones, asigna incidencias y supervisa el flujo institucional.",
   admin: "Gobierna roles, datos, seguridad, auditoria y salud completa de la plataforma.",
 };
 
@@ -72,11 +69,6 @@ export const DEMO_ROLE_ACCOUNTS: Record<
     email: "tutor@syncut.test",
     password: "SyncUT2026!",
     fullName: "Mtra. Fernanda Ruiz Hernandez",
-  },
-  coordinator: {
-    email: "coordinacion@syncut.test",
-    password: "SyncUT2026!",
-    fullName: "Ana Ramos",
   },
   admin: {
     email: "admin@syncut.test",
@@ -104,21 +96,15 @@ export const ROLE_PERMISSIONS: Record<UserRole, readonly RolePermission[]> = {
   tutor: [
     "dashboard:view",
     "justifications:tutor_followup",
+    "justifications:resolve",
     "appointments:availability",
     "appointments:confirm",
     "appointments:attendance",
     "appointments:session_note",
-    "notifications:view",
-    "notifications:send",
-    "incidents:comment",
-    "chatbot:use",
-  ],
-  coordinator: [
-    "dashboard:view",
-    "justifications:resolve",
     "appointments:oversight",
     "notifications:view",
     "notifications:send",
+    "incidents:comment",
     "incidents:assign",
     "incidents:resolve",
     "chatbot:use",

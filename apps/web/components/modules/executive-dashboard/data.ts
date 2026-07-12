@@ -256,7 +256,7 @@ export const modules = [
     nextSteps: ["Tablero semáforo semanal", "Reglas de escalamiento"],
     deliverables: ["Matriz de priorización de quejas", "Tablero visual"],
     improvements: ["Integrar notificaciones SMS en alertas rojas"],
-    dependencies: ["Roles de coordinador"],
+    dependencies: ["Roles de tutor"],
     blockers: ["Ninguno"],
     history: [
       { by: "Osmara Araujo", date: "02 Jun", type: "Docs", approval: "Aprobado", detail: "Definición de incidencias y reglas de semáforo." },

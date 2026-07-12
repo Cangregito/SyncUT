@@ -10,7 +10,7 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export type UserRole = 'student' | 'teacher' | 'tutor' | 'admin' | 'coordinator';
+export type UserRole = 'student' | 'teacher' | 'tutor' | 'admin';
 
 export interface UserProfile {
   id: string;

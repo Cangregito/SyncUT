@@ -3,7 +3,7 @@
  * Usado por todos los squads para garantizar tipado estricto
  */
 
-export const VALID_ROLES = ['student', 'teacher', 'tutor', 'admin', 'coordinator'] as const;
+export const VALID_ROLES = ['student', 'teacher', 'tutor', 'admin'] as const;
 
 export interface ValidationResult {
   valid: boolean;

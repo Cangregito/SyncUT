@@ -194,7 +194,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   if (!canResolveIncident) {
     return NextResponse.json(
       {
-        error: "Solo coordinacion, administracion o el tutor directo puede cerrar incidencias de su alumno",
+        error: "Solo administracion o el tutor directo puede cerrar incidencias de su alumno",
       },
       { status: 403 },
     );

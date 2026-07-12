@@ -353,7 +353,7 @@ export default async function JustificacionesPage({
                   ? "Aporta contexto de materia, asistencia y evidencia academica. No aprueba ni rechaza."
                   : profile.role === "tutor"
                     ? "Da seguimiento al estudiante y puede solicitar informacion adicional antes de escalar."
-                    : "Coordinacion o administracion resuelven el expediente con aprobacion, rechazo o solicitud de informacion."}
+                    : "Tutor o administracion resuelven el expediente con aprobacion, rechazo o solicitud de informacion."}
               </p>
             </section>
           )}

@@ -421,7 +421,7 @@ export default async function IncidenciasPage({
     supabase
       .from("profiles")
       .select("id, full_name, email, role")
-      .in("role", ["admin", "coordinator", "teacher", "tutor"])
+      .in("role", ["admin", "teacher", "tutor"])
       .order("full_name", { ascending: true }),
     incidents.length
       ? supabase
@@ -541,13 +541,11 @@ export default async function IncidenciasPage({
           <section className="rounded-lg border border-outline-variant bg-surface-container p-5">
             <h2 className="text-sm font-semibold uppercase text-on-surface-variant">Rol en incidencias</h2>
             <p className="mt-3 text-sm text-on-surface-variant">
-              {profile.role === "coordinator"
-                ? "Asigna responsables, da seguimiento a SLA y resuelve incidencias institucionales."
+              {profile.role === "tutor"
+                ? "Asigna responsables, da seguimiento tutorial y a SLA, y resuelve incidencias institucionales de sus alumnos."
                 : profile.role === "teacher"
                   ? "Comenta incidencias academicas asignadas con evidencia docente."
-                  : profile.role === "tutor"
-                    ? "Aporta seguimiento tutorial y puede cerrar incidencias de alumnos de su equipo."
-                    : "Supervisa la bitacora completa y puede cerrar casos criticos."}
+                  : "Supervisa la bitacora completa y puede cerrar casos criticos."}
             </p>
           </section>
         )}

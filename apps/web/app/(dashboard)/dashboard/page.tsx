@@ -66,7 +66,7 @@ const workflowByRole: Record<UserRole, { title: string; steps: string[] }> = {
     title: "Flujo docente",
     steps: [
       "Aporta contexto de materia y asistencia en justificaciones.",
-      "Comenta incidencias academicas asignadas por coordinacion.",
+      "Comenta incidencias academicas asignadas por el tutor responsable.",
       "No aprueba ni asigna casos; deja evidencia para decision institucional.",
     ],
   },
@@ -75,12 +75,6 @@ const workflowByRole: Record<UserRole, { title: string; steps: string[] }> = {
     steps: [
       "Publica disponibilidad y confirma citas.",
       "Registra asistencia, acuerdos y seguimiento de tutorias.",
-      "Solicita informacion o escala casos; no cierra resoluciones institucionales.",
-    ],
-  },
-  coordinator: {
-    title: "Flujo coordinacion",
-    steps: [
       "Aprueba, rechaza o pide informacion en justificaciones.",
       "Asigna responsables y resuelve incidencias.",
       "Administra contenidos del asistente institucional.",

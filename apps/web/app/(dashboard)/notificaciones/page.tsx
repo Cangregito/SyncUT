@@ -85,7 +85,7 @@ export default async function NotificacionesPage({
   const profile = await requireProfile();
   const params = await searchParams;
   const supabase = await createSupabaseServerClient();
-  const canInspectEmailQueue = ["admin", "coordinator"].includes(profile.role);
+  const canInspectEmailQueue = ["admin", "tutor"].includes(profile.role);
 
   let query = supabase
     .from("notifications")
