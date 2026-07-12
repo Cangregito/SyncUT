@@ -1,5 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import type { Tables } from "@plataforma/types";
 
 import { SubmitButton } from "@/components/forms/submit-button";
@@ -32,6 +33,26 @@ type ChannelItem = {
   author?: Pick<Tables<"profiles">, "full_name" | "email"> | null;
 };
 
+type ItemProgress = { item_id: string; student_id: string; status: "completed"; completed_at: string };
+
+async function updateAssignmentProgress(formData: FormData) {
+  "use server";
+  const profile = await requireProfile();
+  if (profile.role !== "student") redirect("/equipo?error=forbidden");
+  const itemId = String(formData.get("item_id") ?? "");
+  const teamId = String(formData.get("team_id") ?? "");
+  const completed = String(formData.get("completed") ?? "") === "true";
+  if (!itemId || !teamId) redirect("/equipo?error=Actividad no válida.");
+  const supabase = await createSupabaseServerClient();
+  const query = supabase.from("tutor_team_item_progress" as "notifications");
+  const { error } = completed
+    ? await query.insert({ item_id: itemId, student_id: profile.id, status: "completed" } as never)
+    : await query.delete().eq("item_id" as "id", itemId).eq("student_id" as "user_id", profile.id);
+  if (error) redirect(`/equipo?team=${teamId}&error=${encodeURIComponent(error.message)}#asignaciones`);
+  revalidatePath("/equipo");
+  redirect(`/equipo?team=${teamId}#asignaciones`);
+}
+
 async function publishChannelItem(formData: FormData) {
   "use server";
   const profile = await requireProfile();
@@ -59,7 +80,7 @@ async function publishChannelItem(formData: FormData) {
     p_body: body, p_metadata: { team_id: teamId, kind }, p_triggered_by: profile.id,
   })));
   revalidatePath("/equipo"); revalidatePath("/notificaciones");
-  redirect("/equipo?published=true");
+  redirect(`/equipo?team=${teamId}&published=true#panel-equipo`);
 }
 
 async function createTeam(formData: FormData) {
@@ -189,7 +210,7 @@ async function scheduleStudentAppointment(formData: FormData) {
 export default async function EquipoTutorialPage({
   searchParams,
 }: {
-  searchParams: Promise<{ created?: string; joined?: string; sent?: string; announced?: string; scheduled?: string; published?: string; error?: string }>;
+  searchParams: Promise<{ team?: string; created?: string; joined?: string; sent?: string; announced?: string; scheduled?: string; published?: string; error?: string }>;
 }) {
   const profile = await requireProfile();
   const params = await searchParams;
@@ -223,13 +244,21 @@ export default async function EquipoTutorialPage({
     .order("created_at", { ascending: false });
 
   const teams = (teamsData ?? []) as unknown as TutorTeam[];
-  const activeTeam = teams.find((team) => team.is_active) ?? teams[0] ?? null;
+  const requestedTeam = params.team ? teams.find((team) => team.id === params.team) : null;
+  const activeTeam = requestedTeam ?? teams.find((team) => team.is_active) ?? teams[0] ?? null;
   const studentTeam = profile.role === "student" ? activeTeam : null;
 
   const { data: channelData } = activeTeam
     ? await supabase.from("tutor_team_channel_items" as "notifications").select("id,team_id,author_id,kind,title,body,due_at,created_at,author:profiles!tutor_team_channel_items_author_id_fkey(full_name,email)").eq("team_id" as "id", activeTeam.id).order("created_at", { ascending: false }).limit(50)
     : { data: [] };
   const channelItems = (channelData ?? []) as unknown as ChannelItem[];
+  const itemIds = channelItems.filter((item) => item.kind === "assignment").map((item) => item.id);
+  const { data: progressData } = itemIds.length
+    ? await supabase.from("tutor_team_item_progress" as "notifications").select("item_id,student_id,status,completed_at").in("item_id" as "id", itemIds)
+    : { data: [] };
+  const itemProgress = (progressData ?? []) as unknown as ItemProgress[];
+  const assignmentsItems = channelItems.filter((item) => item.kind === "assignment");
+  const generalItems = channelItems.filter((item) => item.kind !== "assignment");
 
   const memberIds = canManageTeam ? [...new Set(teams.flatMap((team) => (team.tutor_team_members ?? []).filter((member) => member.status === 'active').map((member) => member.student_id)))] : [];
   // This server-rendered value defines the rolling reporting window for tutors.
@@ -401,6 +430,10 @@ export default async function EquipoTutorialPage({
                   </div>
                 ))}
               </div>
+              <Link href={`/equipo?team=${team.id}#panel-equipo`} className={`mt-4 flex w-full items-center justify-center gap-2 rounded px-4 py-2.5 text-sm font-bold transition ${activeTeam?.id === team.id ? "bg-primary-container text-on-primary-container" : "border border-primary text-primary hover:bg-primary-container hover:text-on-primary-container"}`}>
+                <span className="material-symbols-outlined text-[18px]">groups</span>
+                {activeTeam?.id === team.id ? "Equipo abierto" : "Entrar al equipo"}
+              </Link>
             </article>
             );
           })}
@@ -408,12 +441,20 @@ export default async function EquipoTutorialPage({
       </section>
 
       {activeTeam ? (
-        <section className="rounded-lg border border-outline-variant bg-surface-container p-5">
+        <section id="panel-equipo" className="scroll-mt-20 rounded-lg border border-primary/40 bg-surface-container p-5">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <div><p className="text-xs font-semibold uppercase text-primary">Canal</p><h2 className="mt-1 text-xl font-bold text-on-surface">General · {activeTeam.name}</h2></div>
+            <div><p className="text-xs font-semibold uppercase text-primary">Panel del equipo · Canal</p><h2 className="mt-1 text-xl font-bold text-on-surface">General · {activeTeam.name}</h2><p className="mt-1 text-xs text-on-surface-variant">Publica comentarios, asignaciones y recordatorios para este grupo.</p></div>
             <span className="rounded-full bg-primary-container px-3 py-1 text-xs text-on-primary-container">{channelItems.length} publicaciones</span>
           </div>
-          <form action={publishChannelItem} className="mt-5 rounded border border-outline-variant bg-surface p-4">
+          <nav className="mt-5 flex flex-wrap gap-2 border-b border-outline-variant pb-3">
+            {[['Inicio','#panel-equipo'],['General','#general'],['Asignaciones','#asignaciones'],['Integrantes','#integrantes']].map(([label, href]) => <a key={label} href={href} className="rounded-full bg-surface px-3 py-1.5 text-xs font-semibold text-on-surface-variant hover:bg-primary-container hover:text-on-primary-container">{label}</a>)}
+          </nav>
+          <div className="mt-5 grid gap-3 sm:grid-cols-3">
+            <div className="rounded border border-outline-variant bg-surface p-3"><p className="text-[10px] uppercase text-on-surface-variant">Integrantes activos</p><p className="mt-1 text-2xl font-black text-on-surface">{(activeTeam.tutor_team_members ?? []).filter((member) => member.status === 'active').length}</p></div>
+            <div className="rounded border border-outline-variant bg-surface p-3"><p className="text-[10px] uppercase text-on-surface-variant">Asignaciones</p><p className="mt-1 text-2xl font-black text-primary">{assignmentsItems.length}</p></div>
+            <div className="rounded border border-outline-variant bg-surface p-3"><p className="text-[10px] uppercase text-on-surface-variant">Próximas entregas</p><p className="mt-1 text-2xl font-black text-on-surface">{assignmentsItems.filter((item) => item.due_at && new Date(item.due_at) >= new Date()).length}</p></div>
+          </div>
+          <form id="general" action={publishChannelItem} className="mt-5 scroll-mt-20 rounded border border-outline-variant bg-surface p-4">
             <input type="hidden" name="team_id" value={activeTeam.id} />
             <select name="kind" className="rounded border border-outline-variant bg-surface-container px-3 py-2 text-sm text-on-surface">
               <option value="comment">Comentario</option>
@@ -424,13 +465,23 @@ export default async function EquipoTutorialPage({
             <SubmitButton className="mt-3 rounded bg-primary px-4 py-2 text-sm font-bold text-on-primary" pendingLabel="Publicando...">Publicar y notificar</SubmitButton>
           </form>
           <div className="mt-5 space-y-3">
-            {channelItems.length === 0 ? <p className="rounded border border-outline-variant bg-surface p-4 text-sm text-on-surface-variant">Todavía no hay publicaciones en General.</p> : null}
-            {channelItems.map((item) => <article key={item.id} className="rounded border border-outline-variant bg-surface p-4">
+            {generalItems.length === 0 ? <p className="rounded border border-outline-variant bg-surface p-4 text-sm text-on-surface-variant">Todavía no hay publicaciones en General.</p> : null}
+            {generalItems.map((item) => <article key={item.id} className="rounded border border-outline-variant bg-surface p-4">
               <div className="flex flex-wrap items-center gap-2"><span className="rounded-full bg-primary-container/40 px-2 py-1 text-[10px] font-bold uppercase text-primary">{item.kind === "assignment" ? "Asignación" : item.kind === "reminder" ? "Recordatorio" : "Comentario"}</span><span className="text-xs text-on-surface-variant">{item.author?.full_name ?? item.author?.email ?? "Integrante"} · {new Date(item.created_at).toLocaleString("es-MX")}</span></div>
               {item.title ? <h3 className="mt-3 font-bold text-on-surface">{item.title}</h3> : null}<p className="mt-2 whitespace-pre-wrap text-sm text-on-surface">{item.body}</p>
               {item.due_at ? <p className="mt-3 text-xs font-semibold text-primary">Fecha límite: {new Date(item.due_at).toLocaleString("es-MX")}</p> : null}
             </article>)}
           </div>
+          <div id="asignaciones" className="mt-8 scroll-mt-20 border-t border-outline-variant pt-5">
+            <div className="flex items-center justify-between"><div><p className="text-xs font-semibold uppercase text-primary">Trabajo tutorial</p><h3 className="mt-1 text-lg font-bold text-on-surface">Asignaciones</h3></div><span className="text-xs text-on-surface-variant">{assignmentsItems.length} registradas</span></div>
+            <div className="mt-4 grid gap-3 md:grid-cols-2">{assignmentsItems.length === 0 ? <p className="text-sm text-on-surface-variant">No hay asignaciones publicadas.</p> : assignmentsItems.map((item) => {
+              const completedByMe = itemProgress.some((progress) => progress.item_id === item.id && progress.student_id === profile.id);
+              const completedCount = itemProgress.filter((progress) => progress.item_id === item.id).length;
+              const overdue = item.due_at && new Date(item.due_at) < new Date();
+              return <article key={item.id} className="rounded border border-outline-variant bg-surface p-4"><div className="flex items-start justify-between gap-2"><h4 className="font-bold text-on-surface">{item.title}</h4>{overdue ? <span className="rounded bg-error-container px-2 py-1 text-[10px] font-bold text-on-error-container">Vencida</span> : null}</div><p className="mt-2 text-sm text-on-surface-variant">{item.body}</p>{item.due_at ? <p className="mt-3 text-xs font-semibold text-primary">Entrega: {new Date(item.due_at).toLocaleString('es-MX')}</p> : null}{canManageTeam ? <p className="mt-3 text-xs text-on-surface-variant">Completada por {completedCount} alumno(s).</p> : <form action={updateAssignmentProgress} className="mt-3"><input type="hidden" name="item_id" value={item.id}/><input type="hidden" name="team_id" value={activeTeam.id}/><input type="hidden" name="completed" value={String(!completedByMe)}/><SubmitButton className={`rounded px-3 py-2 text-xs font-bold ${completedByMe ? 'border border-tertiary text-tertiary' : 'bg-primary-container text-on-primary-container'}`} pendingLabel="Guardando...">{completedByMe ? 'Marcar como pendiente' : 'Marcar como completada'}</SubmitButton></form>}</article>;
+            })}</div>
+          </div>
+          <div id="integrantes" className="mt-8 scroll-mt-20 border-t border-outline-variant pt-5"><p className="text-xs font-semibold uppercase text-primary">Directorio</p><h3 className="mt-1 text-lg font-bold text-on-surface">Integrantes</h3><div className="mt-4 grid gap-2 sm:grid-cols-2"><div className="rounded border border-outline-variant bg-surface p-3"><p className="text-sm font-bold text-on-surface">{activeTeam.tutor?.full_name ?? activeTeam.tutor?.email}</p><p className="text-xs text-on-surface-variant">Tutor · Responsable del equipo</p></div>{(activeTeam.tutor_team_members ?? []).filter((member) => member.status === 'active').map((member) => <div key={member.id} className="rounded border border-outline-variant bg-surface p-3"><p className="text-sm font-bold text-on-surface">{member.student?.profile?.full_name ?? member.student?.profile?.email}</p><p className="text-xs text-on-surface-variant">Alumno · {member.student?.student_code ?? 'Sin matrícula'}</p></div>)}</div></div>
         </section>
       ) : null}
 

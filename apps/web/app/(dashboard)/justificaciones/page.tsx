@@ -2,6 +2,7 @@ import { revalidatePath } from "next/cache";
 import type { Tables } from "@plataforma/types";
 
 import { SubmitButton } from "@/components/forms/submit-button";
+import { FilePreviewModal } from "@/components/files/file-preview-modal";
 import { JustificationForm } from "@/components/justifications/justification-form";
 import { requireProfile } from "@/lib/auth/session";
 import { hasPermission } from "@/lib/auth/roles";
@@ -420,9 +421,7 @@ export default async function JustificacionesPage({
                         <div key={file.id} className="flex items-center gap-2 rounded border border-outline-variant bg-surface px-3 py-2 text-xs text-on-surface-variant">
                           <span className="max-w-64 truncate" title={file.file_name}>{file.file_name}</span>
                           {access?.viewUrl ? (
-                            <a href={access.viewUrl} target="_blank" rel="noopener noreferrer" className="font-semibold text-primary hover:underline">
-                              Ver
-                            </a>
+                            <FilePreviewModal fileName={file.file_name} contentType={file.content_type} url={access.viewUrl} />
                           ) : null}
                           {access?.downloadUrl ? (
                             <a href={access.downloadUrl} className="font-semibold text-primary hover:underline">

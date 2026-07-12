@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { createSupabaseBrowserClient } from "@plataforma/sdk/client";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 
 import {
   getModulesForRole,
@@ -240,6 +241,7 @@ export function DashboardShell({
             </div>
 
             {/* Notifications */}
+            <ThemeToggle compact />
             <Link
               href="/notificaciones?estado=no-leidas"
               aria-label="Abrir notificaciones no leidas"
@@ -276,6 +278,7 @@ export function DashboardShell({
                     </p>
                   </div>
                   <div className="p-2">
+                    <ThemeToggle />
                     <Link
                       href="/notificaciones#preferencias"
                       onClick={() => setActiveHeaderMenu(null)}
