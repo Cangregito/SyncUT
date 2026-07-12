@@ -6,6 +6,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { LogsFilterBar } from "./logs-filter-bar";
 
 type Params = { q?: string; action?: string; result?: string; severity?: string; from?: string; to?: string };
+type UnifiedLog = { id: string; user_id: string | null; action: string; table_name: string; record_id: string | null; old_values: unknown; new_values: unknown; created_at: string; result: string; reason: string | null; severity: string };
 
 function dateLabel(value: string) {
   return new Intl.DateTimeFormat("es-MX", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
@@ -19,20 +20,33 @@ export default async function AdminLogsPage({ searchParams }: { searchParams: Pr
   await requireRole(["admin"]);
   const params = await searchParams;
   const db = await createSupabaseServerClient();
-  const [{ data: rows, error }, { data: profiles }] = await Promise.all([
+  const [core, profileResult, appointments, justifications, incidents, notifications] = await Promise.all([
     db.from("audit_logs").select("id,user_id,action,table_name,record_id,old_values,new_values,created_at,result,reason,severity,ip_address,user_agent,request_id").order("created_at", { ascending: false }).limit(500),
     db.from("profiles").select("id,full_name,email,role"),
+    db.from("appointment_audit_events").select("id,actor_id,appointment_id,event_type,from_status,to_status,note,created_at").order("created_at", { ascending: false }).limit(500),
+    db.from("justification_audit_events").select("id,actor_id,justification_id,event_type,from_status,to_status,note,created_at").order("created_at", { ascending: false }).limit(500),
+    db.from("incident_audit_events").select("id,actor_id,incident_id,event_type,from_status,to_status,from_priority,to_priority,assigned_to,note,created_at").order("created_at", { ascending: false }).limit(500),
+    db.from("notification_logs").select("id,triggered_by,user_id,event_type,notification_id,email_queue_id,payload,created_at").order("created_at", { ascending: false }).limit(500),
   ]);
+  const profiles = profileResult.data;
+  const rows: UnifiedLog[] = [
+    ...(core.data ?? []).map(row => ({ ...row, old_values: row.old_values, new_values: row.new_values })),
+    ...(appointments.data ?? []).map(row => ({ id:`appointment:${row.id}`, user_id:row.actor_id, action:`appointment.${row.event_type}`, table_name:"appointments", record_id:row.appointment_id, old_values:{status:row.from_status}, new_values:{status:row.to_status}, created_at:row.created_at ?? new Date(0).toISOString(), result:"success", reason:row.note, severity:"info" })),
+    ...(justifications.data ?? []).map(row => ({ id:`justification:${row.id}`, user_id:row.actor_id, action:`justification.${row.event_type}`, table_name:"justifications", record_id:row.justification_id, old_values:{status:row.from_status}, new_values:{status:row.to_status}, created_at:row.created_at ?? new Date(0).toISOString(), result:"success", reason:row.note, severity:row.to_status === "rejected" ? "warning" : "info" })),
+    ...(incidents.data ?? []).map(row => ({ id:`incident:${row.id}`, user_id:row.actor_id, action:`incident.${row.event_type}`, table_name:"incidents", record_id:row.incident_id, old_values:{status:row.from_status,priority:row.from_priority}, new_values:{status:row.to_status,priority:row.to_priority,assigned_to:row.assigned_to}, created_at:row.created_at ?? new Date(0).toISOString(), result:"success", reason:row.note, severity:row.to_priority === "alta" ? "critical" : row.to_status === "cerrada" ? "info" : "warning" })),
+    ...(notifications.data ?? []).map(row => ({ id:`notification:${row.id}`, user_id:row.triggered_by, action:`notification.${row.event_type}`, table_name:"notifications", record_id:row.notification_id ?? row.email_queue_id, old_values:null, new_values:{user_id:row.user_id,payload:row.payload}, created_at:row.created_at, result:"success", reason:"Evento de comunicación institucional", severity:"info" })),
+  ].sort((a,b) => new Date(b.created_at).getTime()-new Date(a.created_at).getTime()).slice(0,1000);
+  const errors = [core.error, appointments.error, justifications.error, incidents.error, notifications.error, profileResult.error].filter(Boolean);
   const names = new Map((profiles ?? []).map((p) => [p.id, `${p.full_name} (${p.email})`]));
   const q = (params.q ?? "").trim().toLowerCase();
   const from = params.from ? new Date(`${params.from}T00:00:00`).getTime() : null;
   const to = params.to ? new Date(`${params.to}T23:59:59.999`).getTime() : null;
-  const filtered = (rows ?? []).filter((row) => {
+  const filtered = rows.filter((row) => {
     const haystack = [row.action, row.table_name, row.reason, row.record_id, names.get(row.user_id ?? ""), JSON.stringify(row.new_values)].join(" ").toLowerCase();
     const timestamp = new Date(row.created_at).getTime();
     return (!q || haystack.includes(q)) && (!params.action || row.action === params.action) && (!params.result || row.result === params.result) && (!params.severity || row.severity === params.severity) && (!from || timestamp >= from) && (!to || timestamp <= to);
   });
-  const actions = [...new Set((rows ?? []).map((row) => row.action))].sort();
+  const actions = [...new Set(rows.map((row) => row.action))].sort();
   const critical = filtered.filter((row) => row.severity === "critical").length;
   const failed = filtered.filter((row) => row.result !== "success").length;
   const actors = new Set(filtered.map((row) => row.user_id).filter(Boolean)).size;
@@ -47,7 +61,7 @@ export default async function AdminLogsPage({ searchParams }: { searchParams: Pr
     <section className="rounded-2xl border border-violet-400/15 bg-[radial-gradient(circle_at_top_right,rgba(124,58,237,.2),transparent_40%),linear-gradient(135deg,#15131b,#0d0d10)] p-6 md:p-8">
       <div className="flex flex-wrap items-end justify-between gap-5"><div><p className="text-xs font-semibold uppercase tracking-[.18em] text-violet-300">Centro de observabilidad</p><h1 className="mt-2 text-3xl font-bold tracking-tight text-white">Auditoría y análisis de eventos</h1><p className="mt-3 max-w-3xl text-sm text-zinc-400">Evidencia trazable para seguridad, cumplimiento y análisis operativo. Los registros son inmutables.</p></div><a href={`data:text/csv;charset=utf-8,${encodeURIComponent(csv)}`} download={`syncut-auditoria-${new Date().toISOString().slice(0,10)}.csv`} className="flex items-center gap-2 rounded-xl bg-violet-500 px-4 py-3 text-sm font-bold text-white"><Download size={17}/> Exportar {filtered.length} eventos</a></div>
     </section>
-    {error && <div className="rounded-xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-300">No fue posible consultar la auditoría: {error.message}</div>}
+    {errors.length > 0 && <div className="rounded-xl border border-amber-400/20 bg-amber-400/10 p-4 text-sm text-amber-300">Algunas fuentes no pudieron consultarse: {errors.map(item=>item?.message).join(" · ")}</div>}
     <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{[
       ["Eventos analizados", filtered.length, Activity, "text-violet-300 bg-violet-400/10"],
       ["Eventos críticos", critical, ShieldAlert, "text-red-300 bg-red-400/10"],
