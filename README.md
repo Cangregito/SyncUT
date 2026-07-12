@@ -34,6 +34,10 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
+En producción, la URL canónica es `https://syncut.click`. Configura
+`NEXT_PUBLIC_APP_URL=https://syncut.click` en Vercel; `localhost` se reserva
+únicamente para desarrollo local.
+
 ## Calidad
 
 ```bash

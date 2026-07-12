@@ -1,7 +1,7 @@
 # Auditoria de roles y flujo real
 
 Fecha: 2026-07-06  
-Produccion: https://sync-ut.vercel.app  
+Produccion: https://syncut.click
 Commit base documentado: `d125611 feat: separate role workflows`
 
 ## Objetivo

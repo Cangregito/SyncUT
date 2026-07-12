@@ -1,4 +1,4 @@
-const PRODUCTION_APP_URL = "https://sync-ut.vercel.app";
+const PRODUCTION_APP_URL = "https://syncut.click";
 
 export function getPublicAppUrl(): string {
   const configuredUrl = process.env.NEXT_PUBLIC_APP_URL?.trim();

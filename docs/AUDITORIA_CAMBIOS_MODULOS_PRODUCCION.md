@@ -6,8 +6,8 @@ Fecha: 2026-06-30
 
 La aplicacion web fue desplegada a Vercel en produccion.
 
-- URL principal: https://sync-ut.vercel.app
-- URL del deployment: https://sync-m5hbb50df-cangregitos-projects.vercel.app
+- URL principal: https://syncut.click
+- Dominio canonico del deployment: https://syncut.click
 - Deployment ID: `dpl_35CKBwas4TumnUwzTPnUm5RFxE4z`
 - Proyecto Vercel: `cangregitos-projects/sync-ut`
 - Estado: `READY`

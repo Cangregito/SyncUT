@@ -2,11 +2,11 @@ project_id = "SyncUT"
 
 [auth]
 enabled = true
-site_url = "https://sync-ut.vercel.app"
+site_url = "https://syncut.click"
 additional_redirect_urls = [
-  "https://sync-ut.vercel.app/auth/callback",
-  "https://sync-ut.vercel.app/auth/callback?next=/dashboard",
-  "https://sync-ut.vercel.app/auth/callback?next=/reset-password",
+  "https://syncut.click/auth/callback",
+  "https://syncut.click/auth/callback?next=/dashboard",
+  "https://syncut.click/auth/callback?next=/reset-password",
 ]
 enable_signup = true
 minimum_password_length = 8

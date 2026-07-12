@@ -1,7 +1,7 @@
 # Auditoria de validaciones de formularios
 
 Fecha: 2026-07-06  
-Produccion: https://sync-ut.vercel.app
+Produccion: https://syncut.click
 
 ## Objetivo
 
