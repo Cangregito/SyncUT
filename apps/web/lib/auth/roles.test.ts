@@ -48,8 +48,8 @@ describe("role helpers", () => {
   it("returns only modules visible for each role", () => {
     expect(getModulesForRole("student").some((module) => module.href === "/admin")).toBe(false);
     expect(getModulesForRole("admin").some((module) => module.href === "/admin")).toBe(true);
-    expect(getModulesForRole("admin")).toHaveLength(2);
-    expect(getModulesForRole("admin").map((module) => module.href)).toEqual(["/admin", "/admin/proyecto"]);
+    expect(getModulesForRole("admin")).toHaveLength(3);
+    expect(getModulesForRole("admin").map((module) => module.href)).toEqual(["/admin", "/admin/proyecto", "/admin/logs"]);
     expect(hasPermission("admin", "justifications:resolve")).toBe(false);
     expect(hasPermission("admin", "appointments:oversight")).toBe(false);
   });
