@@ -169,7 +169,7 @@ export default async function EquipoTutorialPage({
 
       {params.error ? (
         <p className="rounded border border-error/40 bg-error-container/20 p-3 text-sm font-semibold text-on-error-container">
-          No se pudo completar la acción. Revisa los datos o permisos del flujo.
+          No se pudo completar la acción: {params.error === "forbidden" ? "tu rol no tiene permiso para esta operación." : params.error}
         </p>
       ) : null}
 

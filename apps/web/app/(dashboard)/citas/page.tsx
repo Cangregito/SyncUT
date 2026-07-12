@@ -270,12 +270,17 @@ async function updateAppointmentStatus(formData: FormData) {
     return;
   }
 
-  const { error } = await supabase
-    .from("appointments")
-    .update({ status, updated_at: new Date().toISOString() })
-    .eq("id", id);
+  const { error } = await supabase.rpc("change_appointment_status", {
+    p_appointment_id: id,
+    p_status: status,
+  });
 
-  if (!error) {
+  if (error) {
+    console.error("Unable to change appointment status", error);
+    return;
+  }
+
+  {
     await supabase.from("appointment_audit_events").insert({
       appointment_id: id,
       actor_id: profile.id,
@@ -475,24 +480,18 @@ async function recordAttendance(formData: FormData) {
   const nextAppointmentStatus: AppointmentStatus =
     statusValue === "attended" ? "completada" : statusValue === "no_show" ? "no_asistio" : "cancelada";
 
-  const { error } = await supabase.from("appointment_attendance").upsert({
-    appointment_id: appointmentId,
-    status: statusValue,
-    recorded_by: profile.id,
-    notes: notes || null,
-    updated_at: new Date().toISOString(),
-  }, {
-    onConflict: "appointment_id",
+  const { data: savedStatus, error } = await supabase.rpc("record_appointment_attendance", {
+    p_appointment_id: appointmentId,
+    p_status: statusValue,
+    p_notes: notes || undefined,
   });
 
-  if (!error) {
-    await supabase
-      .from("appointments")
-      .update({
-        status: nextAppointmentStatus,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", appointmentId);
+  if (error) {
+    console.error("Unable to record appointment attendance", error);
+    return;
+  }
+
+  if (savedStatus) {
 
     await supabase.from("appointment_audit_events").insert({
       appointment_id: appointmentId,
@@ -825,17 +824,23 @@ export default async function CitasPage() {
                     <input type="hidden" name="id" value={item.id} />
                     {(canOverseeAppointments || item.tutor_id === profile.id) ? (
                       <>
+                        {item.status === "pendiente" ? (
                         <SubmitButton name="status" value="confirmada" className="rounded border border-primary px-3 py-2 text-xs font-semibold text-primary disabled:opacity-60" pendingLabel="Confirmando...">
                           Confirmar
                         </SubmitButton>
+                        ) : null}
+                        {item.status === "confirmada" ? (
                         <SubmitButton name="status" value="completada" className="rounded border border-outline-variant px-3 py-2 text-xs font-semibold text-on-surface-variant disabled:opacity-60" pendingLabel="Completando...">
                           Completar
                         </SubmitButton>
+                        ) : null}
                       </>
                     ) : null}
+                    {item.status === "pendiente" || item.status === "confirmada" ? (
                     <SubmitButton name="status" value="cancelada" className="rounded border border-error px-3 py-2 text-xs font-semibold text-error disabled:opacity-60" pendingLabel="Cancelando...">
                       Cancelar
                     </SubmitButton>
+                    ) : null}
                   </form>
                 ) : null}
                 {attendanceRecord ? (

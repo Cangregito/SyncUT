@@ -1484,6 +1484,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      change_appointment_status: {
+        Args: {
+          p_appointment_id: string
+          p_status: Database["public"]["Enums"]["appointment_status"]
+        }
+        Returns: undefined
+      }
       create_tutor_team: {
         Args: { p_name?: string }
         Returns: {
@@ -1541,6 +1548,14 @@ export type Database = {
           team_id: string
           tutor_id: string
         }[]
+      }
+      record_appointment_attendance: {
+        Args: {
+          p_appointment_id: string
+          p_notes?: string
+          p_status: Database["public"]["Enums"]["appointment_attendance_status"]
+        }
+        Returns: Database["public"]["Enums"]["appointment_status"]
       }
       send_tutor_teacher_notification: {
         Args: {

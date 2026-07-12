@@ -251,6 +251,21 @@ export default async function JustificacionesPage({
   const justifications = (justificationsData ?? []) as unknown as JustificationRow[];
   const auditEvents = (auditData ?? []) as unknown as AuditRow[];
   const files = (filesData ?? []) as FileRow[];
+  const fileAccessEntries = await Promise.all(
+    files.map(async (file) => {
+      const [{ data: viewData }, { data: downloadData }] = await Promise.all([
+        supabase.storage
+          .from("evidencias_justificaciones")
+          .createSignedUrl(file.file_path, 60 * 15),
+        supabase.storage
+          .from("evidencias_justificaciones")
+          .createSignedUrl(file.file_path, 60 * 15, { download: file.file_name }),
+      ]);
+
+      return [file.id, { viewUrl: viewData?.signedUrl, downloadUrl: downloadData?.signedUrl }] as const;
+    }),
+  );
+  const fileAccessById = new Map(fileAccessEntries);
   const auditByJustification = auditEvents.reduce<Map<string, AuditRow[]>>((acc, event) => {
     const current = acc.get(event.justification_id) ?? [];
     current.push(event);
@@ -408,11 +423,27 @@ export default async function JustificacionesPage({
 
                 {itemFiles.length > 0 ? (
                   <div className="mt-4 flex flex-wrap gap-2">
-                    {itemFiles.map((file) => (
-                      <span key={file.id} className="rounded border border-outline-variant bg-surface px-3 py-2 text-xs text-on-surface-variant">
-                        {file.file_name}
-                      </span>
-                    ))}
+                    {itemFiles.map((file) => {
+                      const access = fileAccessById.get(file.id);
+                      return (
+                        <div key={file.id} className="flex items-center gap-2 rounded border border-outline-variant bg-surface px-3 py-2 text-xs text-on-surface-variant">
+                          <span className="max-w-64 truncate" title={file.file_name}>{file.file_name}</span>
+                          {access?.viewUrl ? (
+                            <a href={access.viewUrl} target="_blank" rel="noopener noreferrer" className="font-semibold text-primary hover:underline">
+                              Ver
+                            </a>
+                          ) : null}
+                          {access?.downloadUrl ? (
+                            <a href={access.downloadUrl} className="font-semibold text-primary hover:underline">
+                              Descargar
+                            </a>
+                          ) : null}
+                          {!access?.viewUrl && !access?.downloadUrl ? (
+                            <span className="text-error">Sin acceso</span>
+                          ) : null}
+                        </div>
+                      );
+                    })}
                   </div>
                 ) : null}
 

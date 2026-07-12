@@ -27,11 +27,25 @@ function safeFileName(name: string) {
     .slice(0, 120);
 }
 
+function addCalendarDays(date: string, days: number) {
+  if (!date) return undefined;
+  const value = new Date(`${date}T00:00:00Z`);
+  value.setUTCDate(value.getUTCDate() + days);
+  return value.toISOString().slice(0, 10);
+}
+
+function inclusiveCalendarDays(startDate: string, endDate: string) {
+  const start = Date.parse(`${startDate}T00:00:00Z`);
+  const end = Date.parse(`${endDate}T00:00:00Z`);
+  return Math.floor((end - start) / 86_400_000) + 1;
+}
+
 export function JustificationForm() {
   const router = useRouter();
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [startDate, setStartDate] = useState("");
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -53,6 +67,11 @@ export function JustificationForm() {
 
       if (title.length < 5 || description.length < 15 || !startDate || !endDate || endDate < startDate) {
         setMessage("Revisa titulo, descripcion y rango de fechas.");
+        return;
+      }
+
+      if (inclusiveCalendarDays(startDate, endDate) > 3) {
+        setMessage("Cada justificacion puede cubrir un maximo de 3 dias. Crea otra solicitud para los dias restantes.");
         return;
       }
 
@@ -138,6 +157,7 @@ export function JustificationForm() {
       });
 
       event.currentTarget.reset();
+      setStartDate("");
       setMessage("Justificacion enviada correctamente.");
       router.refresh();
     } finally {
@@ -158,13 +178,14 @@ export function JustificationForm() {
         <div className="grid grid-cols-2 gap-3">
           <label className="text-xs font-medium text-on-surface-variant">
             Inicio
-            <input name="start_date" required type="date" className="mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
+            <input name="start_date" required type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} className="mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
           </label>
           <label className="text-xs font-medium text-on-surface-variant">
             Fin
-            <input name="end_date" required type="date" className="mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
+            <input name="end_date" required type="date" min={startDate || undefined} max={addCalendarDays(startDate, 2)} className="mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
           </label>
         </div>
+        <p className="text-[11px] text-on-surface-variant">Maximo 3 dias naturales por solicitud. Si necesitas mas dias, registra otra justificacion.</p>
         <textarea name="description" required minLength={15} rows={4} placeholder="Describe el motivo y el impacto academico" className="w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
         <label className="block text-xs font-medium text-on-surface-variant">
           Evidencia
