@@ -98,26 +98,17 @@ async function updateJustificationStatus(formData: FormData) {
     return;
   }
 
-  const { error } = await supabase
-    .from("justifications")
-    .update({
-      status: nextStatus,
-      reviewer_id: profile.id,
-      review_notes: reviewNotes || null,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", id);
+  const resolveJustification = supabase.rpc as unknown as (
+    name: string,
+    args: Record<string, unknown>,
+  ) => Promise<{ error: { message: string } | null }>;
+  const { error } = await resolveJustification("resolve_justification", {
+    p_justification_id: id,
+    p_status: nextStatus,
+    p_review_notes: reviewNotes || undefined,
+  });
 
   if (!error) {
-    await supabase.from("justification_audit_events").insert({
-      justification_id: id,
-      actor_id: profile.id,
-      event_type: "status_changed",
-      from_status: current.status,
-      to_status: nextStatus,
-      note: reviewNotes || `Cambio de estado a ${statusLabels[nextStatus]}.`,
-    });
-
     const eventType =
       nextStatus === "approved"
         ? "justification.approved"
@@ -476,7 +467,7 @@ export default async function JustificacionesPage({
                   </div>
 
                   <div className="space-y-3">
-                    {(canResolveJustifications || canRequestMoreInfo) ? (
+                    {(canResolveJustifications || canRequestMoreInfo) && (item.status === "pending" || item.status === "requires_more_info") ? (
                       <form action={updateJustificationStatus} className="rounded border border-outline-variant bg-surface p-4">
                         <input type="hidden" name="id" value={item.id} />
                         <h3 className="text-xs font-semibold uppercase text-on-surface-variant">Revision</h3>
@@ -487,7 +478,7 @@ export default async function JustificacionesPage({
                               Aprobar
                             </SubmitButton>
                           ) : null}
-                          {canRequestMoreInfo ? (
+                          {canRequestMoreInfo && item.status === "pending" ? (
                             <SubmitButton name="status" value="requires_more_info" className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800" pendingLabel="Enviando...">
                               Solicitar informacion
                             </SubmitButton>
