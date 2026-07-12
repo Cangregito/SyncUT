@@ -102,10 +102,58 @@ async function sendTeacherMessage(formData: FormData) {
   redirect("/equipo?sent=true");
 }
 
+async function sendTeamAnnouncement(formData: FormData) {
+  "use server";
+  const profile = await requireProfile();
+  if (!['tutor', 'admin'].includes(profile.role)) redirect('/equipo?error=forbidden');
+  const teamId = String(formData.get('team_id') ?? '');
+  const title = String(formData.get('title') ?? '').trim();
+  const body = String(formData.get('body') ?? '').trim();
+  if (!teamId || title.length < 3 || body.length < 5) redirect('/equipo?error=Completa el asunto y el aviso.');
+  const supabase = await createSupabaseServerClient();
+  const { data: team } = await supabase.from('tutor_teams').select('id,tutor_id').eq('id', teamId).maybeSingle();
+  if (!team || (profile.role !== 'admin' && team.tutor_id !== profile.id)) redirect('/equipo?error=No tienes acceso a ese equipo.');
+  const { data: members, error: membersError } = await supabase.from('tutor_team_members').select('student_id').eq('team_id', teamId).eq('status', 'active');
+  if (membersError) redirect(`/equipo?error=${encodeURIComponent(membersError.message)}`);
+  const results = await Promise.all((members ?? []).map((member) => supabase.rpc('emit_notification', {
+    p_user_id: member.student_id, p_event_type: 'tutor_team.announcement', p_title: title, p_body: body,
+    p_metadata: { team_id: teamId }, p_triggered_by: profile.id,
+  })));
+  const failure = results.find((result) => result.error)?.error;
+  if (failure) redirect(`/equipo?error=${encodeURIComponent(failure.message)}`);
+  revalidatePath('/equipo'); revalidatePath('/notificaciones');
+  redirect('/equipo?announced=true');
+}
+
+async function scheduleStudentAppointment(formData: FormData) {
+  "use server";
+  const profile = await requireProfile();
+  if (!['tutor', 'admin'].includes(profile.role)) redirect('/equipo?error=forbidden');
+  const studentId = String(formData.get('student_id') ?? '');
+  const scheduledDate = String(formData.get('scheduled_date') ?? '');
+  const startsAt = String(formData.get('starts_at') ?? '');
+  const endsAt = String(formData.get('ends_at') ?? '');
+  const reason = String(formData.get('reason') ?? '').trim();
+  if (!studentId || !scheduledDate || !startsAt || !endsAt || endsAt <= startsAt || reason.length < 5) redirect('/equipo?error=Revisa los datos de la cita.');
+  const supabase = await createSupabaseServerClient();
+  const { data: membership } = await supabase.from('tutor_team_members').select('team:tutor_teams!inner(tutor_id)').eq('student_id', studentId).eq('status', 'active').eq('team.tutor_id', profile.id).maybeSingle();
+  if (!membership && profile.role !== 'admin') redirect('/equipo?error=El alumno no pertenece a uno de tus equipos.');
+  const { data: appointment, error } = await supabase.from('appointments').insert({
+    student_id: studentId, tutor_id: profile.id, scheduled_date: scheduledDate, starts_at: startsAt,
+    ends_at: endsAt, modality: 'presencial', location: 'Por confirmar', reason, status: 'confirmada',
+  }).select('id').single();
+  if (error || !appointment) redirect(`/equipo?error=${encodeURIComponent(error?.message ?? 'No se pudo crear la cita.')}`);
+  await supabase.rpc('emit_notification', { p_user_id: studentId, p_event_type: 'appointment.created',
+    p_title: 'Tu tutor agendó una cita', p_body: `${scheduledDate}, ${startsAt.slice(0,5)}-${endsAt.slice(0,5)}. ${reason}`,
+    p_metadata: { appointment_id: appointment.id }, p_triggered_by: profile.id });
+  revalidatePath('/equipo'); revalidatePath('/citas');
+  redirect('/equipo?scheduled=true');
+}
+
 export default async function EquipoTutorialPage({
   searchParams,
 }: {
-  searchParams: Promise<{ created?: string; joined?: string; sent?: string; error?: string }>;
+  searchParams: Promise<{ created?: string; joined?: string; sent?: string; announced?: string; scheduled?: string; error?: string }>;
 }) {
   const profile = await requireProfile();
   const params = await searchParams;
@@ -142,6 +190,26 @@ export default async function EquipoTutorialPage({
   const activeTeam = teams.find((team) => team.is_active) ?? teams[0] ?? null;
   const studentTeam = profile.role === "student" ? activeTeam : null;
 
+  const memberIds = [...new Set(teams.flatMap((team) => (team.tutor_team_members ?? []).filter((member) => member.status === 'active').map((member) => member.student_id)))];
+  const since = new Date(Date.now() - 30 * 86_400_000).toISOString();
+  const [{ data: incidentSignals }, { data: justificationSignals }, { data: attendanceSignals }] = memberIds.length
+    ? await Promise.all([
+        supabase.from('incidents').select('reported_by,priority,status,created_at').in('reported_by', memberIds).gte('created_at', since),
+        supabase.from('justifications').select('student_id,status,created_at').in('student_id', memberIds).gte('created_at', since),
+        supabase.from('appointment_attendance').select('status,appointment:appointments!inner(student_id)').in('appointment.student_id', memberIds).gte('recorded_at', since),
+      ])
+    : [{ data: [] }, { data: [] }, { data: [] }];
+
+  const teamHealth = new Map(teams.map((team) => {
+    const ids = new Set((team.tutor_team_members ?? []).filter((member) => member.status === 'active').map((member) => member.student_id));
+    const incidents = (incidentSignals ?? []).filter((row) => ids.has(row.reported_by));
+    const justifications = (justificationSignals ?? []).filter((row) => ids.has(row.student_id));
+    const absences = (attendanceSignals ?? []).filter((row) => ids.has((row.appointment as unknown as { student_id: string }).student_id) && row.status !== 'attended');
+    const score = incidents.length * 2 + incidents.filter((row) => row.priority === 'alta' && !['resuelta','cerrada'].includes(row.status)).length * 2 + justifications.length + absences.length * 2;
+    const level = score >= 8 ? 'red' : score >= 4 ? 'yellow' : 'green';
+    return [team.id, { level, score, incidents: incidents.length, justifications: justifications.length, absences: absences.length }] as const;
+  }));
+
   const { data: teacherDirectoryData } = canSendTeacherMessages
     ? await supabase.rpc("get_teacher_directory")
     : { data: [] };
@@ -161,9 +229,9 @@ export default async function EquipoTutorialPage({
         </p>
       </header>
 
-      {params.created || params.joined || params.sent ? (
+      {params.created || params.joined || params.sent || params.announced || params.scheduled ? (
         <p className="rounded border border-tertiary/40 bg-tertiary-container/20 p-3 text-sm font-semibold text-on-tertiary-container">
-          {params.created ? "Equipo creado correctamente." : params.joined ? "Te uniste al equipo tutorial." : "Notificación enviada al docente."}
+          {params.created ? "Equipo creado correctamente." : params.joined ? "Te uniste al equipo tutorial." : params.announced ? 'Aviso enviado al grupo y agregado a la cola de correo.' : params.scheduled ? 'Cita agendada y notificada al alumno.' : "Notificación enviada al docente."}
         </p>
       ) : null}
 
@@ -251,7 +319,10 @@ export default async function EquipoTutorialPage({
             </p>
           ) : null}
 
-          {teams.map((team) => (
+          {teams.map((team) => {
+            const health = teamHealth.get(team.id) ?? { level: 'green', score: 0, incidents: 0, justifications: 0, absences: 0 };
+            const healthStyle = health.level === 'red' ? 'border-red-500 bg-red-500/10 text-red-300' : health.level === 'yellow' ? 'border-amber-500 bg-amber-500/10 text-amber-300' : 'border-emerald-500 bg-emerald-500/10 text-emerald-300';
+            return (
             <article key={team.id} className="rounded border border-outline-variant bg-surface p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
@@ -264,6 +335,11 @@ export default async function EquipoTutorialPage({
                   <p className="text-[10px] font-semibold uppercase text-on-primary-container">Código</p>
                   <p className="font-mono text-lg font-black tracking-widest text-on-primary-container">{team.join_code}</p>
                 </div>
+              </div>
+              <div className={`mt-4 rounded border p-3 ${healthStyle}`}>
+                <div className="flex items-center justify-between gap-3"><p className="text-sm font-bold">Salud del grupo: {health.level === 'red' ? 'Requiere atención' : health.level === 'yellow' ? 'En observación' : 'Estable'}</p><span className="text-xl">●</span></div>
+                <p className="mt-2 text-xs">Últimos 30 días · {health.incidents} incidencias · {health.justifications} justificantes · {health.absences} inasistencias a tutoría</p>
+                <p className="mt-1 text-[11px] opacity-80">Indicador orientativo para priorizar seguimiento; revisa el contexto individual antes de intervenir.</p>
               </div>
               <div className="mt-4 space-y-2">
                 {(team.tutor_team_members ?? []).length === 0 ? (
@@ -283,9 +359,40 @@ export default async function EquipoTutorialPage({
                 ))}
               </div>
             </article>
-          ))}
+            );
+          })}
         </div>
       </section>
+
+      {canManageTeam && activeTeam ? (
+        <section className="grid gap-6 lg:grid-cols-2">
+          <form action={sendTeamAnnouncement} className="rounded-lg border border-outline-variant bg-surface-container p-5">
+            <input type="hidden" name="team_id" value={activeTeam.id} />
+            <h2 className="text-sm font-semibold uppercase text-on-surface-variant">Aviso al grupo</h2>
+            <p className="mt-2 text-xs text-on-surface-variant">Se entrega dentro de SyncUT y se agrega a la cola de correo de cada alumno, respetando sus preferencias.</p>
+            <input name="title" required minLength={3} maxLength={120} placeholder="Asunto del aviso" className="mt-4 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
+            <textarea name="body" required minLength={5} rows={4} placeholder="Mensaje para todo el equipo" className="mt-3 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
+            <SubmitButton className="mt-3 rounded bg-primary px-4 py-2 text-sm font-bold text-on-primary" pendingLabel="Enviando...">Enviar al grupo</SubmitButton>
+          </form>
+
+          <form action={scheduleStudentAppointment} className="rounded-lg border border-outline-variant bg-surface-container p-5">
+            <h2 className="text-sm font-semibold uppercase text-on-surface-variant">Agendar cita con alumno</h2>
+            <select name="student_id" required className="mt-4 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface">
+              <option value="">Selecciona alumno</option>
+              {(activeTeam.tutor_team_members ?? []).filter((member) => member.status === 'active').map((member) => (
+                <option key={member.id} value={member.student_id}>{member.student?.profile?.full_name ?? member.student?.profile?.email ?? member.student_id}</option>
+              ))}
+            </select>
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              <input name="scheduled_date" type="date" min={new Date().toISOString().slice(0,10)} required className="rounded border border-outline-variant bg-surface px-2 py-2 text-xs text-on-surface" />
+              <input name="starts_at" type="time" required className="rounded border border-outline-variant bg-surface px-2 py-2 text-xs text-on-surface" />
+              <input name="ends_at" type="time" required className="rounded border border-outline-variant bg-surface px-2 py-2 text-xs text-on-surface" />
+            </div>
+            <textarea name="reason" required minLength={5} rows={3} placeholder="Motivo y objetivo de la cita" className="mt-3 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
+            <SubmitButton className="mt-3 rounded bg-primary px-4 py-2 text-sm font-bold text-on-primary" pendingLabel="Agendando...">Agendar y notificar</SubmitButton>
+          </form>
+        </section>
+      ) : null}
 
       {canSendTeacherMessages && activeTeam ? (
         <section className="rounded-lg border border-outline-variant bg-surface-container p-5">
