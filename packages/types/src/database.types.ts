@@ -241,7 +241,11 @@ export type Database = {
           ip_address: unknown
           new_values: Json | null
           old_values: Json | null
+          reason: string | null
           record_id: string | null
+          request_id: string | null
+          result: string
+          severity: string
           table_name: string
           user_agent: string | null
           user_id: string | null
@@ -253,7 +257,11 @@ export type Database = {
           ip_address?: unknown
           new_values?: Json | null
           old_values?: Json | null
+          reason?: string | null
           record_id?: string | null
+          request_id?: string | null
+          result?: string
+          severity?: string
           table_name: string
           user_agent?: string | null
           user_id?: string | null
@@ -265,7 +273,11 @@ export type Database = {
           ip_address?: unknown
           new_values?: Json | null
           old_values?: Json | null
+          reason?: string | null
           record_id?: string | null
+          request_id?: string | null
+          result?: string
+          severity?: string
           table_name?: string
           user_agent?: string | null
           user_id?: string | null
@@ -1087,6 +1099,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          account_status: string
           avatar_url: string | null
           created_at: string | null
           email: string
@@ -1094,9 +1107,13 @@ export type Database = {
           id: string
           phone: string | null
           role: string
+          status_changed_at: string | null
+          status_changed_by: string | null
+          status_reason: string | null
           updated_at: string | null
         }
         Insert: {
+          account_status?: string
           avatar_url?: string | null
           created_at?: string | null
           email: string
@@ -1104,9 +1121,13 @@ export type Database = {
           id: string
           phone?: string | null
           role?: string
+          status_changed_at?: string | null
+          status_changed_by?: string | null
+          status_reason?: string | null
           updated_at?: string | null
         }
         Update: {
+          account_status?: string
           avatar_url?: string | null
           created_at?: string | null
           email?: string
@@ -1114,6 +1135,9 @@ export type Database = {
           id?: string
           phone?: string | null
           role?: string
+          status_changed_at?: string | null
+          status_changed_by?: string | null
+          status_reason?: string | null
           updated_at?: string | null
         }
         Relationships: []
@@ -1484,6 +1508,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_change_user_role: {
+        Args: { target_user_id: string; new_role: string; change_reason: string }
+        Returns: undefined
+      }
+      admin_set_account_status: {
+        Args: { target_user_id: string; new_status: string; change_reason: string }
+        Returns: undefined
+      }
       change_appointment_status: {
         Args: {
           p_appointment_id: string

@@ -11,6 +11,7 @@ export type CurrentProfile = {
   email: string;
   fullName: string;
   role: UserRole;
+  accountStatus: "active" | "suspended" | "deactivated";
 };
 
 export async function getCurrentUser(): Promise<User | null> {
@@ -34,7 +35,7 @@ export async function getCurrentProfile(): Promise<CurrentProfile | null> {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id,email,full_name,role")
+    .select("id,email,full_name,role,account_status")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -45,6 +46,7 @@ export async function getCurrentProfile(): Promise<CurrentProfile | null> {
       profile?.full_name ??
       String(user.user_metadata?.full_name ?? "Usuario SyncUT"),
     role: toUserRole(profile?.role),
+    accountStatus: profile?.account_status === "suspended" || profile?.account_status === "deactivated" ? profile.account_status : "active",
   };
 }
 
@@ -53,6 +55,10 @@ export async function requireProfile(): Promise<CurrentProfile> {
 
   if (!profile) {
     redirect("/login");
+  }
+
+  if (profile.accountStatus !== "active") {
+    redirect("/login?error=account_inactive");
   }
 
   return profile;
