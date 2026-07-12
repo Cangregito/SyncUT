@@ -2,6 +2,7 @@ import { revalidatePath } from "next/cache";
 import type { Tables } from "@plataforma/types";
 
 import { ModalityDetailsFields } from "@/components/appointments/modality-details-fields";
+import { AppointmentSlotPicker } from "@/components/appointments/appointment-slot-picker";
 import { SubmitButton } from "@/components/forms/submit-button";
 import { requireProfile } from "@/lib/auth/session";
 import { hasPermission, type UserRole } from "@/lib/auth/roles";
@@ -165,7 +166,8 @@ async function createAppointment(formData: FormData) {
   }
 
   const today = new Date().toISOString().slice(0, 10);
-  if (scheduledDate < today || toMinutes(startsAt) >= toMinutes(endsAt)) {
+  const requestedDay = getDayOfWeek(scheduledDate);
+  if (scheduledDate < today || requestedDay === 0 || requestedDay === 6 || toMinutes(startsAt) >= toMinutes(endsAt)) {
     return;
   }
 
@@ -199,6 +201,19 @@ async function createAppointment(formData: FormData) {
   });
 
   if (!hasAvailability) {
+    return;
+  }
+
+  const { data: existingAppointment } = await supabase
+    .from("appointments")
+    .select("id")
+    .eq("tutor_id", tutorId)
+    .eq("scheduled_date", scheduledDate)
+    .in("status", ["pendiente", "confirmada"])
+    .limit(1)
+    .maybeSingle();
+
+  if (existingAppointment) {
     return;
   }
 
@@ -628,6 +643,10 @@ export default async function CitasPage() {
   const availability = (availabilityData ?? []) as unknown as AvailabilityRow[];
   const auditEvents = (auditData ?? []) as unknown as AuditEventRow[];
   const attendance = (attendanceData ?? []) as unknown as AttendanceRow[];
+  const { data: privateBusyDateData } = profile.role === "student"
+    ? await supabase.rpc("get_assigned_tutor_busy_dates" as "get_teacher_directory", { p_days_ahead: 93 } as never)
+    : { data: [] };
+  const privateBusyDates = (privateBusyDateData ?? []) as unknown as Array<{ tutor_id: string; scheduled_date: string }>;
   const notesByAppointment = new Map(notes.map((note) => [note.appointment_id, note]));
   const attendanceByAppointment = new Map(attendance.map((item) => [item.appointment_id, item]));
   const auditByAppointment = auditEvents.reduce<Map<string, AuditEventRow[]>>((acc, event) => {
@@ -704,37 +723,11 @@ export default async function CitasPage() {
           ) : null}
 
           <div className="mt-4 space-y-3">
-            <label className="block text-xs font-medium text-on-surface-variant">
-              Tutor asignado
-              <select
-                name="tutor_id"
-                required
-                disabled={assignments.length === 0}
-                className="mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface disabled:opacity-50"
-              >
-                <option value="">Selecciona tutor</option>
-                {assignments.map((item) => (
-                  <option key={item.tutor_id} value={item.tutor_id}>
-                    {item.tutor?.full_name ?? item.tutor?.email ?? `Tutor ${item.tutor_id.slice(0, 8)}`}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <label className="block text-xs font-medium text-on-surface-variant">
-                Fecha
-                <input name="scheduled_date" type="date" required className="mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
-              </label>
-              <label className="block text-xs font-medium text-on-surface-variant">
-                Inicio
-                <input name="starts_at" type="time" required className="mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
-              </label>
-              <label className="block text-xs font-medium text-on-surface-variant">
-                Fin
-                <input name="ends_at" type="time" required className="mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
-              </label>
-            </div>
+            <AppointmentSlotPicker
+              tutors={assignments.map((item) => ({ id: item.tutor_id, label: item.tutor?.full_name ?? item.tutor?.email ?? `Tutor ${item.tutor_id.slice(0, 8)}` }))}
+              availability={availability.map((slot) => ({ tutorId: slot.tutor_id, dayOfWeek: slot.day_of_week, startsAt: slot.starts_at, endsAt: slot.ends_at }))}
+              busyDates={privateBusyDates.map((item) => ({ tutorId: item.tutor_id, date: item.scheduled_date }))}
+            />
 
             <ModalityDetailsFields mode="appointment" />
             <label className="block text-xs font-medium text-on-surface-variant">
