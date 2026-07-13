@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Tables } from "@plataforma/types";
 import { createSupabaseBrowserClient } from "@plataforma/sdk/client";
@@ -54,6 +54,7 @@ export function JustificationForm() {
   const router = useRouter();
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const submissionLock = useRef(false);
   const [message, setMessage] = useState<string | null>(null);
   const [startDate, setStartDate] = useState("");
   const minimumAllowedDate = localDateValue(-3);
@@ -61,8 +62,9 @@ export function JustificationForm() {
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (isSubmitting) return;
+    if (submissionLock.current || isSubmitting) return;
 
+    submissionLock.current = true;
     setIsSubmitting(true);
     setMessage(null);
 
@@ -106,6 +108,23 @@ export function JustificationForm() {
         return;
       }
 
+
+      const { data: duplicate } = await supabase
+        .from("justifications")
+        .select("id")
+        .eq("student_id", user.id)
+        .ilike("title", title)
+        .eq("start_date", startDate)
+        .eq("end_date", endDate)
+        .in("status", ["pending", "requires_more_info"])
+        .limit(1)
+        .maybeSingle();
+
+      if (duplicate) {
+        setMessage("Esta justificacion ya fue enviada y sigue pendiente de revision.");
+        return;
+      }
+
       const dueDate = new Date(`${endDate}T00:00:00`);
       dueDate.setDate(dueDate.getDate() + 3);
 
@@ -126,7 +145,7 @@ export function JustificationForm() {
         .single();
 
       if (justificationError || !justification) {
-        setMessage(justificationError?.message ?? "No se pudo crear la justificacion.");
+        setMessage(justificationError?.code === "23505" ? "Esta justificacion ya fue enviada y sigue pendiente de revision." : justificationError?.message ?? "No se pudo crear la justificacion.");
         return;
       }
 
@@ -184,6 +203,7 @@ export function JustificationForm() {
       setMessage("Justificacion enviada correctamente.");
       router.refresh();
     } finally {
+      submissionLock.current = false;
       setIsSubmitting(false);
     }
   }
@@ -220,7 +240,7 @@ export function JustificationForm() {
           />
         </label>
         {message ? (
-          <p className="rounded border border-outline-variant bg-surface px-3 py-2 text-xs text-on-surface-variant">
+          <p role="status" aria-live="polite" className={`rounded border px-3 py-2 text-xs font-semibold ${message === "Justificacion enviada correctamente." ? "fixed right-5 top-20 z-50 max-w-sm border-tertiary bg-tertiary-container p-4 text-on-tertiary-container shadow-2xl" : "border-outline-variant bg-surface text-on-surface-variant"}`}>
             {message}
           </p>
         ) : null}
@@ -230,7 +250,7 @@ export function JustificationForm() {
           aria-busy={isSubmitting}
           className="w-full rounded bg-primary-container px-4 py-2 text-sm font-semibold text-on-primary-container disabled:opacity-60"
         >
-          {isSubmitting ? "Enviando..." : "Enviar justificacion"}
+          {isSubmitting ? <span className="inline-flex items-center gap-2"><span className="material-symbols-outlined animate-spin text-[18px]">progress_activity</span>Enviando...</span> : "Enviar justificacion"}
         </button>
       </div>
     </form>
