@@ -25,7 +25,7 @@ function employeeCode(email: string) {
 
 function isValidStaffEmail(email: string, role: string) {
   if (role === "teacher") {
-    return /^[a-z0-9]+(?:[._-][a-z0-9]+)*@utcjedu\.onmicrosoft\.com$/i.test(email);
+    return /^[a-z0-9]+(?:[._-][a-z0-9]+)*@(utcjedu\.onmicrosoft\.com|utcj\.edu\.mx)$/i.test(email);
   }
   if (role === "tutor") {
     return /^[a-z0-9]+(?:[._-][a-z0-9]+)*@utcj\.edu\.mx$/i.test(email);
@@ -148,7 +148,7 @@ export default async function AdminRoutePage({ searchParams }: { searchParams: P
     </section>
 
     {params.success && <div className="rounded-xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm font-medium text-emerald-300">{params.success === "role" ? "Rol y privilegios actualizados correctamente." : params.success === "status" ? "Estado de cuenta actualizado y sesiones revocadas cuando correspondía." : "Cuenta de personal registrada e invitación procesada."}</div>}
-    {params.error && <div className="rounded-xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-sm font-medium text-red-300">{params.error === "teacher_email" ? "El docente debe usar un correo @utcjedu.onmicrosoft.com." : params.error === "tutor_email" ? "El tutor debe usar un correo @utcj.edu.mx." : "No se pudo completar la acción. Verifica los datos y vuelve a intentarlo."}</div>}
+    {params.error && <div className="rounded-xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-sm font-medium text-red-300">{params.error === "teacher_email" ? "El docente debe usar un correo @utcjedu.onmicrosoft.com o @utcj.edu.mx." : params.error === "tutor_email" ? "El tutor debe usar un correo @utcj.edu.mx." : "No se pudo completar la acción. Verifica los datos y vuelve a intentarlo."}</div>}
 
     <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
       {metrics.map(({ label, value, icon: Icon, tone }) => <article key={label} className="rounded-2xl border border-white/[.07] bg-zinc-950/60 p-5"><div className="flex items-start justify-between"><div><p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">{label}</p><p className="mt-2 text-3xl font-bold text-white">{value}</p></div><div className={`grid size-10 place-items-center rounded-xl ${tone}`}><Icon size={20}/></div></div></article>)}
@@ -158,7 +158,7 @@ export default async function AdminRoutePage({ searchParams }: { searchParams: P
       <article className="rounded-2xl border border-white/[.07] bg-zinc-950/60 p-5 md:p-6">
         <div className="flex items-center gap-3"><div className="grid size-10 place-items-center rounded-xl bg-violet-400/10 text-violet-300"><UserPlus size={20}/></div><div><h2 className="font-bold text-white">Agregar personal</h2><p className="text-xs text-zinc-500">Invitación segura por correo institucional</p></div></div>
         <form action={inviteStaffAccount} className="mt-6 space-y-4">
-          {[['full_name','Nombre completo','Ej. Ana Martínez','text'],['email','Correo institucional','nombre_apellido@utcjedu.onmicrosoft.com','email'],['department','Área o departamento','Ej. Tecnologías de la Información','text']].map(([name,label,placeholder,type]) => <label key={name} className="block"><span className="mb-1.5 block text-xs font-semibold text-zinc-400">{label}</span><input name={name} type={type} placeholder={placeholder} required={name !== 'department'} className="w-full rounded-xl border border-white/10 bg-black/20 px-3.5 py-3 text-sm text-white outline-none transition focus:border-violet-400/60 focus:ring-2 focus:ring-violet-400/10"/>{name === 'email' ? <span className="mt-1.5 block text-[11px] text-zinc-500">Docente: @utcjedu.onmicrosoft.com · Tutor: @utcj.edu.mx</span> : null}</label>)}
+          {[['full_name','Nombre completo','Ej. Ana Martínez','text'],['email','Correo institucional','nombre_apellido@utcjedu.onmicrosoft.com','email'],['department','Área o departamento','Ej. Tecnologías de la Información','text']].map(([name,label,placeholder,type]) => <label key={name} className="block"><span className="mb-1.5 block text-xs font-semibold text-zinc-400">{label}</span><input name={name} type={type} placeholder={placeholder} required={name !== 'department'} className="w-full rounded-xl border border-white/10 bg-black/20 px-3.5 py-3 text-sm text-white outline-none transition focus:border-violet-400/60 focus:ring-2 focus:ring-violet-400/10"/>{name === 'email' ? <span className="mt-1.5 block text-[11px] text-zinc-500">Docente: @utcjedu.onmicrosoft.com o @utcj.edu.mx · Tutor: @utcj.edu.mx</span> : null}</label>)}
           <label className="block"><span className="mb-1.5 block text-xs font-semibold text-zinc-400">Rol inicial</span><select name="role" className="w-full rounded-xl border border-white/10 bg-zinc-950 px-3.5 py-3 text-sm text-white outline-none focus:border-violet-400/60"><option value="teacher">Docente</option><option value="tutor">Tutor</option></select></label>
           <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-violet-500 px-4 py-3 text-sm font-bold text-white transition hover:bg-violet-400">Enviar invitación <ArrowUpRight size={16}/></button>
         </form>

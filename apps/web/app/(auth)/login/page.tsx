@@ -39,6 +39,8 @@ export default function LoginPage() {
         return;
       }
 
+      await supabase.rpc("log_auth_event" as "get_teacher_directory", { p_action: "AUTH_LOGIN" } as never);
+
       const requestedNext = new URLSearchParams(window.location.search).get("next");
       const safeNext =
         requestedNext?.startsWith("/") && !requestedNext.startsWith("//")

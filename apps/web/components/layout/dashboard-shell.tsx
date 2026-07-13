@@ -36,6 +36,7 @@ export function DashboardShell({
     setIsSigningOut(true);
     setActiveHeaderMenu(null);
     const supabase = createSupabaseBrowserClient();
+    await supabase.rpc("log_auth_event" as "get_teacher_directory", { p_action: "AUTH_LOGOUT" } as never);
     await supabase.auth.signOut();
     router.replace("/login");
     router.refresh();

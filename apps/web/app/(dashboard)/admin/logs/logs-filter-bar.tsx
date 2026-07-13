@@ -14,6 +14,7 @@ export function LogsFilterBar({ actions }: { actions: string[] }) {
 
   function update(name: string, value: string) {
     const next = new URLSearchParams(searchParams.toString());
+    next.delete("page");
     if (value) next.set(name, value); else next.delete(name);
     startTransition(() => router.replace(`${pathname}?${next.toString()}`, { scroll: false }));
   }
