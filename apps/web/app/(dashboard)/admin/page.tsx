@@ -33,6 +33,18 @@ function isValidStaffEmail(email: string, role: string) {
   return false;
 }
 
+function adminErrorMessage(error: string) {
+  if (error === "teacher_email") return "El docente debe usar un correo @utcjedu.onmicrosoft.com o @utcj.edu.mx.";
+  if (error === "tutor_email") return "El tutor debe usar un correo @utcj.edu.mx.";
+  if (error === "missing") return "Completa el nombre, correo y rol del personal.";
+  if (error === "confirmation") return "La operación requiere confirmación y un motivo válido.";
+  const normalized = error.toLowerCase();
+  if (normalized.includes("already") || normalized.includes("registered")) return "Ese correo ya tiene una cuenta registrada. Búscalo en el directorio para actualizar su rol.";
+  if (normalized.includes("rate") || normalized.includes("limit")) return "Se alcanzó temporalmente el límite de invitaciones por correo. Espera unos minutos y vuelve a intentar.";
+  if (normalized.includes("invalid") && normalized.includes("email")) return "El proveedor de autenticación rechazó el formato del correo institucional.";
+  return `No se pudo registrar la cuenta: ${error}`;
+}
+
 async function inviteStaffAccount(formData: FormData) {
   "use server";
   const actor = await requireRole(["admin"]);
@@ -51,13 +63,20 @@ async function inviteStaffAccount(formData: FormData) {
       data: { full_name: fullName, role },
       redirectTo: getAuthRedirectUrl("/auth/callback?next=/dashboard"),
     });
-    if (error || !data.user) redirect(`/admin?error=${encodeURIComponent(error?.message ?? "invite")}`);
+    if (error || !data.user) {
+      const message = error?.message ?? "El proveedor no devolvió la cuenta invitada.";
+      await db.from("audit_logs").insert({ user_id: actor.id, action: "STAFF_INVITE_FAILED", table_name: "profiles", old_values: null, new_values: { email, full_name: fullName, role, department }, result: "failed", reason: message, severity: "warning", request_id: crypto.randomUUID() });
+      redirect(`/admin?error=${encodeURIComponent(message)}`);
+    }
     userId = data.user.id;
   }
   const { error: profileError } = await db.from("profiles").upsert({
     id: userId, email, full_name: fullName, role, updated_at: new Date().toISOString(),
   });
-  if (profileError) redirect(`/admin?error=${encodeURIComponent(profileError.message)}`);
+  if (profileError) {
+    await db.from("audit_logs").insert({ user_id: actor.id, action: "STAFF_PROFILE_FAILED", table_name: "profiles", record_id: userId, old_values: null, new_values: { email, full_name: fullName, role, department }, result: "failed", reason: profileError.message, severity: "warning", request_id: crypto.randomUUID() });
+    redirect(`/admin?error=${encodeURIComponent(profileError.message)}`);
+  }
   await db.from("teachers").upsert({
     id: userId, employee_code: employeeCode(email), department,
     specialization: role === "tutor" ? ["Tutoría académica"] : ["Docencia"], updated_at: new Date().toISOString(),
@@ -148,7 +167,7 @@ export default async function AdminRoutePage({ searchParams }: { searchParams: P
     </section>
 
     {params.success && <div className="rounded-xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm font-medium text-emerald-300">{params.success === "role" ? "Rol y privilegios actualizados correctamente." : params.success === "status" ? "Estado de cuenta actualizado y sesiones revocadas cuando correspondía." : "Cuenta de personal registrada e invitación procesada."}</div>}
-    {params.error && <div className="rounded-xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-sm font-medium text-red-300">{params.error === "teacher_email" ? "El docente debe usar un correo @utcjedu.onmicrosoft.com o @utcj.edu.mx." : params.error === "tutor_email" ? "El tutor debe usar un correo @utcj.edu.mx." : "No se pudo completar la acción. Verifica los datos y vuelve a intentarlo."}</div>}
+    {params.error && <div className="rounded-xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-sm font-medium text-red-300">{adminErrorMessage(params.error)}</div>}
 
     <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
       {metrics.map(({ label, value, icon: Icon, tone }) => <article key={label} className="rounded-2xl border border-white/[.07] bg-zinc-950/60 p-5"><div className="flex items-start justify-between"><div><p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">{label}</p><p className="mt-2 text-3xl font-bold text-white">{value}</p></div><div className={`grid size-10 place-items-center rounded-xl ${tone}`}><Icon size={20}/></div></div></article>)}
