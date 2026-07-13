@@ -17,6 +17,7 @@ type ProfileSummary = {
 type IncidentRow = Tables<"incidents"> & {
   reporter: ProfileSummary | null;
   assignee: ProfileSummary | null;
+  related_teacher?: ProfileSummary | null;
 };
 
 type IncidentCommentRow = Tables<"incident_comments"> & {
@@ -90,8 +91,10 @@ async function createIncident(formData: FormData) {
   const priority = isPriority(priorityValue) ? priorityValue : "media";
   const categoryValue = String(formData.get("category") ?? "academica");
   const category = isIncidentCategory(categoryValue) ? categoryValue : "academica";
+  const teamId = String(formData.get("team_id") ?? "");
+  const relatedTeacherId = String(formData.get("related_teacher_id") ?? "") || null;
 
-  if (!isUsefulText(title, 5) || !isUsefulText(area, 3) || !isUsefulText(description, 15)) {
+  if (!teamId || !isUsefulText(title, 5) || !isUsefulText(area, 3) || !isUsefulText(description, 15)) {
     return;
   }
 
@@ -104,7 +107,9 @@ async function createIncident(formData: FormData) {
       description,
       priority,
       category,
-    })
+      team_id: teamId,
+      related_teacher_id: relatedTeacherId,
+    } as never)
     .select("id")
     .single();
 
@@ -152,11 +157,11 @@ async function assignIncident(formData: FormData) {
 
   const { data: incident } = await supabase
     .from("incidents")
-    .select("reported_by, assigned_to, title")
+    .select("reported_by, assigned_to, title, status")
     .eq("id", incidentId)
     .maybeSingle();
 
-  if (!incident) {
+  if (!incident || ["resuelta", "cerrada"].includes(incident.status)) {
     return;
   }
 
@@ -216,6 +221,10 @@ async function updateIncidentStatus(formData: FormData) {
     .maybeSingle();
 
   if (!incident) {
+    return;
+  }
+
+  if (["resuelta", "cerrada"].includes(incident.status)) {
     return;
   }
 
@@ -386,8 +395,11 @@ export default async function IncidenciasPage({
       updated_at,
       resolved_at,
       closed_at,
+      team_id,
+      related_teacher_id,
       reporter:profiles!incidents_reported_by_fkey(full_name,email),
-      assignee:profiles!incidents_assigned_to_fkey(full_name,email)
+      assignee:profiles!incidents_assigned_to_fkey(full_name,email),
+      related_teacher:profiles!incidents_related_teacher_id_fkey(full_name,email)
     `)
     .order("created_at", { ascending: false });
 
@@ -455,6 +467,14 @@ export default async function IncidenciasPage({
       : Promise.resolve({ data: [] }),
   ]);
   const staff = (staffData ?? []) as StaffProfile[];
+  const { data: studentMembershipData } = profile.role === "student"
+    ? await supabase.from("tutor_team_members").select("team_id,team:tutor_teams!inner(id,name)").eq("student_id", profile.id).eq("status", "active").maybeSingle()
+    : { data: null };
+  const studentMembership = studentMembershipData as unknown as { team_id: string; team: { id: string; name: string } } | null;
+  const { data: linkedTeacherData } = studentMembership
+    ? await supabase.from("tutor_team_teachers" as "notifications").select("teacher_id,teacher:profiles!tutor_team_teachers_teacher_id_fkey(full_name,email)").eq("team_id" as "id", studentMembership.team_id)
+    : { data: [] };
+  const linkedTeachers = (linkedTeacherData ?? []) as unknown as Array<{ teacher_id: string; teacher: ProfileSummary | null }>;
   const auditEvents = (auditData ?? []) as unknown as IncidentAuditRow[];
   const directTutorStudentIds = new Set((tutorAssignmentsData ?? []).map((item) => item.student_id));
   const commentsByIncident = comments.reduce<Map<string, IncidentCommentRow[]>>((acc, comment) => {
@@ -503,6 +523,7 @@ export default async function IncidenciasPage({
         {canCreateIncident ? (
         <form action={createIncident} className="rounded-lg border border-outline-variant bg-surface-container p-5">
           <h2 className="text-sm font-semibold uppercase text-on-surface-variant">Nuevo reporte</h2>
+          {!studentMembership ? <p className="mt-4 rounded border border-error/40 bg-error-container p-3 text-sm text-on-error-container">Primero debes unirte a un equipo tutorial para registrar una incidencia.</p> : <><input type="hidden" name="team_id" value={studentMembership.team_id}/><p className="mt-3 rounded border border-outline-variant bg-surface p-3 text-xs text-on-surface-variant">Equipo: <b className="text-on-surface">{studentMembership.team.name}</b></p></>}
           <div className="mt-4 space-y-3">
             <label className="block text-xs font-medium text-on-surface-variant">
               Titulo
@@ -531,11 +552,16 @@ export default async function IncidenciasPage({
               </select>
             </label>
             <label className="block text-xs font-medium text-on-surface-variant">
+              Docente relacionado (opcional)
+              <select name="related_teacher_id" disabled={!studentMembership} className="mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface disabled:opacity-50"><option value="">Ningún docente / No aplica</option>{linkedTeachers.map((item)=><option key={item.teacher_id} value={item.teacher_id}>{item.teacher?.full_name ?? item.teacher?.email}</option>)}</select>
+              <span className="mt-1 block text-[10px]">Solo aparecen docentes vinculados por el tutor a tu equipo.</span>
+            </label>
+            <label className="block text-xs font-medium text-on-surface-variant">
               Descripcion
               <textarea name="description" required minLength={15} rows={4} className="mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
             </label>
           </div>
-          <button type="submit" className="mt-4 w-full rounded bg-primary-container px-4 py-2 text-sm font-semibold text-on-primary-container hover:bg-primary">
+          <button type="submit" disabled={!studentMembership} className="mt-4 w-full rounded bg-primary-container px-4 py-2 text-sm font-semibold text-on-primary-container hover:bg-primary disabled:opacity-50">
             Reportar incidencia
           </button>
         </form>
@@ -580,6 +606,7 @@ export default async function IncidenciasPage({
                   const incidentComments = commentsByIncident.get(item.id) ?? [];
                   const incidentAudit = auditByIncident.get(item.id) ?? [];
                   const slaState = getSlaState(item.sla_due_at, item.status);
+                  const isFinalStatus = item.status === "resuelta" || item.status === "cerrada";
                   return (
                     <>
                 <div className="flex flex-wrap items-start justify-between gap-2">
@@ -597,6 +624,7 @@ export default async function IncidenciasPage({
                       Reporta: {item.reporter?.full_name ?? item.reporter?.email ?? "Usuario visible por RLS"}
                       {item.assignee ? ` | Asignado: ${item.assignee.full_name ?? item.assignee.email}` : ""}
                     </p>
+                    {item.related_teacher ? <p className="mt-1 text-xs font-semibold text-primary">Docente relacionado: {item.related_teacher.full_name ?? item.related_teacher.email}</p> : null}
                   </div>
                   <span className="rounded bg-surface-container-highest px-2 py-1 text-[10px] font-semibold uppercase text-primary">
                     {priorityLabels[item.priority]} | {statusLabels[item.status]}
@@ -609,7 +637,7 @@ export default async function IncidenciasPage({
                   </p>
                 ) : null}
 
-                {(canAssignIncident || canResolveIncident || directTutorStudentIds.has(item.reported_by)) ? (
+                {!isFinalStatus && (canAssignIncident || canResolveIncident || directTutorStudentIds.has(item.reported_by)) ? (
                   <div className="mt-4 space-y-3">
                   {canAssignIncident ? (
                   <form action={assignIncident} className="flex flex-col gap-2 sm:flex-row">
@@ -661,7 +689,7 @@ export default async function IncidenciasPage({
                   </div>
                   ) : null}
                   </div>
-                ) : null}
+                ) : isFinalStatus ? <div className="mt-4 flex items-center gap-2 rounded border border-tertiary/40 bg-tertiary-container p-3 text-sm font-semibold text-on-tertiary-container"><span className="material-symbols-outlined text-[18px]">task_alt</span>Caso {item.status === "cerrada" ? "cerrado" : "resuelto"}. No hay acciones operativas pendientes.</div> : null}
                 {incidentComments.length > 0 ? (
                   <div className="mt-4 space-y-2 rounded border border-outline-variant bg-surface-container p-3">
                     <p className="text-xs font-semibold uppercase text-on-surface-variant">Seguimiento</p>
@@ -676,7 +704,7 @@ export default async function IncidenciasPage({
                     ))}
                   </div>
                 ) : null}
-                {(canCommentIncident || item.reported_by === profile.id) ? (
+                {!isFinalStatus && (canCommentIncident || item.reported_by === profile.id) ? (
                 <form action={createIncidentComment} className="mt-4 flex flex-col gap-2 sm:flex-row">
                   <input type="hidden" name="incident_id" value={item.id} />
                   <input
