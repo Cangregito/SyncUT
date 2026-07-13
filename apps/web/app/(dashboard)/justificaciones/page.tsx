@@ -100,17 +100,17 @@ async function updateJustificationStatus(formData: FormData) {
     return;
   }
 
-  const resolveJustification = supabase.rpc as unknown as (
-    name: string,
-    args: Record<string, unknown>,
-  ) => Promise<{ error: { message: string } | null }>;
-  const { error } = await resolveJustification("resolve_justification", {
+  const { error } = await supabase.rpc("resolve_justification" as "get_teacher_directory", {
     p_justification_id: id,
     p_status: nextStatus,
     p_review_notes: reviewNotes || undefined,
-  });
+  } as never);
 
-  if (!error) {
+  if (error) {
+    redirect(`/justificaciones?error=${encodeURIComponent(error.message)}`);
+  }
+
+  {
     const eventType =
       nextStatus === "approved"
         ? "justification.approved"
@@ -168,7 +168,7 @@ async function addReviewNote(formData: FormData) {
 export default async function JustificacionesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ estado?: string; categoria?: string; q?: string }>;
+  searchParams: Promise<{ estado?: string; categoria?: string; q?: string; error?: string }>;
 }) {
   const profile = await requireProfile();
   if (profile.role === "teacher") redirect("/docente");
@@ -314,6 +314,7 @@ export default async function JustificacionesPage({
           No se pudieron consultar justificaciones. Detalle: {justificationsError.message}
         </div>
       ) : null}
+      {params.error ? <div className="rounded-lg border border-error/40 bg-error-container p-4 text-sm font-semibold text-on-error-container">No se pudo actualizar la justificación: {params.error}</div> : null}
 
       <div className="grid gap-6 xl:grid-cols-[380px_1fr]">
         <aside className="space-y-6">
