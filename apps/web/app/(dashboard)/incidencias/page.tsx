@@ -18,6 +18,7 @@ type IncidentRow = Tables<"incidents"> & {
   reporter: ProfileSummary | null;
   assignee: ProfileSummary | null;
   related_teacher?: ProfileSummary | null;
+  related_student?: ProfileSummary | null;
 };
 
 type IncidentCommentRow = Tables<"incident_comments"> & {
@@ -93,6 +94,7 @@ async function createIncident(formData: FormData) {
   const category = isIncidentCategory(categoryValue) ? categoryValue : "academica";
   const teamId = String(formData.get("team_id") ?? "");
   const relatedTeacherId = String(formData.get("related_teacher_id") ?? "") || null;
+  const relatedStudentId = String(formData.get("related_student_id") ?? "") || null;
 
   if (!teamId || !isUsefulText(title, 5) || !isUsefulText(area, 3) || !isUsefulText(description, 15)) {
     return;
@@ -109,6 +111,7 @@ async function createIncident(formData: FormData) {
       category,
       team_id: teamId,
       related_teacher_id: relatedTeacherId,
+      related_student_id: relatedStudentId,
     } as never)
     .select("id")
     .single();
@@ -397,9 +400,11 @@ export default async function IncidenciasPage({
       closed_at,
       team_id,
       related_teacher_id,
+      related_student_id,
       reporter:profiles!incidents_reported_by_fkey(full_name,email),
       assignee:profiles!incidents_assigned_to_fkey(full_name,email),
-      related_teacher:profiles!incidents_related_teacher_id_fkey(full_name,email)
+      related_teacher:profiles!incidents_related_teacher_id_fkey(full_name,email),
+      related_student:profiles!incidents_related_student_id_fkey(full_name,email)
     `)
     .order("created_at", { ascending: false });
 
@@ -472,9 +477,13 @@ export default async function IncidenciasPage({
     : { data: null };
   const studentMembership = studentMembershipData as unknown as { team_id: string; team: { id: string; name: string } } | null;
   const { data: linkedTeacherData } = studentMembership
-    ? await supabase.from("tutor_team_teachers" as "notifications").select("teacher_id,teacher:profiles!tutor_team_teachers_teacher_id_fkey(full_name,email)").eq("team_id" as "id", studentMembership.team_id)
+    ? await supabase.rpc("get_my_team_teachers" as "get_teacher_directory")
     : { data: [] };
-  const linkedTeachers = (linkedTeacherData ?? []) as unknown as Array<{ teacher_id: string; teacher: ProfileSummary | null }>;
+  const linkedTeachers = (linkedTeacherData ?? []) as unknown as Array<{ team_id: string; teacher_id: string; full_name: string | null; email: string }>;
+  const { data: relatedStudentData } = studentMembership
+    ? await supabase.from("tutor_team_members").select("student_id,student:students!tutor_team_members_student_id_fkey(profile:profiles!students_id_fkey(full_name,email))").eq("team_id", studentMembership.team_id).eq("status", "active")
+    : { data: [] };
+  const relatedStudents = (relatedStudentData ?? []) as unknown as Array<{ student_id: string; student: { profile: ProfileSummary | null } | null }>;
   const auditEvents = (auditData ?? []) as unknown as IncidentAuditRow[];
   const directTutorStudentIds = new Set((tutorAssignmentsData ?? []).map((item) => item.student_id));
   const commentsByIncident = comments.reduce<Map<string, IncidentCommentRow[]>>((acc, comment) => {
@@ -553,8 +562,13 @@ export default async function IncidenciasPage({
             </label>
             <label className="block text-xs font-medium text-on-surface-variant">
               Docente relacionado (opcional)
-              <select name="related_teacher_id" disabled={!studentMembership} className="mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface disabled:opacity-50"><option value="">Ningún docente / No aplica</option>{linkedTeachers.map((item)=><option key={item.teacher_id} value={item.teacher_id}>{item.teacher?.full_name ?? item.teacher?.email}</option>)}</select>
+              <select name="related_teacher_id" disabled={!studentMembership} className="mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface disabled:opacity-50"><option value="">Ningún docente / No aplica</option>{linkedTeachers.filter((item)=>item.team_id===studentMembership?.team_id).map((item)=><option key={item.teacher_id} value={item.teacher_id}>{item.full_name ?? item.email}</option>)}</select>
               <span className="mt-1 block text-[10px]">Solo aparecen docentes vinculados por el tutor a tu equipo.</span>
+            </label>
+            <label className="block text-xs font-medium text-on-surface-variant">
+              Alumno relacionado (opcional)
+              <select name="related_student_id" disabled={!studentMembership} className="mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface disabled:opacity-50"><option value="">Ningún alumno / No aplica</option>{relatedStudents.map((item)=><option key={item.student_id} value={item.student_id}>{item.student?.profile?.full_name ?? item.student?.profile?.email}</option>)}</select>
+              <span className="mt-1 block text-[10px]">Solo aparecen alumnos activos del mismo equipo.</span>
             </label>
             <label className="block text-xs font-medium text-on-surface-variant">
               Descripcion
@@ -625,6 +639,7 @@ export default async function IncidenciasPage({
                       {item.assignee ? ` | Asignado: ${item.assignee.full_name ?? item.assignee.email}` : ""}
                     </p>
                     {item.related_teacher ? <p className="mt-1 text-xs font-semibold text-primary">Docente relacionado: {item.related_teacher.full_name ?? item.related_teacher.email}</p> : null}
+                    {item.related_student ? <p className="mt-1 text-xs font-semibold text-primary">Alumno relacionado: {item.related_student.full_name ?? item.related_student.email}</p> : null}
                   </div>
                   <span className="rounded bg-surface-container-highest px-2 py-1 text-[10px] font-semibold uppercase text-primary">
                     {priorityLabels[item.priority]} | {statusLabels[item.status]}
