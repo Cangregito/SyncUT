@@ -210,6 +210,8 @@ async function createAppointment(formData: FormData) {
     .select("id")
     .eq("tutor_id", tutorId)
     .eq("scheduled_date", scheduledDate)
+    .eq("starts_at", startsAt)
+    .eq("ends_at", endsAt)
     .in("status", ["pendiente", "confirmada"])
     .limit(1)
     .maybeSingle();
@@ -645,10 +647,10 @@ export default async function CitasPage() {
   const availability = (availabilityData ?? []) as unknown as AvailabilityRow[];
   const auditEvents = (auditData ?? []) as unknown as AuditEventRow[];
   const attendance = (attendanceData ?? []) as unknown as AttendanceRow[];
-  const { data: privateBusyDateData } = profile.role === "student"
+  const { data: privateBusySlotData } = profile.role === "student"
     ? await supabase.rpc("get_assigned_tutor_busy_dates" as "get_teacher_directory", { p_days_ahead: 93 } as never)
     : { data: [] };
-  const privateBusyDates = (privateBusyDateData ?? []) as unknown as Array<{ tutor_id: string; scheduled_date: string }>;
+  const privateBusySlots = (privateBusySlotData ?? []) as unknown as Array<{ tutor_id: string; scheduled_date: string; starts_at: string; ends_at: string }>;
   const notesByAppointment = new Map(notes.map((note) => [note.appointment_id, note]));
   const attendanceByAppointment = new Map(attendance.map((item) => [item.appointment_id, item]));
   const auditByAppointment = auditEvents.reduce<Map<string, AuditEventRow[]>>((acc, event) => {
@@ -728,7 +730,7 @@ export default async function CitasPage() {
             <AppointmentSlotPicker
               tutors={assignments.map((item) => ({ id: item.tutor_id, label: item.tutor?.full_name ?? item.tutor?.email ?? `Tutor ${item.tutor_id.slice(0, 8)}` }))}
               availability={availability.map((slot) => ({ tutorId: slot.tutor_id, dayOfWeek: slot.day_of_week, startsAt: slot.starts_at, endsAt: slot.ends_at }))}
-              busyDates={privateBusyDates.map((item) => ({ tutorId: item.tutor_id, date: item.scheduled_date }))}
+              busySlots={privateBusySlots.map((item) => ({ tutorId: item.tutor_id, date: item.scheduled_date, startsAt: item.starts_at, endsAt: item.ends_at }))}
             />
 
             <ModalityDetailsFields mode="appointment" />

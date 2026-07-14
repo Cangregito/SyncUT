@@ -88,6 +88,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, readonly RolePermission[]> = {
   ],
   teacher: [
     "dashboard:view",
+    "justifications:academic_note",
     "notifications:view",
   ],
   tutor: [
