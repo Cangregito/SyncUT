@@ -3,15 +3,19 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
+import { createSupabaseBrowserClient } from "@plataforma/sdk/client";
+
+import { DEMO_ROLE_ACCOUNTS, ROLE_LABELS, USER_ROLES, type UserRole } from "@/lib/auth/roles";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [username, setUsername] = useState("admin@syncut.io");
-  const [password, setPassword] = useState("hunter2");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  function handleLogin(event: FormEvent<HTMLFormElement>) {
+  async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setErrorMsg("");
 
@@ -20,25 +24,45 @@ export default function LoginPage() {
       return;
     }
 
-    // Mock validation to match the mockup error state if they clear fields
-    if (password !== "hunter2") {
-      setErrorMsg("Contraseña incorrecta. Por favor intente de nuevo.");
-      return;
-    }
-
     const cleanUsername = username.trim();
+    setIsSubmitting(true);
 
-    // Save session in local storage for mockup flow
-    window.localStorage.setItem(
-      "syncut_beta_session",
-      JSON.stringify({
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const { error } = await supabase.auth.signInWithPassword({
         email: cleanUsername,
-        role: cleanUsername.toLowerCase() === "jassiel.rr1502@gmail.com" || cleanUsername.toLowerCase().includes("admin") ? "admin" : "student",
-        loggedAt: new Date().toISOString(),
-      })
-    );
+        password,
+      });
 
-    router.push("/dashboard");
+      if (error) {
+        setErrorMsg("Correo o contraseña incorrectos.");
+        return;
+      }
+
+      const requestedNext = new URLSearchParams(window.location.search).get("next");
+      const safeNext =
+        requestedNext?.startsWith("/") && !requestedNext.startsWith("//")
+          ? requestedNext
+          : "/dashboard";
+
+      router.replace(safeNext);
+      router.refresh();
+    } catch (error) {
+      setErrorMsg(
+        error instanceof Error
+          ? error.message
+          : "No fue posible iniciar sesión."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  function fillDemoAccount(role: UserRole) {
+    const account = DEMO_ROLE_ACCOUNTS[role];
+    setUsername(account.email);
+    setPassword(account.password);
+    setErrorMsg("");
   }
 
   return (
@@ -56,6 +80,19 @@ export default function LoginPage() {
 
       {/* Login Box */}
       <div className="bg-surface-container border border-outline-variant rounded-lg p-6 sm:p-8">
+        <div className="mb-5 grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {USER_ROLES.map((role) => (
+            <button
+              key={role}
+              type="button"
+              onClick={() => fillDemoAccount(role)}
+              className="flex items-center justify-between rounded border border-outline-variant bg-surface px-3 py-2 text-left text-xs text-on-surface-variant hover:border-primary hover:text-on-surface focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              <span>{ROLE_LABELS[role]}</span>
+              <span className="material-symbols-outlined text-[16px]">login</span>
+            </button>
+          ))}
+        </div>
         <form className="space-y-5" onSubmit={handleLogin}>
           {/* Username */}
           <div>
@@ -71,6 +108,7 @@ export default function LoginPage() {
                 id="username"
                 type="text"
                 placeholder="admin@syncut.io"
+                autoComplete="email"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
               />
@@ -83,12 +121,12 @@ export default function LoginPage() {
               <label className="block text-sm font-medium text-on-surface-variant" htmlFor="password">
                 Contraseña
               </label>
-              <a
+              <Link
                 className="text-xs text-primary hover:text-primary-fixed transition-colors font-medium focus:outline-none focus:underline focus:underline-offset-2"
-                href="#"
+                href="/forgot-password"
               >
                 ¿Olvidaste tu contraseña?
-              </a>
+              </Link>
             </div>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -100,6 +138,7 @@ export default function LoginPage() {
                 }`}
                 id="password"
                 type={showPassword ? "text" : "password"}
+                autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
@@ -145,8 +184,9 @@ export default function LoginPage() {
           <button
             className="w-full flex justify-center items-center gap-2 py-2.5 px-4 border border-transparent rounded text-sm font-bold text-on-primary bg-primary hover:bg-surface-tint focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background active:scale-[0.98] transition-all duration-150"
             type="submit"
+            disabled={isSubmitting}
           >
-            Iniciar Sesión
+            {isSubmitting ? "Iniciando..." : "Iniciar Sesión"}
             <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
           </button>
         </form>

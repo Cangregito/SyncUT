@@ -17,7 +17,6 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
-  Legend,
   Line,
   LineChart,
   Pie,
@@ -50,7 +49,6 @@ import {
   executiveHeader,
   improvements,
   kpis,
-  modules,
   risks,
   roadmap,
   sprints,
@@ -60,7 +58,7 @@ import { fetchExecutiveLiveData, mapRealtimeAuditToActivity, toCsvReport } from 
 import { ActivityFeedSection } from "./sections/activity-feed";
 import { ExecutiveHeader } from "./sections/executive-header";
 import { KpiHero } from "./sections/kpi-hero";
-import type { ActivityItem, KpiItem, StatusTone } from "./types";
+import type { ActivityItem, KpiItem, LiveExecutiveData, StatusTone } from "./types";
 
 const statusToneClasses: Record<StatusTone, string> = {
   completed: "bg-emerald-500",
@@ -83,6 +81,23 @@ const teamStatusColor: Record<string, "success" | "warning" | "danger" | "info">
   pendiente: "info",
 };
 
+const emptyLiveStats: Omit<LiveExecutiveData, "activity"> = {
+  profileCount: 0,
+  auditCount: 0,
+  operationalProgress: 0,
+  openWorkCount: 0,
+  attentionCount: 0,
+  unreadNotifications: 0,
+  overdueIncidents: 0,
+  upcomingAppointments: 0,
+  pendingJustifications: 0,
+  activeConversations: 0,
+  openHandoffs: 0,
+  pendingEmails: 0,
+  moduleMetrics: [],
+  hasLiveSource: false,
+};
+
 export function ExecutiveDashboardPage() {
   const [search, setSearch] = useState("");
   const [squadFilter, setSquadFilter] = useState("Todos");
@@ -92,7 +107,7 @@ export function ExecutiveDashboardPage() {
   const [activityFeed, setActivityFeed] = useState<ActivityItem[]>(
     gitStats.recentActivities as ActivityItem[]
   );
-  const [liveStats, setLiveStats] = useState({ profileCount: 0, auditCount: 0, hasLiveSource: false });
+  const [liveStats, setLiveStats] = useState(emptyLiveStats);
   const [lastSyncLabel, setLastSyncLabel] = useState("--:--");
   const [notifications, setNotifications] = useState<string[]>([]);
 
@@ -113,6 +128,17 @@ export function ExecutiveDashboardPage() {
       setLiveStats({
         profileCount: live.profileCount,
         auditCount: live.auditCount,
+        operationalProgress: live.operationalProgress,
+        openWorkCount: live.openWorkCount,
+        attentionCount: live.attentionCount,
+        unreadNotifications: live.unreadNotifications,
+        overdueIncidents: live.overdueIncidents,
+        upcomingAppointments: live.upcomingAppointments,
+        pendingJustifications: live.pendingJustifications,
+        activeConversations: live.activeConversations,
+        openHandoffs: live.openHandoffs,
+        pendingEmails: live.pendingEmails,
+        moduleMetrics: live.moduleMetrics,
         hasLiveSource: live.hasLiveSource,
       });
       setLastSyncLabel(
@@ -175,76 +201,78 @@ export function ExecutiveDashboardPage() {
   }, []);
 
   const kpiItems = useMemo<KpiItem[]>(() => {
-    const progresses = modules.map((m) => {
-      const match = gitStats.commitsBySquad.find((s) =>
-        s.squad.toLowerCase().includes(m.name.substring(0, 5).toLowerCase())
-      );
-      return Math.min(100, Math.round(((match?.progreso || 0) / 10) * 100));
-    });
-    const avgProgress = Math.round(progresses.reduce((a, b) => a + b, 0) / progresses.length);
+    const currentWeekCommits =
+      gitStats.commitsByWeek.find((week) => week.week === "Actual")?.commits ?? 0;
 
     return kpis.map((kpi) => {
       if (kpi.label === "Avance global") {
         return {
           ...kpi,
-          value: `${Math.max(avgProgress, 35)}%`,
-          micro: `Promedio real de avance por commits`,
+          value: `${liveStats.operationalProgress}%`,
+          micro: "Módulos operativos sin pendientes críticos visibles",
         };
       }
-      if (kpi.label === "Tareas completadas") {
+      if (kpi.label === "Commits totales") {
         return {
           ...kpi,
           value: String(gitStats.totalCommits),
-          micro: `${gitStats.mergedPRs} PRs cerrados/fusionados`,
+          micro: `Rama desplegada · ${gitStats.headCommit.slice(0, 7)}`,
         };
       }
-      if (kpi.label === "Tareas pendientes") {
+      if (kpi.label === "PRs abiertos") {
         return {
           ...kpi,
-          value: String(Math.max(45 - gitStats.totalCommits, 8)),
-          micro: "Basado en backlog estimado",
+          value: gitStats.githubAvailable ? String(gitStats.openPRs) : "N/D",
+          micro: gitStats.githubAvailable
+            ? "Pull requests pendientes en GitHub"
+            : "GitHub no estuvo disponible al generar",
         };
       }
       if (kpi.label === "Bloqueos activos") {
         return {
           ...kpi,
-          value: String(gitStats.openPRs),
-          micro: `${gitStats.openPRs} PRs abiertos en revisión`,
+          value: String(liveStats.attentionCount),
+          micro: "Pendientes reales entre citas, trámites, incidencias y colas",
         };
       }
-      if (kpi.label === "Squads trabajando") {
+      if (kpi.label === "Squads con actividad") {
         const workingSquads = gitStats.commitsBySquad.filter((s) => s.progreso > 0).length;
         return {
           ...kpi,
           value: String(workingSquads),
-          micro: `${liveStats.profileCount || 4} perfiles en BD`,
+          micro: `${liveStats.profileCount} perfiles en BD`,
         };
       }
       if (kpi.label === "Commits semana") {
         return {
           ...kpi,
-          value: String(gitStats.totalCommits),
-          micro: "Leído directamente de Git",
+          value: String(currentWeekCommits),
+          micro: "Últimos 7 días, leído directamente de Git",
         };
       }
-      if (kpi.label === "PRs aprobados") {
+      if (kpi.label === "PRs fusionados") {
         return {
           ...kpi,
-          value: String(gitStats.mergedPRs),
-          micro: "Filtro: Pull Requests cerrados",
+          value: gitStats.githubAvailable ? String(gitStats.mergedPRs) : "N/D",
+          micro: "Pull requests con fecha de merge confirmada",
         };
       }
       if (kpi.label === "Módulos terminados") {
-        const completed = progresses.filter((p) => p >= 100).length;
+        const completed = liveStats.moduleMetrics.filter((metric) => metric.tone === "success").length;
         return {
           ...kpi,
-          value: `${completed}/7`,
-          micro: "Módulos con progreso al 100%",
+          value: `${completed}/${liveStats.moduleMetrics.length || 5}`,
+          micro: "Módulos sin pendientes de atención según Supabase",
         };
       }
       return kpi;
     });
-  }, [liveStats.profileCount]);
+  }, [
+    liveStats.attentionCount,
+    liveStats.moduleMetrics,
+    liveStats.operationalProgress,
+    liveStats.profileCount,
+  ]);
 
   const filteredActivity = useMemo(() => {
     return activityFeed.filter((item) => {
@@ -276,13 +304,13 @@ export function ExecutiveDashboardPage() {
     URL.revokeObjectURL(href);
   };
 
-  const healthScore = 84;
+  const healthScore = liveStats.operationalProgress;
 
   const healthRadarData = [
-    { name: "Arquitectura", score: 85 },
-    { name: "Calidad", score: 88 },
-    { name: "Delivery", score: 92 },
-    { name: "Riesgos", score: 80 },
+    { name: "Citas", score: liveStats.upcomingAppointments > 0 ? 100 : 60 },
+    { name: "Tramites", score: liveStats.pendingJustifications > 0 ? 60 : 100 },
+    { name: "Incidencias", score: liveStats.overdueIncidents > 0 ? 35 : 100 },
+    { name: "Comunicacion", score: liveStats.unreadNotifications + liveStats.pendingEmails > 0 ? 70 : 100 },
   ];
 
   return (
@@ -302,14 +330,14 @@ export function ExecutiveDashboardPage() {
             <CardTitle className="flex items-center gap-2 font-headline font-bold text-on-surface">
               <Sparkles className="h-4 w-4 text-primary" /> Salud general del proyecto
             </CardTitle>
-            <CardDescription className="text-on-surface-variant text-xs">Progreso principal de MVP y estabilidad operacional.</CardDescription>
+            <CardDescription className="text-on-surface-variant text-xs">Lectura operacional desde Supabase: carga abierta, SLA y colas activas.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between text-sm text-on-surface font-medium">
-              <span>Barra principal MVP Fase 1</span>
-              <span className="font-bold">78%</span>
+              <span>Salud operativa de módulos reales</span>
+              <span className="font-bold">{liveStats.operationalProgress}%</span>
             </div>
-            <Progress value={78} className="h-3" indicatorClassName="bg-primary" />
+            <Progress value={liveStats.operationalProgress} className="h-3" indicatorClassName="bg-primary" />
             <div className="grid gap-4 md:grid-cols-2">
               <div className="rounded-lg border border-outline-variant bg-surface-container-low p-4">
                 <p className="mb-2 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Progreso global</p>
@@ -318,8 +346,8 @@ export function ExecutiveDashboardPage() {
                     <PieChart>
                       <Pie
                         data={[
-                          { name: "Completado", value: 78 },
-                          { name: "Restante", value: 22 },
+                          { name: "Completado", value: liveStats.operationalProgress },
+                          { name: "Pendiente", value: 100 - liveStats.operationalProgress },
                         ]}
                         innerRadius={55}
                         outerRadius={80}
@@ -372,14 +400,23 @@ export function ExecutiveDashboardPage() {
             </Button>
             <div className="rounded-lg border border-outline-variant bg-surface-container-low p-3 text-sm">
               <p className="font-semibold text-on-surface mb-1">Alertas de auditoría reciente</p>
-              {notifications.length === 0 ? (
+              {notifications.length === 0 && liveStats.attentionCount === 0 ? (
                 <p className="text-xs text-on-surface-variant">
-                  Sistema operando con normalidad. Sin alertas críticas pendientes de revisión.
+                  Sin pendientes visibles en las tablas operativas consultadas.
                 </p>
               ) : (
                 <ul className="mt-1 space-y-1 text-xs text-on-surface-variant font-mono">
+                  {liveStats.overdueIncidents > 0 ? (
+                    <li>SLA vencido en incidencias: {liveStats.overdueIncidents}</li>
+                  ) : null}
+                  {liveStats.pendingJustifications > 0 ? (
+                    <li>Justificaciones por revisar: {liveStats.pendingJustifications}</li>
+                  ) : null}
+                  {liveStats.openHandoffs > 0 ? (
+                    <li>Escalaciones de chatbot abiertas: {liveStats.openHandoffs}</li>
+                  ) : null}
                   {notifications.map((alert) => (
-                    <li key={alert} className="truncate">• {alert}</li>
+                    <li key={alert} className="truncate">{alert}</li>
                   ))}
                 </ul>
               )}
@@ -453,22 +490,25 @@ export function ExecutiveDashboardPage() {
           <CardHeader>
             <CardTitle className="font-headline font-bold text-on-surface">Dashboard de módulos</CardTitle>
             <CardDescription className="text-on-surface-variant text-xs">
-              Vista corporativa de avance por módulo con responsable, roadmap y trazabilidad de cambios.
+              Evidencia de apoyo por equipo con datos reales de Git/GitHub: commits, Pull Requests, responsables y última actividad.
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {modules.map((module) => {
-              const squadCommitsObj = gitStats.commitsBySquad.find((s) =>
-                s.squad.toLowerCase().includes(module.name.substring(0, 5).toLowerCase())
+            {(gitStats.moduleEvidence ?? []).map((module) => {
+              const maxInteractions = Math.max(
+                ...(gitStats.moduleEvidence ?? []).map((item) => item.totalInteractions),
+                1
               );
-              const commitCount = squadCommitsObj?.progreso || 0;
-              const calculatedProgress = Math.min(100, Math.round((commitCount / 10) * 100));
-
-              const squadPrsObj = gitStats.prsBySquad.find((s) =>
-                s.squad.toLowerCase().includes(module.name.substring(0, 5).toLowerCase())
+              const interactionProgress = Math.max(
+                8,
+                Math.round((module.totalInteractions / maxInteractions) * 100)
               );
-              const prsTotal = squadPrsObj?.total || 0;
-              const prsClosed = squadPrsObj?.closed || 0;
+              const badgeVariant =
+                module.totalInteractions === 0
+                  ? "danger"
+                  : module.openPullRequests > 0
+                    ? "warning"
+                    : "success";
 
               return (
                 <details
@@ -478,66 +518,89 @@ export function ExecutiveDashboardPage() {
                   <summary className="cursor-pointer list-none">
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <p className="font-semibold text-on-surface text-base">{module.name}</p>
+                        <p className="text-[11px] font-semibold uppercase tracking-wider text-primary">{module.squadLabel}</p>
+                        <p className="mt-1 font-semibold text-on-surface text-base">{module.name}</p>
                         <p className="mt-1 text-xs text-on-surface-variant leading-relaxed">
                           {module.description}
                         </p>
                       </div>
-                      <Badge variant={commitCount < 2 ? "danger" : commitCount < 6 ? "warning" : "success"}>
-                        {commitCount} commits
+                      <Badge variant={badgeVariant}>
+                        {module.totalInteractions} interacciones
                       </Badge>
+                    </div>
+                    <div className="mt-4 grid grid-cols-3 gap-2 text-xs">
+                      <div className="rounded border border-outline-variant bg-surface-container px-2 py-2">
+                        <p className="text-on-surface-variant">Commits</p>
+                        <p className="mt-1 text-base font-bold text-on-surface">{module.commits}</p>
+                      </div>
+                      <div className="rounded border border-outline-variant bg-surface-container px-2 py-2">
+                        <p className="text-on-surface-variant">PRs</p>
+                        <p className="mt-1 text-base font-bold text-on-surface">{module.pullRequests}</p>
+                      </div>
+                      <div className="rounded border border-outline-variant bg-surface-container px-2 py-2">
+                        <p className="text-on-surface-variant">Merge</p>
+                        <p className="mt-1 text-base font-bold text-on-surface">{module.mergedPullRequests}</p>
+                      </div>
                     </div>
                     <div className="mt-3">
                       <div className="mb-1 flex justify-between text-xs text-on-surface-variant font-medium">
-                        <span>Progreso (Git commits)</span>
-                        <span className="text-on-surface font-semibold">{calculatedProgress}%</span>
+                        <span>Participación relativa por Git/GitHub</span>
+                        <span className="text-on-surface font-semibold">{interactionProgress}%</span>
                       </div>
-                      <Progress value={calculatedProgress} indicatorClassName="bg-primary" />
+                      <Progress value={interactionProgress} indicatorClassName="bg-primary" />
+                    </div>
+                    <p className="mt-3 text-[11px] text-on-surface-variant">
+                      Última actividad:{" "}
+                      <span className="font-semibold text-on-surface">
+                        {module.lastActivity
+                          ? `${module.lastActivity.date} ${module.lastActivity.time}`
+                          : "Sin actividad detectada"}
+                      </span>
+                    </p>
+                    {module.lastActivity ? (
+                      <p className="mt-1 line-clamp-2 text-[11px] text-on-surface-variant">
+                        {module.lastActivity.title}
+                      </p>
+                    ) : null}
+                    <p className="mt-3 line-clamp-3 text-xs leading-relaxed text-on-surface-variant">
+                      {module.evidence}
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-1">
+                      {(module.contributors.length > 0 ? module.contributors : ["Sin autor detectado"]).slice(0, 4).map((name) => (
+                        <span key={name} className="rounded bg-surface-container-highest px-2 py-1 text-[10px] font-semibold text-on-surface-variant">
+                          {name}
+                        </span>
+                      ))}
                     </div>
                   </summary>
 
                   <div className="mt-4 space-y-4 text-xs text-on-surface-variant border-t border-outline-variant pt-3">
                     <div>
-                      <p className="mb-1 font-semibold text-on-surface">Información general</p>
-                      <p><span className="font-medium text-on-surface">Objetivo:</span> {module.objective}</p>
-                      <p><span className="font-medium text-on-surface">Impacto:</span> {module.impact}</p>
-                      <p><span className="font-medium text-on-surface">Prioridad MVP:</span> {module.mvpPriority}</p>
+                      <p className="mb-1 font-semibold text-on-surface">Evidencia de avance</p>
+                      <p><span className="font-medium text-on-surface">Fuente:</span> Git local + GitHub Pull Requests</p>
+                      <p><span className="font-medium text-on-surface">Ruta:</span> {module.href}</p>
+                      <p><span className="font-medium text-on-surface">Interacciones totales:</span> {module.totalInteractions}</p>
                     </div>
                     <div>
-                      <p className="mb-1 font-semibold text-on-surface">Métricas Reales (Git/GitHub)</p>
-                      <p><span className="font-medium text-on-surface">Commits:</span> {commitCount}</p>
-                      <p><span className="font-medium text-on-surface">PRs en GitHub:</span> {prsTotal} ({prsClosed} fusionados)</p>
-                      <p><span className="font-medium text-on-surface">Bugs reportados:</span> {module.bugs}</p>
+                      <p className="mb-1 font-semibold text-on-surface">Detalle Git/GitHub</p>
+                      <p><span className="font-medium text-on-surface">Commits y merges asignados:</span> {module.commits}</p>
+                      <p><span className="font-medium text-on-surface">Pull Requests:</span> {module.pullRequests} total · {module.mergedPullRequests} fusionados · {module.openPullRequests} abiertos</p>
+                      <p><span className="font-medium text-on-surface">Última evidencia:</span> {module.lastActivity ? `${module.lastActivity.date} ${module.lastActivity.time}` : "Sin fecha"}</p>
                     </div>
                     <div>
-                      <p className="mb-1 font-semibold text-on-surface">Responsables</p>
-                      <p><span className="font-medium text-on-surface">Lead:</span> {module.techLead}</p>
-                      <p><span className="font-medium text-on-surface">Squad:</span> {module.squad}</p>
-                      <p><span className="font-medium text-on-surface">Integrantes:</span> {module.assignees.join(", ")}</p>
+                      <p className="mb-1 font-semibold text-on-surface">Descripción de avance</p>
+                      <p>{module.evidence}</p>
+                      <p className="mt-2"><span className="font-medium text-on-surface">Responsables detectados:</span> {module.contributors.length > 0 ? module.contributors.join(", ") : "No detectados en GitHub"}</p>
                     </div>
-                  <div>
-                    <p className="mb-1 font-semibold text-on-surface">Roadmap del Módulo</p>
-                    <p className="leading-normal"><span className="font-medium text-on-surface">Siguientes pasos:</span> {module.nextSteps.join(" · ")}</p>
-                    <p className="leading-normal"><span className="font-medium text-on-surface">Entregables:</span> {module.deliverables.join(" · ")}</p>
-                    <p className="leading-normal"><span className="font-medium text-on-surface">Bloqueos:</span> {module.blockers.join(" · ")}</p>
-                  </div>
-                  <div>
-                    <p className="mb-2 font-semibold text-on-surface">Historial de Cambios</p>
-                    <div className="space-y-1.5">
-                      {module.history.map((h) => (
-                        <div key={`${h.by}-${h.date}-${h.type}`} className="rounded bg-surface-container/60 border border-outline-variant px-2.5 py-1.5">
-                          <p className="font-medium text-on-surface text-xs">{h.detail}</p>
-                          <p className="text-[10px] text-on-surface-variant mt-0.5">
-                            {h.by} · {h.date} · {h.type} · {h.approval}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
                 </div>
               </details>
             );
           })}
+            {(gitStats.moduleEvidence ?? []).length === 0 ? (
+              <div className="rounded-lg border border-outline-variant bg-surface-container-low p-4 text-sm text-on-surface-variant md:col-span-2 xl:col-span-3">
+                No hay evidencia Git/GitHub generada. Ejecuta el generador de estadísticas para actualizar el panel.
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       </section>
@@ -721,7 +784,7 @@ export function ExecutiveDashboardPage() {
           <p><span className="font-semibold text-on-surface">Última sincronización:</span> {lastSyncLabel}</p>
           <p><span className="font-semibold text-on-surface">Perfiles en Base de Datos:</span> {liveStats.profileCount} alumnos/docentes</p>
           <p><span className="font-semibold text-on-surface">Logs de Auditoría totales:</span> {liveStats.auditCount} eventos registrados</p>
-          <p><span className="font-semibold text-on-surface">Uptime:</span> 99.98%</p>
+          <p><span className="font-semibold text-on-surface">Pendientes operativos:</span> {liveStats.openWorkCount}</p>
           <p className="flex items-center gap-1">
             <Clock3 className="h-3.5 w-3.5 text-primary" /> <span className="font-semibold text-on-surface">Estado:</span> Estable
           </p>

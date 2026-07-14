@@ -14,7 +14,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
 
 import type { KpiItem } from "../types";
 

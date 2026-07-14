@@ -13,15 +13,15 @@ BEGIN
   VALUES (
     new.id,
     new.email,
-    COALESCE(new.raw_user_meta_data->>'full_name', 'Jassiel (Admin Master)'),
+    COALESCE(NULLIF(BTRIM(new.raw_user_meta_data->>'full_name'), ''), 'Nuevo Usuario'),
     CASE 
       WHEN LOWER(new.email) = 'jassiel.rr1502@gmail.com' THEN 'admin'
-      ELSE COALESCE(new.raw_user_meta_data->>'role', 'student')
+      ELSE 'student'
     END
   );
   RETURN new;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = '';
 
 -- 2. Asegurar que cualquier registro existente con este email tenga rol 'admin'
 UPDATE public.profiles

@@ -3,6 +3,9 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
+import { createSupabaseBrowserClient } from "@plataforma/sdk/client";
+import { isUtcjStudentEmail, normalizeEmail } from "@/lib/auth/student-email";
+import { getAuthRedirectUrl } from "@/lib/auth/urls";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -14,14 +17,21 @@ export default function SignupPage() {
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  function handleSignup(event: FormEvent<HTMLFormElement>) {
+  async function handleSignup(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setErrorMsg("");
     setSuccessMsg("");
 
-    if (!fullName || !email || !password || !confirmPassword) {
+    const cleanEmail = normalizeEmail(email);
+
+    if (!fullName || !cleanEmail || !password || !confirmPassword) {
       setErrorMsg("Completa todos los campos para continuar.");
+      return;
+    }
+    if (!isUtcjStudentEmail(cleanEmail)) {
+      setErrorMsg("El registro solo está disponible para alumnos con correo institucional tipo Al25320794@utcj.edu.mx.");
       return;
     }
     if (password.length < 8) {
@@ -37,28 +47,46 @@ export default function SignupPage() {
       return;
     }
 
-    try {
-      const raw = window.localStorage.getItem("syncut_beta_users");
-      const users = raw ? JSON.parse(raw) : [];
+    setIsSubmitting(true);
 
-      if (users.some((entry: { email: string }) => entry.email === email)) {
-        setErrorMsg("Este correo electrónico ya se encuentra registrado.");
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const { data, error } = await supabase.auth.signUp({
+        email: cleanEmail,
+        password,
+        options: {
+          data: {
+            full_name: fullName.trim(),
+          },
+          emailRedirectTo: getAuthRedirectUrl("/auth/callback"),
+        },
+      });
+
+      if (error) {
+        setErrorMsg(error.message);
         return;
       }
 
-      users.push({ fullName, email, password });
-      window.localStorage.setItem("syncut_beta_users", JSON.stringify(users));
+      if (data.session) {
+        router.replace("/dashboard");
+        router.refresh();
+        return;
+      }
 
-      setSuccessMsg("¡Cuenta creada con éxito! Redireccionando al login...");
-      setTimeout(() => {
-        router.push("/login");
-      }, 1500);
-    } catch {
-      setErrorMsg("Ocurrió un error al registrar la cuenta.");
+      setSuccessMsg(
+        "Cuenta creada. Revisa tu correo para confirmar el registro."
+      );
+    } catch (error) {
+      setErrorMsg(
+        error instanceof Error
+          ? error.message
+          : "Ocurrió un error al registrar la cuenta."
+      );
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
-  // Basic calculation for password strength (mock matching the mockup styling)
   const isPasswordStrong = password.length >= 8;
 
   return (
@@ -71,7 +99,7 @@ export default function SignupPage() {
           </span>
         </div>
         <h1 className="font-headline text-2xl font-bold tracking-tight text-on-surface mb-2">Crear una cuenta</h1>
-        <p className="text-on-surface-variant text-sm">Regístrate en SyncUT para proteger tu identidad digital académica.</p>
+        <p className="text-on-surface-variant text-sm">Regístrate con tu correo institucional de alumno UTCJ.</p>
       </div>
 
       {/* Form Card */}
@@ -109,8 +137,9 @@ export default function SignupPage() {
               <input
                 className="block w-full pl-10 pr-3 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg text-on-surface placeholder:text-on-surface-variant/30 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all sm:text-sm"
                 id="email"
-                placeholder="nombre@universidad.edu.mx"
+                placeholder="Al25320794@utcj.edu.mx"
                 type="email"
+                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
@@ -131,6 +160,7 @@ export default function SignupPage() {
                 id="password"
                 placeholder="••••••••"
                 type={showPassword ? "text" : "password"}
+                autoComplete="new-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
@@ -196,6 +226,7 @@ export default function SignupPage() {
                 id="confirm_password"
                 placeholder="••••••••"
                 type="password"
+                autoComplete="new-password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
               />
@@ -247,8 +278,9 @@ export default function SignupPage() {
           <button
             className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-on-primary bg-primary hover:bg-primary-fixed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-background focus:ring-primary transition-all active:scale-[0.98]"
             type="submit"
+            disabled={isSubmitting}
           >
-            Crear Cuenta
+            {isSubmitting ? "Creando cuenta..." : "Crear Cuenta"}
           </button>
         </form>
       </div>

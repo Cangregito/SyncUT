@@ -28,7 +28,7 @@ export interface AuthError {
   code?: string;
 }
 
-export interface AuthResponse<T = any> {
+export interface AuthResponse<T = unknown> {
   data: T | null;
   error: AuthError | null;
 }

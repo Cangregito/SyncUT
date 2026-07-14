@@ -9,6 +9,9 @@
     },
     "./types": {
       "default": "./src/types.ts"
+    },
+    "./contracts": {
+      "default": "./src/contracts.ts"
     }
   },
   "dependencies": {

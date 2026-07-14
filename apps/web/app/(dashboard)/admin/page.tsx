@@ -1,146 +1,222 @@
-"use client";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { createSupabaseBrowserClient } from "@plataforma/sdk/client";
 import { ExecutiveDashboardPage } from "@/components/modules/executive-dashboard/executive-dashboard-page";
+import { requireRole } from "@/lib/auth/session";
+import { ROLE_LABELS, USER_ROLES, type UserRole } from "@/lib/auth/roles";
+import { createSupabaseServiceRoleClient } from "@/lib/supabase/server";
+import { getAuthRedirectUrl } from "@/lib/auth/urls";
 
-export default function AdminRoutePage() {
-  const router = useRouter();
-  const [authorized, setAuthorized] = useState<boolean | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
+const STAFF_ROLES = ["coordinator", "teacher", "tutor"] as const;
+type StaffRole = (typeof STAFF_ROLES)[number];
 
-  useEffect(() => {
-    let active = true;
+function isStaffRole(value: unknown): value is StaffRole {
+  return typeof value === "string" && STAFF_ROLES.includes(value as StaffRole);
+}
 
-    async function checkAuth() {
-      try {
-        // 1. Obtener sesión local de localStorage
-        const localSession = window.localStorage.getItem("syncut_beta_session");
-        if (!localSession) {
-          if (active) {
-            setAuthorized(false);
-            setLoading(false);
-          }
-          return;
-        }
+function normalizeStaffEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
 
-        const parsed = JSON.parse(localSession);
-        const email = parsed?.email?.trim().toLowerCase();
-        if (active) {
-          setCurrentUserEmail(parsed?.email || "No identificado");
-        }
+function buildEmployeeCode(email: string): string {
+  const prefix = email.split("@")[0]?.replace(/[^a-z0-9]/gi, "").toUpperCase();
+  return `UTCJ-${prefix || crypto.randomUUID().slice(0, 8).toUpperCase()}`;
+}
 
-        // 2. Verificar de forma segura contra la sesión de Supabase Auth
-        const hasEnv =
-          Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
-          Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+async function inviteStaffAccount(formData: FormData) {
+  "use server";
 
-        if (hasEnv) {
-          const supabase = createSupabaseBrowserClient();
+  await requireRole(["admin"]);
 
-          // A. Intentar por usuario autenticado en Supabase Auth
-          const { data: { user } } = await supabase.auth.getUser();
-          
-          if (user) {
-            const { data: profile, error } = await supabase
-              .from("profiles")
-              .select("role")
-              .eq("id", user.id)
-              .single();
+  const fullName = String(formData.get("full_name") ?? "").trim();
+  const email = normalizeStaffEmail(String(formData.get("email") ?? ""));
+  const roleValue = String(formData.get("role") ?? "");
+  const department = String(formData.get("department") ?? "").trim() || "UTCJ";
 
-            if (!error && profile && profile.role === "admin") {
-              if (active) {
-                setAuthorized(true);
-                setLoading(false);
-              }
-              return;
-            }
-          }
+  if (!fullName || !email || !isStaffRole(roleValue)) {
+    redirect("/admin?staff_error=missing");
+  }
 
-          // B. Fallback: Buscar en la tabla profiles por correo de la sesión local
-          if (email) {
-            const { data: profile, error } = await supabase
-              .from("profiles")
-              .select("role")
-              .eq("email", email)
-              .single();
+  if (!email.endsWith("@utcj.edu.mx")) {
+    redirect("/admin?staff_error=email");
+  }
 
-            if (!error && profile && profile.role === "admin") {
-              if (active) {
-                setAuthorized(true);
-                setLoading(false);
-              }
-              return;
-            }
-          }
+  const serviceSupabase = createSupabaseServiceRoleClient();
+  const { data: existingProfile } = await serviceSupabase
+    .from("profiles")
+    .select("id")
+    .eq("email", email)
+    .maybeSingle();
 
-          // Si la DB está conectada pero el rol no es admin
-          if (active) {
-            setAuthorized(false);
-            setLoading(false);
-          }
-          return;
-        }
+  let userId = existingProfile?.id ?? null;
 
-        // 3. Fallback absoluto si no hay variables de entorno (modo offline mockup)
-        const isMockAdmin = email === "jassiel.rr1502@gmail.com" || parsed?.role === "admin" || email?.includes("admin");
-        if (active) {
-          setAuthorized(isMockAdmin);
-          setLoading(false);
-        }
-      } catch {
-        if (active) {
-          setAuthorized(false);
-          setLoading(false);
-        }
-      }
+  if (!userId) {
+    const { data, error } = await serviceSupabase.auth.admin.inviteUserByEmail(email, {
+      data: {
+        full_name: fullName,
+        role: roleValue,
+      },
+      redirectTo: getAuthRedirectUrl("/auth/callback?next=/dashboard"),
+    });
+
+    if (error || !data.user) {
+      redirect(`/admin?staff_error=${encodeURIComponent(error?.message ?? "invite")}`);
     }
 
-    void checkAuth();
-
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3">
-        <div className="w-10 h-10 rounded-lg bg-surface-container border border-outline-variant flex items-center justify-center animate-spin">
-          <span className="material-symbols-outlined text-primary text-2xl">sync</span>
-        </div>
-        <p className="text-on-surface-variant text-sm tracking-wider font-mono">VERIFICANDO CREDENCIALES...</p>
-      </div>
-    );
+    userId = data.user.id;
   }
 
-  if (authorized === false) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] p-6 text-center max-w-md mx-auto">
-        <div className="w-16 h-16 rounded-full bg-error-container/20 border border-error/30 flex items-center justify-center mb-6 text-error animate-pulse">
-          <span className="material-symbols-outlined text-4xl">gavel</span>
-        </div>
-        <h2 className="font-headline font-black text-2xl text-on-surface mb-2 tracking-tight">
-          Acceso Restringido
-        </h2>
-        <p className="text-on-surface-variant text-sm leading-relaxed mb-4">
-          Esta zona de gobernanza está reservada exclusivamente para usuarios con el rol de <strong>admin</strong> en la base de datos. Tu usuario actual no tiene privilegios suficientes.
-        </p>
-        <p className="w-full text-on-surface-variant text-xs bg-surface-container-high border border-outline-variant rounded p-3 mb-6 font-mono truncate">
-          Usuario actual: <span className="text-primary font-bold">{currentUserEmail || "No identificado"}</span>
-        </p>
-        <button
-          onClick={() => router.push("/dashboard")}
-          className="px-5 py-2.5 bg-surface-container-high hover:bg-surface-container-highest border border-outline-variant rounded-lg text-sm font-semibold transition-all cursor-pointer active:scale-95"
-        >
-          Volver al Portal
-        </button>
-      </div>
-    );
+  await serviceSupabase.from("profiles").upsert({
+    id: userId,
+    email,
+    full_name: fullName,
+    role: roleValue,
+    updated_at: new Date().toISOString(),
+  });
+
+  if (roleValue === "teacher" || roleValue === "tutor") {
+    await serviceSupabase.from("teachers").upsert({
+      id: userId,
+      employee_code: buildEmployeeCode(email),
+      department,
+      specialization: roleValue === "tutor" ? ["Tutoría académica"] : ["Docencia"],
+      updated_at: new Date().toISOString(),
+    });
   }
 
-  // Si está autorizado, renderizar el panel ejecutivo de avance
-  return <ExecutiveDashboardPage />;
+  const notificationTitle = "Cuenta institucional activada";
+  const notificationBody = `Tu cuenta fue registrada como ${ROLE_LABELS[roleValue]}. Revisa tu correo para activar el acceso.`;
+  const { data: notification } = await serviceSupabase.from("notifications").insert({
+    user_id: userId,
+    event_type: "staff.invited",
+    title: notificationTitle,
+    body: notificationBody,
+    metadata: { role: roleValue, department },
+  }).select("id").maybeSingle();
+
+  const { data: queuedEmail } = await serviceSupabase.from("email_queue").insert({
+    user_id: userId,
+    to_email: email,
+    subject: notificationTitle,
+    template_slug: "staff-invited",
+    template_data: {
+      title: notificationTitle,
+      body: notificationBody,
+      metadata: { role: roleValue, department },
+    },
+  }).select("id").maybeSingle();
+
+  await serviceSupabase.from("notification_logs").insert({
+    event_type: "staff.invited",
+    user_id: userId,
+    notification_id: notification?.id ?? null,
+    email_queue_id: queuedEmail?.id ?? null,
+    triggered_by: null,
+    payload: {
+      title: notificationTitle,
+      body: notificationBody,
+      metadata: { role: roleValue, department },
+    },
+  });
+
+  revalidatePath("/admin");
+  redirect("/admin?staff_created=true");
+}
+
+export default async function AdminRoutePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ staff_created?: string; staff_error?: string }>;
+}) {
+  await requireRole(["admin"]);
+  const params = await searchParams;
+
+  return (
+    <div className="mx-auto flex max-w-7xl flex-col gap-6">
+      <section className="rounded-lg border border-outline-variant bg-surface-container p-5">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-primary">Gobernanza de cuentas</p>
+            <h1 className="mt-2 text-2xl font-headline font-bold text-on-surface">Alta institucional de staff</h1>
+            <p className="mt-2 max-w-3xl text-sm text-on-surface-variant">
+              Coordinadores, docentes y tutores se agregan desde aquí. El registro público queda reservado para alumnos con correo institucional.
+            </p>
+          </div>
+          <span className="rounded border border-outline-variant px-3 py-2 text-xs font-semibold text-on-surface-variant">
+            Roles permitidos: {STAFF_ROLES.map((role) => ROLE_LABELS[role]).join(", ")}
+          </span>
+        </div>
+
+        {params.staff_created ? (
+          <p className="mt-4 rounded border border-tertiary/40 bg-tertiary-container/20 p-3 text-sm font-semibold text-on-tertiary-container">
+            Cuenta de staff registrada. Si era nueva, Supabase envió la invitación al correo institucional.
+          </p>
+        ) : null}
+
+        {params.staff_error ? (
+          <p className="mt-4 rounded border border-error/40 bg-error-container/20 p-3 text-sm font-semibold text-on-error-container">
+            No se pudo registrar la cuenta. Verifica nombre, rol y correo @utcj.edu.mx.
+          </p>
+        ) : null}
+
+        <form action={inviteStaffAccount} className="mt-5 grid gap-4 md:grid-cols-4">
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold uppercase text-on-surface-variant" htmlFor="full_name">
+              Nombre
+            </label>
+            <input
+              id="full_name"
+              name="full_name"
+              className="w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface"
+              placeholder="Nombre completo"
+              required
+            />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold uppercase text-on-surface-variant" htmlFor="email">
+              Correo institucional
+            </label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              className="w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface"
+              placeholder="docente@utcj.edu.mx"
+              required
+            />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold uppercase text-on-surface-variant" htmlFor="role">
+              Rol
+            </label>
+            <select id="role" name="role" className="w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" required>
+              {USER_ROLES.filter((role): role is UserRole & StaffRole => isStaffRole(role)).map((role) => (
+                <option key={role} value={role}>
+                  {ROLE_LABELS[role]}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold uppercase text-on-surface-variant" htmlFor="department">
+              Área
+            </label>
+            <input
+              id="department"
+              name="department"
+              className="w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface"
+              placeholder="Departamento"
+            />
+          </div>
+          <div className="md:col-span-4">
+            <button className="rounded bg-primary px-4 py-2 text-sm font-bold text-on-primary">
+              Invitar o actualizar cuenta
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <ExecutiveDashboardPage />
+    </div>
+  );
 }

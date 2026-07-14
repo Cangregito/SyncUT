@@ -1,0 +1,35 @@
+project_id = "SyncUT"
+
+[auth]
+enabled = true
+site_url = "https://sync-ut.vercel.app"
+additional_redirect_urls = [
+  "https://sync-ut.vercel.app/auth/callback",
+  "https://sync-ut.vercel.app/auth/callback?next=/dashboard",
+  "https://sync-ut.vercel.app/auth/callback?next=/reset-password",
+]
+enable_signup = true
+minimum_password_length = 8
+
+[storage]
+enabled = true
+
+[storage.vector]
+enabled = false
+
+[auth.mfa]
+max_enrolled_factors = 10
+
+[auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true
+
+[auth.mfa.phone]
+enroll_enabled = false
+verify_enabled = false
+
+[auth.email]
+enable_signup = true
+enable_confirmations = true
+max_frequency = "1m"
+otp_length = 8

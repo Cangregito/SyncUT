@@ -1,231 +1,316 @@
-"use client";
+import { revalidatePath } from "next/cache";
+import type { Database, Tables } from "@plataforma/types";
 
-import Link from "next/link";
-import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { requireProfile } from "@/lib/auth/session";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-type NotificationChannel = "in-app" | "email";
+type NotificationRow = Tables<"notifications">;
+type NotificationEventTypeRow = Tables<"notification_event_types">;
+type NotificationPreferenceRow = Tables<"notification_preferences">;
+type EmailQueueSummaryRow =
+  Database["public"]["Functions"]["get_email_queue_summary"]["Returns"][number];
 
-type NotificationItem = {
-  id: string;
-  origen: "citas" | "justificaciones" | "incidencias" | "chatbot" | "manual";
-  titulo: string;
-  detalle: string;
-  canal: NotificationChannel;
-  leida: boolean;
-  createdAt: string;
-};
+async function toggleNotificationRead(formData: FormData) {
+  "use server";
 
-const STORAGE_KEY = "syncut_beta_notifications_v1";
+  await requireProfile();
+  const supabase = await createSupabaseServerClient();
+  const id = String(formData.get("id") ?? "");
+  const nextValue = String(formData.get("is_read") ?? "") === "true";
 
-const seedData: NotificationItem[] = [
-  {
-    id: "NOT-9001",
-    origen: "manual",
-    titulo: "Bienvenido al centro de notificaciones",
-    detalle: "Usa el boton Sincronizar para traer eventos de los demas modulos.",
-    canal: "in-app",
-    leida: false,
-    createdAt: "2026-06-03T10:00:00.000Z",
-  },
-];
+  if (!id) return;
 
-function safeParseArray<T>(raw: string | null): T[] {
-  if (!raw) return [];
-  try {
-    const parsed = JSON.parse(raw) as T[];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
+  await supabase
+    .from("notifications")
+    .update({
+      is_read: nextValue,
+      read_at: nextValue ? new Date().toISOString() : null,
+    })
+    .eq("id", id);
+
+  revalidatePath("/notificaciones");
+  revalidatePath("/dashboard");
 }
 
-export default function NotificacionesPage() {
-  const [items, setItems] = useState<NotificationItem[]>(seedData);
-  const [sourceFilter, setSourceFilter] = useState<"todos" | NotificationItem["origen"]>("todos");
-  const [message, setMessage] = useState("");
-  const [manualTitle, setManualTitle] = useState("");
-  const [manualDetail, setManualDetail] = useState("");
+async function markAllNotificationsRead() {
+  "use server";
 
-  useEffect(() => {
-    const stored = safeParseArray<NotificationItem>(window.localStorage.getItem(STORAGE_KEY));
-    if (stored.length) {
-      setItems(stored);
-    }
-  }, []);
+  const profile = await requireProfile();
+  const supabase = await createSupabaseServerClient();
 
-  useEffect(() => {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-  }, [items]);
+  await supabase
+    .from("notifications")
+    .update({
+      is_read: true,
+      read_at: new Date().toISOString(),
+    })
+    .eq("user_id", profile.id)
+    .eq("is_read", false);
 
-  const filtered = useMemo(() => {
-    const sorted = [...items].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
-    if (sourceFilter === "todos") return sorted;
-    return sorted.filter((item) => item.origen === sourceFilter);
-  }, [items, sourceFilter]);
+  revalidatePath("/notificaciones");
+  revalidatePath("/dashboard");
+}
 
-  function addManualNotification(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setMessage("");
+async function updatePreference(formData: FormData) {
+  "use server";
 
-    if (!manualTitle || !manualDetail) {
-      setMessage("Completa titulo y detalle para crear la notificacion.");
-      return;
-    }
+  const profile = await requireProfile();
+  const supabase = await createSupabaseServerClient();
+  const eventType = String(formData.get("event_type") ?? "");
+  const inApp = String(formData.get("in_app") ?? "") === "on";
+  const email = String(formData.get("email") ?? "") === "on";
 
-    const newItem: NotificationItem = {
-      id: `NOT-${Math.floor(Math.random() * 9000) + 1000}`,
-      origen: "manual",
-      titulo: manualTitle,
-      detalle: manualDetail,
-      canal: "in-app",
-      leida: false,
-      createdAt: new Date().toISOString(),
-    };
-
-    setItems((current) => [newItem, ...current]);
-    setManualTitle("");
-    setManualDetail("");
-    setMessage("Notificacion manual creada.");
+  if (!eventType) {
+    return;
   }
 
-  function syncEvents() {
-    const citas = safeParseArray<{ id: string; estado: string }>(
-      window.localStorage.getItem("syncut_beta_citas_v1")
-    );
-    const justificaciones = safeParseArray<{ id: string; estado: string }>(
-      window.localStorage.getItem("syncut_beta_justificaciones_v1")
-    );
-    const incidencias = safeParseArray<{ id: string; status?: string; estado?: string }>(
-      window.localStorage.getItem("syncut_beta_incidencias_v1")
-    );
+  await supabase.from("notification_preferences").upsert({
+    user_id: profile.id,
+    event_type: eventType,
+    in_app: inApp,
+    email,
+    updated_at: new Date().toISOString(),
+  }, {
+    onConflict: "user_id,event_type",
+  });
 
-    const generated: NotificationItem[] = [];
+  revalidatePath("/notificaciones");
+}
 
-    citas.slice(0, 3).forEach((item) => {
-      generated.push({
-        id: `SYNC-CIT-${item.id}`,
-        origen: "citas",
-        titulo: `Actualizacion de cita ${item.id}`,
-        detalle: `Estado actual: ${item.estado}`,
-        canal: "email",
-        leida: false,
-        createdAt: new Date().toISOString(),
-      });
-    });
+export default async function NotificacionesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ estado?: string; evento?: string }>;
+}) {
+  const profile = await requireProfile();
+  const params = await searchParams;
+  const supabase = await createSupabaseServerClient();
+  const canInspectEmailQueue = ["admin", "coordinator"].includes(profile.role);
 
-    justificaciones.slice(0, 3).forEach((item) => {
-      generated.push({
-        id: `SYNC-JUS-${item.id}`,
-        origen: "justificaciones",
-        titulo: `Movimiento en solicitud ${item.id}`,
-        detalle: `Estado actual: ${item.estado}`,
-        canal: "in-app",
-        leida: false,
-        createdAt: new Date().toISOString(),
-      });
-    });
+  let query = supabase
+    .from("notifications")
+    .select("id, event_type, title, body, metadata, is_read, read_at, created_at")
+    .eq("user_id", profile.id)
+    .order("created_at", { ascending: false });
 
-    incidencias.slice(0, 3).forEach((item) => {
-      generated.push({
-        id: `SYNC-INC-${item.id}`,
-        origen: "incidencias",
-        titulo: `Incidencia ${item.id} reportada`,
-        detalle: `Estado actual: ${item.status ?? item.estado ?? "abierta"}`,
-        canal: "in-app",
-        leida: false,
-        createdAt: new Date().toISOString(),
-      });
-    });
-
-    setItems((current) => {
-      const byId = new Map(current.map((entry) => [entry.id, entry]));
-      generated.forEach((entry) => byId.set(entry.id, entry));
-      return [...byId.values()];
-    });
-    setMessage(`Sincronizacion completa: ${generated.length} eventos detectados.`);
+  if (params.estado === "no-leidas") {
+    query = query.eq("is_read", false);
   }
 
-  function toggleRead(id: string) {
-    setItems((current) => current.map((item) => (item.id === id ? { ...item, leida: !item.leida } : item)));
+  if (params.evento) {
+    query = query.eq("event_type", params.evento);
+  }
+
+  const { data, error } = await query;
+  const items = (data ?? []) as NotificationRow[];
+  const unread = items.filter((item) => !item.is_read).length;
+  const eventTypes = Array.from(new Set(items.map((item) => item.event_type))).sort();
+  const [{ data: allEventTypesData }, { data: preferencesData }] = await Promise.all([
+    supabase
+      .from("notification_event_types")
+      .select("id, slug, label, description, channel, created_at")
+      .order("slug", { ascending: true }),
+    supabase
+      .from("notification_preferences")
+      .select("id, user_id, event_type, in_app, email, updated_at")
+      .eq("user_id", profile.id),
+  ]);
+  const allEventTypes = (allEventTypesData ?? []) as NotificationEventTypeRow[];
+  const preferences = (preferencesData ?? []) as NotificationPreferenceRow[];
+  const preferencesByEvent = new Map(preferences.map((preference) => [preference.event_type, preference]));
+  let queueSummary: EmailQueueSummaryRow[] = [];
+  let queueSummaryError: string | null = null;
+
+  if (canInspectEmailQueue) {
+    const { data: queueData, error: queueError } = await supabase.rpc("get_email_queue_summary");
+    queueSummary = (queueData ?? []) as EmailQueueSummaryRow[];
+    queueSummaryError = queueError?.message ?? null;
   }
 
   return (
-    <main className="min-h-screen bg-slate-100 px-6 py-8 md:px-10">
-      <section className="mx-auto max-w-6xl space-y-6">
-        <header className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-          <p className="text-xs font-semibold uppercase tracking-wider text-rose-600">Beta funcional - Squad 4</p>
-          <h1 className="mt-2 text-3xl font-black text-slate-900">Centro de Notificaciones</h1>
-          <p className="mt-2 text-sm text-slate-600">
-            Consola de eventos con sincronizacion intermodular para validar flujo real de navegacion.
-          </p>
-          <div className="mt-5 flex flex-wrap gap-3">
-            <Link href="/" className="rounded-xl bg-slate-900 px-4 py-2 text-xs font-semibold text-white">Inicio</Link>
-            <button onClick={syncEvents} className="rounded-xl bg-rose-600 px-4 py-2 text-xs font-semibold text-white hover:bg-rose-700">
-              Sincronizar eventos
-            </button>
-          </div>
-          {message ? <p className="mt-3 text-xs font-semibold text-rose-600">{message}</p> : null}
-        </header>
+    <div className="mx-auto flex max-w-6xl flex-col gap-6">
+      <header>
+        <p className="text-xs font-semibold uppercase tracking-wider text-primary">Squad 4</p>
+        <h1 className="mt-2 text-2xl md:text-3xl font-headline font-bold text-on-surface">
+          Centro de Notificaciones
+        </h1>
+        <p className="mt-2 text-sm text-on-surface-variant">
+          Bandeja real de eventos para {profile.email}. No se generan avisos simulados.
+        </p>
+      </header>
 
-        <div className="grid gap-6 lg:grid-cols-[1fr_1.9fr]">
-          <form onSubmit={addManualNotification} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-sm font-bold uppercase tracking-wide text-slate-700">Crear aviso manual</h2>
-            <div className="mt-4 space-y-3 text-sm">
-              <input
-                value={manualTitle}
-                onChange={(e) => setManualTitle(e.target.value)}
-                placeholder="Titulo"
-                className="w-full rounded-xl border border-slate-300 px-3 py-2"
-              />
-              <textarea
-                rows={3}
-                value={manualDetail}
-                onChange={(e) => setManualDetail(e.target.value)}
-                placeholder="Detalle"
-                className="w-full rounded-xl border border-slate-300 px-3 py-2"
-              />
-            </div>
-            <button className="mt-4 w-full rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700" type="submit">
-              Publicar notificacion
-            </button>
-          </form>
-
-          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <h2 className="text-sm font-bold uppercase tracking-wide text-slate-700">Bandeja de notificaciones</h2>
-              <select
-                value={sourceFilter}
-                onChange={(e) => setSourceFilter(e.target.value as "todos" | NotificationItem["origen"])}
-                className="rounded-lg border border-slate-300 px-2 py-1 text-xs"
-              >
-                <option value="todos">Todos</option>
-                <option value="citas">Citas</option>
-                <option value="justificaciones">Justificaciones</option>
-                <option value="incidencias">Incidencias</option>
-                <option value="chatbot">Chatbot</option>
-                <option value="manual">Manual</option>
-              </select>
-            </div>
-            <div className="mt-4 space-y-3">
-              {filtered.map((item) => (
-                <article key={item.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-sm font-semibold text-slate-900">{item.titulo}</p>
-                    <span className="rounded-full bg-slate-900 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-white">
-                      {item.origen}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-xs text-slate-600">{item.detalle}</p>
-                  <p className="mt-1 text-[11px] text-slate-500">Canal: {item.canal} | {new Date(item.createdAt).toLocaleString()}</p>
-                  <button onClick={() => toggleRead(item.id)} className="mt-3 rounded-lg border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700">
-                    {item.leida ? "Marcar no leida" : "Marcar leida"}
-                  </button>
-                </article>
-              ))}
-            </div>
-          </section>
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="rounded-lg border border-outline-variant bg-surface-container p-5">
+          <p className="text-xs uppercase text-on-surface-variant">Total visibles</p>
+          <p className="mt-2 text-3xl font-bold text-on-surface">{items.length}</p>
+        </div>
+        <div className="rounded-lg border border-outline-variant bg-surface-container p-5">
+          <p className="text-xs uppercase text-on-surface-variant">No leidas</p>
+          <p className="mt-2 text-3xl font-bold text-primary">{unread}</p>
+        </div>
+        <div className="rounded-lg border border-outline-variant bg-surface-container p-5">
+          <p className="text-xs uppercase text-on-surface-variant">Usuario</p>
+          <p className="mt-2 truncate text-sm font-semibold text-on-surface">{profile.email}</p>
         </div>
       </section>
-    </main>
+
+      <section id="preferencias" className="rounded-lg border border-outline-variant bg-surface-container p-5 scroll-mt-24">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-sm font-semibold uppercase text-on-surface-variant">Bandeja</h2>
+          <div className="flex flex-wrap gap-2">
+            <a href="/notificaciones" className="rounded border border-outline-variant px-3 py-2 text-xs font-semibold text-on-surface-variant">
+              Todas
+            </a>
+            <a href="/notificaciones?estado=no-leidas" className="rounded border border-primary px-3 py-2 text-xs font-semibold text-primary">
+              No leidas
+            </a>
+            <form action={markAllNotificationsRead}>
+              <button className="rounded bg-primary-container px-3 py-2 text-xs font-semibold text-on-primary-container">
+                Marcar todas leidas
+              </button>
+            </form>
+          </div>
+        </div>
+
+        {eventTypes.length > 0 ? (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {eventTypes.map((eventType) => (
+              <a
+                key={eventType}
+                href={`/notificaciones?evento=${encodeURIComponent(eventType)}`}
+                className="rounded border border-outline-variant px-2 py-1 text-[11px] font-semibold text-on-surface-variant hover:border-primary hover:text-primary"
+              >
+                {eventType}
+              </a>
+            ))}
+          </div>
+        ) : null}
+
+        {error ? (
+          <p className="mt-4 rounded border border-error/40 bg-error-container/20 p-3 text-sm text-on-error-container">
+            {error.message}
+          </p>
+        ) : null}
+
+        <div className="mt-4 space-y-3">
+          {items.length === 0 && !error ? (
+            <p className="rounded border border-outline-variant bg-surface p-4 text-sm text-on-surface-variant">
+              No hay notificaciones para tu usuario.
+            </p>
+          ) : null}
+
+          {items.map((item) => (
+            <article key={item.id} className="rounded border border-outline-variant bg-surface p-4">
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div>
+                  <h3 className="text-sm font-semibold text-on-surface">{item.title}</h3>
+                  <p className="mt-1 text-xs text-on-surface-variant">
+                    {item.event_type} | {new Date(item.created_at).toLocaleString("es-MX")}
+                  </p>
+                </div>
+                <span className={`rounded px-2 py-1 text-[10px] font-semibold uppercase ${item.is_read ? "bg-surface-container-highest text-on-surface-variant" : "bg-primary-container text-on-primary-container"}`}>
+                  {item.is_read ? "Leida" : "Nueva"}
+                </span>
+              </div>
+              <p className="mt-3 text-sm text-on-surface-variant">{item.body}</p>
+              <form action={toggleNotificationRead} className="mt-4">
+                <input type="hidden" name="id" value={item.id} />
+                <input type="hidden" name="is_read" value={String(!item.is_read)} />
+                <button className="rounded border border-outline-variant px-3 py-2 text-xs font-semibold text-on-surface-variant hover:border-primary hover:text-primary">
+                  {item.is_read ? "Marcar no leida" : "Marcar leida"}
+                </button>
+              </form>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="rounded-lg border border-outline-variant bg-surface-container p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-sm font-semibold uppercase text-on-surface-variant">Preferencias por evento</h2>
+          <span className="text-xs text-on-surface-variant">{allEventTypes.length} tipos disponibles</span>
+        </div>
+        <div className="mt-4 grid gap-3 md:grid-cols-2">
+          {allEventTypes.map((eventType) => {
+            const preference = preferencesByEvent.get(eventType.slug);
+            const defaultInApp = eventType.channel === "in_app" || eventType.channel === "both";
+            const defaultEmail = eventType.channel === "email" || eventType.channel === "both";
+            return (
+              <form key={eventType.slug} action={updatePreference} className="rounded border border-outline-variant bg-surface p-4">
+                <input type="hidden" name="event_type" value={eventType.slug} />
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-on-surface">{eventType.label}</p>
+                    <p className="mt-1 text-xs text-on-surface-variant">{eventType.slug} · {eventType.channel}</p>
+                    {eventType.description ? (
+                      <p className="mt-2 text-xs text-on-surface-variant">{eventType.description}</p>
+                    ) : null}
+                  </div>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-4 text-xs text-on-surface-variant">
+                  <label className="inline-flex items-center gap-2">
+                    <input name="in_app" type="checkbox" defaultChecked={preference?.in_app ?? defaultInApp} />
+                    In-app
+                  </label>
+                  <label className="inline-flex items-center gap-2">
+                    <input name="email" type="checkbox" defaultChecked={preference?.email ?? defaultEmail} />
+                    Email
+                  </label>
+                </div>
+                <button className="mt-3 rounded border border-primary px-3 py-2 text-xs font-semibold text-primary">
+                  Guardar preferencia
+                </button>
+              </form>
+            );
+          })}
+        </div>
+      </section>
+
+      {canInspectEmailQueue ? (
+        <section className="rounded-lg border border-outline-variant bg-surface-container p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-sm font-semibold uppercase text-on-surface-variant">Cola real de correo</h2>
+              <p className="mt-1 text-xs text-on-surface-variant">
+                Resumen seguro desde RPC. La cola completa permanece protegida por RLS.
+              </p>
+            </div>
+            <span className="rounded border border-outline-variant px-3 py-2 text-xs font-semibold text-on-surface-variant">
+              {queueSummary.reduce((total, item) => total + Number(item.total), 0)} correos
+            </span>
+          </div>
+
+          {queueSummaryError ? (
+            <p className="mt-4 rounded border border-error/40 bg-error-container/20 p-3 text-sm text-on-error-container">
+              {queueSummaryError}
+            </p>
+          ) : null}
+
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+            {queueSummary.length === 0 && !queueSummaryError ? (
+              <p className="rounded border border-outline-variant bg-surface p-4 text-sm text-on-surface-variant md:col-span-2 xl:col-span-5">
+                No hay correos registrados en la cola.
+              </p>
+            ) : null}
+
+            {queueSummary.map((item) => (
+              <article key={item.status} className="rounded border border-outline-variant bg-surface p-4">
+                <p className="text-xs font-semibold uppercase text-on-surface-variant">{item.status}</p>
+                <p className="mt-2 text-2xl font-bold text-on-surface">{Number(item.total).toLocaleString("es-MX")}</p>
+                <p className="mt-1 text-xs text-on-surface-variant">
+                  {item.oldest_scheduled_at
+                    ? `Mas antiguo: ${new Date(item.oldest_scheduled_at).toLocaleString("es-MX")}`
+                    : "Sin programacion pendiente"}
+                </p>
+                {item.last_error ? (
+                  <p className="mt-2 break-words text-xs text-error">{item.last_error}</p>
+                ) : null}
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+    </div>
   );
 }
