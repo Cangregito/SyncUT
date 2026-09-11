@@ -11,7 +11,7 @@ const activityColor: Record<string, string> = {
   validation: "bg-amber-500",
   hotfix: "bg-red-500",
   test: "bg-zinc-500",
-  approval: "bg-indigo-500",
+  approval: "bg-primary",
 };
 
 interface ActivityFeedSectionProps {

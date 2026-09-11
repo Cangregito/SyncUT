@@ -426,3 +426,24 @@ describe("Recuperacion - el motivo de volver al login se muestra", () => {
     expect(source("app/(auth)/reset-password/page.tsx")).not.toContain("setErrorMsg(error.message)");
   });
 });
+
+describe("Marca - paleta azul/menta sin restos de morado", () => {
+  it("los tokens del tema parten de los colores institucionales", () => {
+    const css = source("app/globals.css");
+    expect(css).toContain("--primary-container: #274978");
+    expect(css).toContain("--primary: #274978");
+    expect(css).toContain("--tertiary: #4cd49e");
+  });
+
+  it("las vistas administrativas usan tokens semanticos, no violet-*", () => {
+    for (const file of [
+      "app/globals.css",
+      "app/(dashboard)/admin/page.tsx",
+      "app/(dashboard)/admin/logs/page.tsx",
+      "app/(dashboard)/admin/logs/logs-filter-bar.tsx",
+      "app/(dashboard)/admin/proyecto/page.tsx",
+    ]) {
+      expect(source(file), `${file} no debe usar la paleta violet`).not.toMatch(/\b(violet|purple|indigo|fuchsia)-\d{3}\b/);
+    }
+  });
+});

@@ -6,8 +6,8 @@ export default async function ProjectProgressPage() {
 
   return (
     <main className="mx-auto flex max-w-[1500px] flex-col gap-6 pb-12">
-      <section className="rounded-2xl border border-violet-400/15 admin-hero p-6 md:p-8">
-        <p className="text-xs font-semibold uppercase tracking-[.18em] text-violet-300">Observatorio del proyecto</p>
+      <section className="rounded-2xl border border-primary/15 admin-hero p-6 md:p-8">
+        <p className="text-xs font-semibold uppercase tracking-[.18em] text-primary">Observatorio del proyecto</p>
         <h1 className="mt-2 text-3xl font-bold tracking-tight text-white">Avance, commits y estado técnico</h1>
         <p className="mt-3 max-w-3xl text-sm leading-6 text-zinc-400">Progreso por módulo, actividad Git/GitHub, Pull Requests, responsables, salud de Supabase y registros históricos del proyecto.</p>
       </section>
