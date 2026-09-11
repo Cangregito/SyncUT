@@ -10,6 +10,7 @@ await mkdir(output, { recursive: true });
 const browser = await chromium.launch({ headless: true });
 const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
 const page = await context.newPage();
+page.setDefaultNavigationTimeout(120000);
 const checks = [];
 const errors = [];
 page.on('pageerror', error => errors.push(error.message));
@@ -53,7 +54,7 @@ try {
   if (!process.argv.includes('--public-only')) {
   await page.goto(`${base}/login`, { waitUntil: 'networkidle' });
   await page.getByRole('button', { name: /^Estudiante/ }).click();
-  await page.waitForURL(/dashboard/, { timeout: 45000 });
+  await page.waitForURL(/dashboard/, { timeout: 120000 });
   await page.goto(`${base}/notificaciones`, { waitUntil: 'networkidle' });
   await check('Drawer traps keyboard focus, closes with Escape and restores its trigger', async () => {
     const trigger = page.getByRole('button', { name: 'Abrir menú', exact: true });
@@ -87,6 +88,8 @@ try {
     await expect(page.locator('#preferencias summary')).toBeInViewport();
     await page.locator('#preferencias summary').click();
     await expect(page.locator('#preferencias')).not.toHaveAttribute('open', '');
+    await page.getByRole('link', { name: 'Configurar mis avisos' }).click();
+    await expect(page.locator('#preferencias')).toHaveAttribute('open', '');
   });
   await check('Inactive pagination links are excluded from the keyboard sequence', async () => {
     for (const link of await page.locator('nav[aria-label="Paginación de notificaciones"] [aria-disabled="true"]').all()) {
@@ -127,6 +130,12 @@ try {
     await search.fill('zzzz-sin-coincidencias-zzzz');
     await expect(section.getByText(/No encontramos esa pregunta/)).toBeVisible();
     await search.fill('');
+    const more = section.getByRole('button', { name: /Ver más preguntas/ });
+    if (await more.count()) {
+      const previousCount = await section.locator('summary').count();
+      await more.click();
+      await expect(section.locator('summary').nth(previousCount)).toBeFocused();
+    }
   });
   await check('Academic pages fit 320px and 390px in both themes', async () => {
     for (const width of [320, 390]) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { ChevronDown, Search } from "lucide-react";
 
 type Faq = { id: string; category: string; question: string; answer: string };
@@ -10,6 +10,7 @@ export function FaqBrowser({ faqs }: { faqs: Faq[] }) {
   const searchId = useId();
   const [query, setQuery] = useState("");
   const [limit, setLimit] = useState(6);
+  const listRef = useRef<HTMLDivElement>(null);
   const term = normalize(query.trim());
   const filtered = faqs.filter((faq) => normalize(`${faq.category} ${faq.question} ${faq.answer}`).includes(term));
 
@@ -23,7 +24,7 @@ export function FaqBrowser({ faqs }: { faqs: Faq[] }) {
         <input id={searchId} type="search" value={query} onChange={(event) => { setQuery(event.target.value); setLimit(6); }} placeholder="Ej. citas, faltas o acceso" className="min-h-11 w-full rounded-lg border border-outline-variant bg-surface py-2 pl-10 pr-3 text-sm text-on-surface" />
       </div>
       <p role="status" className="mt-3 text-xs text-on-surface-variant">{filtered.length} {filtered.length === 1 ? "pregunta disponible" : "preguntas disponibles"}</p>
-      <div className="mt-3 space-y-2">
+      <div ref={listRef} className="mt-3 space-y-2">
         {filtered.slice(0, limit).map((faq) => (
           <details key={faq.id} className="group rounded-lg border border-outline-variant bg-surface">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-3 [&::-webkit-details-marker]:hidden">
@@ -38,7 +39,11 @@ export function FaqBrowser({ faqs }: { faqs: Faq[] }) {
         ))}
       </div>
       {filtered.length === 0 && <p className="mt-4 text-sm text-on-surface-variant">{faqs.length ? "No encontramos esa pregunta. Prueba con otra palabra o consulta a Lumi." : "Todavía no hay preguntas publicadas. Puedes consultar a Lumi o a tu tutor."}</p>}
-      {filtered.length > limit && <button type="button" onClick={() => setLimit((value) => value + 6)} className="mt-4 w-full rounded-lg border border-outline-variant px-3 py-2 text-sm font-semibold text-primary hover:bg-surface-container-high">Ver más preguntas ({filtered.length - limit})</button>}
+      {filtered.length > limit && <button type="button" onClick={() => {
+        const firstNewIndex = limit;
+        setLimit((value) => value + 6);
+        requestAnimationFrame(() => listRef.current?.querySelectorAll("summary")[firstNewIndex]?.focus());
+      }} className="mt-4 w-full rounded-lg border border-outline-variant px-3 py-2 text-sm font-semibold text-primary hover:bg-surface-container-high">Ver más preguntas ({filtered.length - limit})</button>}
     </section>
   );
 }

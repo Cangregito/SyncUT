@@ -12,15 +12,25 @@ export function DisclosurePanel({ id, title, description, children }: {
   const ref = useRef<HTMLDetailsElement>(null);
 
   useEffect(() => {
+    function reveal() {
+      if (!ref.current) return;
+      ref.current.open = true;
+      ref.current.scrollIntoView({ block: "start" });
+    }
     function revealTarget() {
-      if (window.location.hash === `#${id}` && ref.current) {
-        ref.current.open = true;
-        ref.current.scrollIntoView({ block: "start" });
-      }
+      if (window.location.hash === `#${id}`) reveal();
+    }
+    function revealFromLink(event: MouseEvent) {
+      const link = event.target instanceof Element ? event.target.closest<HTMLAnchorElement>("a[href]") : null;
+      if (link?.hash === `#${id}` && link.pathname === window.location.pathname && link.origin === window.location.origin) reveal();
     }
     revealTarget();
     window.addEventListener("hashchange", revealTarget);
-    return () => window.removeEventListener("hashchange", revealTarget);
+    document.addEventListener("click", revealFromLink);
+    return () => {
+      window.removeEventListener("hashchange", revealTarget);
+      document.removeEventListener("click", revealFromLink);
+    };
   }, [id]);
 
   return (
