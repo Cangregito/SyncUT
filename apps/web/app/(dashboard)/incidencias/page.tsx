@@ -2,6 +2,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { Tables } from "@plataforma/types";
 
+import { DonutChart } from "@/components/charts/donut-chart";
+import { StackedBar } from "@/components/charts/stacked-bar";
 import { requireProfile } from "@/lib/auth/session";
 import { hasPermission } from "@/lib/auth/roles";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -501,6 +503,43 @@ export default async function IncidenciasPage({
     acc.set(event.incident_id, current);
     return acc;
   }, new Map());
+  // Panorama independiente de los filtros y del limite de la lista: misma
+  // logica que /api/incidencias/metrics, calculada aqui para no pedirla al cliente.
+  const { data: metricRows } = await supabase
+    .from("incidents")
+    .select("priority, status, created_at")
+    .order("created_at", { ascending: false })
+    .limit(500);
+  const metrics = (metricRows ?? []) as Array<{ priority: Priority; status: IncidentStatus; created_at: string }>;
+  const isActive = (row: { status: IncidentStatus }) => ["abierta", "en_proceso"].includes(row.status);
+  const semaphore = [
+    { label: "Alta · activas", value: metrics.filter((row) => isActive(row) && row.priority === "alta").length, color: "var(--error)" },
+    { label: "Media · activas", value: metrics.filter((row) => isActive(row) && row.priority === "media").length, color: "var(--chart-amber)" },
+    { label: "Baja · activas", value: metrics.filter((row) => isActive(row) && row.priority === "baja").length, color: "var(--chart-sky)" },
+    { label: "Resueltas / cerradas", value: metrics.filter((row) => !isActive(row)).length, color: "var(--tertiary)" },
+  ];
+  const statusSegments = (priority: Priority) => [
+    { label: "Abierta", value: metrics.filter((row) => row.priority === priority && row.status === "abierta").length, color: "var(--error)" },
+    { label: "En proceso", value: metrics.filter((row) => row.priority === priority && row.status === "en_proceso").length, color: "var(--chart-amber)" },
+    { label: "Resuelta", value: metrics.filter((row) => row.priority === priority && row.status === "resuelta").length, color: "var(--tertiary)" },
+    { label: "Cerrada", value: metrics.filter((row) => row.priority === priority && row.status === "cerrada").length, color: "var(--secondary)" },
+  ];
+  const nowMs = Date.parse(new Date().toISOString());
+  const ageBuckets = [
+    { label: "Menos de 2 días", min: 0, max: 2 },
+    { label: "2 a 7 días", min: 2, max: 7 },
+    { label: "7 a 14 días", min: 7, max: 14 },
+    { label: "Más de 14 días", min: 14, max: Infinity },
+  ].map((bucket) => ({
+    ...bucket,
+    value: metrics.filter((row) => {
+      if (!isActive(row)) return false;
+      const days = (nowMs - Date.parse(row.created_at)) / 86_400_000;
+      return days >= bucket.min && days < bucket.max;
+    }).length,
+  }));
+  const ageMax = Math.max(1, ...ageBuckets.map((bucket) => bucket.value));
+
   const activeCount = incidents.filter((incident) => ["abierta", "en_proceso"].includes(incident.status)).length;
   const overdueCount = incidents.filter((incident) => getSlaState(incident.sla_due_at, incident.status) === "overdue").length;
 
@@ -528,6 +567,43 @@ export default async function IncidenciasPage({
         <div className="rounded-lg border border-outline-variant bg-surface-container p-5">
           <p className="text-xs uppercase text-on-surface-variant">Staff disponible</p>
           <p className="mt-2 text-3xl font-bold text-primary">{staff.length}</p>
+        </div>
+      </section>
+
+      <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div className="min-w-0 rounded-lg border border-outline-variant bg-surface-container p-5">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-primary">Semáforo</p>
+          <h2 className="text-sm font-bold text-on-surface">Carga actual</h2>
+          <div className="mt-4">
+            <DonutChart slices={semaphore} centerLabel="incidencias" size={140} emptyLabel="Sin incidencias visibles para tu rol." />
+          </div>
+        </div>
+        <div className="min-w-0 rounded-lg border border-outline-variant bg-surface-container p-5">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-primary">Prioridad × estado</p>
+          <h2 className="text-sm font-bold text-on-surface">Dónde está el trabajo</h2>
+          <div className="mt-4 space-y-4">
+            {(["alta", "media", "baja"] as Priority[]).map((priority) => (
+              <div key={priority}>
+                <div className="mb-1.5 flex items-center justify-between text-xs"><span className="font-semibold capitalize text-on-surface">Prioridad {priority}</span><span className="text-on-surface-variant">{metrics.filter((row) => row.priority === priority).length}</span></div>
+                <StackedBar segments={statusSegments(priority)} emptyLabel="Sin incidencias con esta prioridad." />
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="min-w-0 rounded-lg border border-outline-variant bg-surface-container p-5">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-primary">Antigüedad</p>
+          <h2 className="text-sm font-bold text-on-surface">Edad de las activas</h2>
+          <ol className="mt-4 space-y-3">
+            {ageBuckets.map((bucket, index) => (
+              <li key={bucket.label}>
+                <div className="flex items-center justify-between text-xs"><span className="text-on-surface-variant">{bucket.label}</span><span className="font-semibold text-on-surface">{bucket.value}</span></div>
+                <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-outline-variant/40">
+                  <div className="chart-grow h-full rounded-full" style={{ width: `${Math.round((bucket.value / ageMax) * 100)}%`, backgroundColor: index >= 2 ? "var(--error)" : index === 1 ? "var(--chart-amber)" : "var(--primary)" }} />
+                </div>
+              </li>
+            ))}
+          </ol>
+          <p className="mt-3 text-[11px] text-on-surface-variant">Cuanto más vieja una incidencia abierta, más probable que el SLA ya venció.</p>
         </div>
       </section>
 

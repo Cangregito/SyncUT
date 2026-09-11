@@ -447,3 +447,34 @@ describe("Marca - paleta azul/menta sin restos de morado", () => {
     }
   });
 });
+
+describe("Graficas - kit de components/charts", () => {
+  it("todo componente que importa recharts declara use client", () => {
+    for (const file of ["components/charts/signal-trend.tsx", "components/charts/donut-chart.tsx"]) {
+      const code = source(file);
+      expect(code).toContain('from "recharts"');
+      expect(code.trimStart().startsWith('"use client"'), `${file} debe empezar con "use client"`).toBe(true);
+    }
+  });
+
+  it("las primitivas SVG no cargan recharts ni hooks (se renderizan en servidor)", () => {
+    for (const file of [
+      "components/charts/health-gauge.tsx",
+      "components/charts/progress-ring.tsx",
+      "components/charts/stacked-bar.tsx",
+      "components/charts/sparkline.tsx",
+    ]) {
+      const code = source(file);
+      expect(code, `${file} no debe importar recharts`).not.toContain("recharts");
+      expect(code, `${file} no debe usar hooks`).not.toMatch(/\buse(State|Effect|Ref|Memo)\(/);
+    }
+  });
+
+  it("las rejillas de graficas definen columna base para movil", () => {
+    for (const file of ["app/(dashboard)/equipo/page.tsx", "app/(dashboard)/dashboard/page.tsx", "app/(dashboard)/incidencias/page.tsx"]) {
+      expect(source(file), `${file}`).not.toMatch(/className="grid gap-4 (?:md|lg|xl):grid-cols/);
+    }
+    expect(source("app/globals.css")).toMatch(/--chart-amber:/);
+    expect(source("app/globals.css")).toMatch(/@keyframes chart-draw/);
+  });
+});

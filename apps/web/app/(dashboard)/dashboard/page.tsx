@@ -1,5 +1,8 @@
 import Link from "next/link";
 
+import { DonutChart } from "@/components/charts/donut-chart";
+import { SignalTrend } from "@/components/charts/signal-trend";
+import { Sparkline } from "@/components/charts/sparkline";
 import { requireProfile } from "@/lib/auth/session";
 import {
   getModulesForRole,
@@ -27,12 +30,17 @@ function KpiCard({
   icon,
   detail,
   href,
+  trend,
+  trendColor,
 }: {
   label: string;
   value: number;
   icon: string;
   detail: string;
   href: string;
+  /** Serie corta (por dia) que se dibuja como sparkline bajo el valor. */
+  trend?: number[];
+  trendColor?: string;
 }) {
   return (
     <Link
@@ -48,6 +56,7 @@ function KpiCard({
           {value.toLocaleString("es-MX")}
         </span>
         <p className="mt-1 text-xs font-medium text-on-surface-variant">{detail}</p>
+        {trend ? <Sparkline points={trend} color={trendColor} className="mt-3" height={32} /> : null}
       </div>
     </Link>
   );
@@ -145,6 +154,47 @@ export default async function DashboardOverviewPage() {
     ),
   ]);
 
+  // Series para las graficas. Se agregan en servidor sobre lo que RLS deja ver,
+  // asi cada rol recibe un panorama de sus propios datos.
+  const nowMs = new Date(today).getTime();
+  const sevenDaysAgo = new Date(nowMs - 7 * 86_400_000).toISOString();
+  const in14Days = new Date(nowMs + 14 * 86_400_000).toISOString().slice(0, 10);
+  const [needsInfo, approved, rejected, recentJustifications, upcomingRows] = await Promise.all([
+    countFrom(supabase.from("justifications").select("id", { count: "exact", head: true }).eq("status", "requires_more_info")),
+    countFrom(supabase.from("justifications").select("id", { count: "exact", head: true }).eq("status", "approved")),
+    countFrom(supabase.from("justifications").select("id", { count: "exact", head: true }).eq("status", "rejected")),
+    supabase.from("justifications").select("created_at").gte("created_at", sevenDaysAgo).limit(500),
+    supabase
+      .from("appointments")
+      .select("scheduled_date, status")
+      .gte("scheduled_date", today)
+      .lte("scheduled_date", in14Days)
+      .in("status", ["pendiente", "confirmada"])
+      .limit(500),
+  ]);
+
+  const dayKeys = Array.from({ length: 7 }, (_, index) => new Date(nowMs - (6 - index) * 86_400_000).toISOString().slice(0, 10));
+  const justificationTrend = dayKeys.map((day) => (recentJustifications.data ?? []).filter((row) => (row.created_at ?? "").slice(0, 10) === day).length);
+
+  const upcoming = (upcomingRows.data ?? []) as Array<{ scheduled_date: string; status: string }>;
+  const nextDays = Array.from({ length: 14 }, (_, index) => {
+    const date = new Date(nowMs + index * 86_400_000);
+    const key = date.toISOString().slice(0, 10);
+    return {
+      label: date.toLocaleDateString("es-MX", { weekday: "short", day: "numeric" }),
+      confirmadas: upcoming.filter((row) => row.scheduled_date === key && row.status === "confirmada").length,
+      pendientes: upcoming.filter((row) => row.scheduled_date === key && row.status === "pendiente").length,
+    };
+  });
+  const appointmentTrend = nextDays.slice(0, 7).map((day) => day.confirmadas + day.pendientes);
+
+  const justificationSlices = [
+    { label: "Pendientes", value: pendingJustifications.count, color: "var(--chart-amber)" },
+    { label: "En observación", value: needsInfo.count, color: "var(--chart-sky)" },
+    { label: "Aprobadas", value: approved.count, color: "var(--tertiary)" },
+    { label: "Rechazadas", value: rejected.count, color: "var(--error)" },
+  ];
+
   const setupErrors = [
     upcomingAppointments.error ? "La tabla de citas aun no esta disponible en la base aplicada." : null,
   ].filter(Boolean);
@@ -165,8 +215,41 @@ export default async function DashboardOverviewPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <KpiCard label="Estudiantes" value={students.count} icon="group" detail="Registros que puedes consultar" href="/dashboard" />
         <KpiCard label="Docentes" value={teachers.count} icon="school" detail="Registros que puedes consultar" href="/dashboard" />
-        <KpiCard label="Justificaciones pendientes" value={pendingJustifications.count} icon="gavel" detail="Solicitudes por revisar" href="/justificaciones" />
-        <KpiCard label="Proximas citas" value={upcomingAppointments.count} icon="event" detail="Pendientes o confirmadas" href="/citas" />
+        <KpiCard label="Justificaciones pendientes" value={pendingJustifications.count} icon="gavel" detail="Solicitudes por revisar · nuevas en 7 días" href="/justificaciones" trend={justificationTrend} trendColor="var(--chart-amber)" />
+        <KpiCard label="Proximas citas" value={upcomingAppointments.count} icon="event" detail="Pendientes o confirmadas · próximos 7 días" href="/citas" trend={appointmentTrend} trendColor="var(--primary)" />
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_1.5fr]">
+        <section className="min-w-0 bg-surface-container border border-outline-variant rounded-lg p-5">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-primary">Trámites</p>
+          <h3 className="text-sm font-bold text-on-surface">Justificaciones por estado</h3>
+          <div className="mt-4">
+            <DonutChart slices={justificationSlices} centerLabel="en total" size={140} emptyLabel="Aún no hay justificaciones visibles para tu rol." />
+          </div>
+        </section>
+        <section className="min-w-0 bg-surface-container border border-outline-variant rounded-lg p-5">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-primary">Agenda</p>
+              <h3 className="text-sm font-bold text-on-surface">Citas de los próximos 14 días</h3>
+            </div>
+            <ul className="flex gap-3 text-[11px] text-on-surface-variant">
+              <li className="flex items-center gap-1.5"><span className="inline-block size-2 rounded-full" style={{ backgroundColor: "var(--primary)" }} aria-hidden />Confirmadas</li>
+              <li className="flex items-center gap-1.5"><span className="inline-block size-2 rounded-full" style={{ backgroundColor: "var(--chart-amber)" }} aria-hidden />Pendientes</li>
+            </ul>
+          </div>
+          <div className="mt-3">
+            <SignalTrend
+              data={nextDays}
+              height={190}
+              emptyLabel="No hay citas programadas en los próximos 14 días."
+              series={[
+                { key: "confirmadas", label: "Confirmadas", color: "var(--primary)" },
+                { key: "pendientes", label: "Pendientes", color: "var(--chart-amber)" },
+              ]}
+            />
+          </div>
+        </section>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">

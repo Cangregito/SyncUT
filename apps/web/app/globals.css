@@ -17,6 +17,7 @@
   --primary: #94b6e6; --primary-container: #274978; --on-primary: #0a1729; --on-primary-container: #dee9f7; --primary-fixed: #bcd2f1;
   --secondary: #71717a; --secondary-container: #27272a; --error: #ef4444; --error-container: #3b1111; --on-error-container: #fca5a5;
   --tertiary: #4cd49e; --tertiary-container: #124934; --on-tertiary-container: #beefdb;
+  --chart-amber: #f5b342; --chart-sky: #5cb8f0;
 }
 
 [data-theme="light"] {
@@ -27,6 +28,7 @@
   --primary: #274978; --primary-container: #2e548a; --on-primary: #ffffff; --on-primary-container: #ffffff; --primary-fixed: #416daa;
   --secondary: #52525b; --secondary-container: #e4e4e7; --error: #b91c1c; --error-container: #fee2e2; --on-error-container: #991b1b;
   --tertiary: #1e7653; --tertiary-container: #d6f5e9; --on-tertiary-container: #13533a;
+  --chart-amber: #c77d00; --chart-sky: #0b7fc2;
 }
 
 @theme inline {
@@ -153,6 +155,19 @@ html, body { transition: background-color 160ms ease, color 160ms ease; }
 [data-theme="light"] .text-on-surface-variant { color: var(--on-surface-variant) !important; }
 [data-theme="light"] .border-outline-variant { border-color: var(--outline-variant) !important; }
 [data-theme="light"] input, [data-theme="light"] select, [data-theme="light"] textarea { color-scheme: light; }
+
+/*
+ * Graficas (components/charts). Las primitivas SVG dibujan el trazo con
+ * stroke-dashoffset y las barras crecen desde la izquierda; quien prefiera
+ * menos movimiento las ve ya terminadas.
+ */
+@keyframes chart-draw { from { stroke-dashoffset: var(--chart-len); } }
+.chart-draw { animation: chart-draw 900ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+@keyframes chart-grow { from { transform: scaleX(0); } }
+.chart-grow { transform-origin: left center; animation: chart-grow 700ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+@media (prefers-reduced-motion: reduce) {
+  .chart-draw, .chart-grow { animation: none; }
+}
 
 .date-input-dark {
   position: relative;

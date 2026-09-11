@@ -3,6 +3,10 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import type { Tables } from "@plataforma/types";
 
+import { HealthGauge } from "@/components/charts/health-gauge";
+import { ProgressRing } from "@/components/charts/progress-ring";
+import { SignalTrend } from "@/components/charts/signal-trend";
+import { StackedBar } from "@/components/charts/stacked-bar";
 import { SubmitButton } from "@/components/forms/submit-button";
 import { requireProfile } from "@/lib/auth/session";
 import { ROLE_LABELS } from "@/lib/auth/roles";
@@ -273,25 +277,71 @@ export default async function EquipoTutorialPage({
     ? await Promise.all([
         supabase.from('incidents').select('reported_by,priority,status,created_at').in('reported_by', memberIds).gte('created_at', since),
         supabase.from('justifications').select('student_id,status,created_at').in('student_id', memberIds).gte('created_at', since),
-        supabase.from('appointment_attendance').select('status,appointment:appointments!inner(student_id)').in('appointment.student_id', memberIds).gte('recorded_at', since),
+        supabase.from('appointment_attendance').select('status,recorded_at,appointment:appointments!inner(student_id)').in('appointment.student_id', memberIds).gte('recorded_at', since),
       ])
     : [{ data: [] }, { data: [] }, { data: [] }];
 
+  // Ventana de 30 dias partida en 5 tramos de 6 dias para la grafica de tendencia.
+  const sinceMs = Date.parse(since);
+  const bucketMs = 6 * 86_400_000;
+  const bucketLabels = Array.from({ length: 5 }, (_, index) =>
+    new Date(sinceMs + index * bucketMs).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' }),
+  );
+  const bucketOf = (iso: string | null) => Math.min(4, Math.max(0, Math.floor((Date.parse(iso ?? since) - sinceMs) / bucketMs)));
+
   const teamHealth = new Map(teams.map((team) => {
-    const ids = new Set((team.tutor_team_members ?? []).filter((member) => member.status === 'active').map((member) => member.student_id));
+    const activeMembers = (team.tutor_team_members ?? []).filter((member) => member.status === 'active');
+    const ids = new Set(activeMembers.map((member) => member.student_id));
+    const studentOf = (row: { appointment: unknown }) => (row.appointment as { student_id: string }).student_id;
     const incidents = (incidentSignals ?? []).filter((row) => ids.has(row.reported_by));
     const justifications = (justificationSignals ?? []).filter((row) => ids.has(row.student_id));
-    const absences = (attendanceSignals ?? []).filter((row) => ids.has((row.appointment as unknown as { student_id: string }).student_id) && row.status !== 'attended');
-    const score = incidents.length * 2 + incidents.filter((row) => row.priority === 'alta' && !['resuelta','cerrada'].includes(row.status)).length * 2 + justifications.length + absences.length * 2;
+    const absences = (attendanceSignals ?? []).filter((row) => ids.has(studentOf(row)) && row.status !== 'attended');
+    const highOpen = incidents.filter((row) => row.priority === 'alta' && !['resuelta','cerrada'].includes(row.status));
+    const score = incidents.length * 2 + highOpen.length * 2 + justifications.length + absences.length * 2;
     const level = score >= 8 ? 'red' : score >= 4 ? 'yellow' : 'green';
-    return [team.id, { level, score, incidents: incidents.length, justifications: justifications.length, absences: absences.length }] as const;
+
+    const weekly = bucketLabels.map((label) => ({ label, incidencias: 0, justificantes: 0, inasistencias: 0 }));
+    for (const row of incidents) weekly[bucketOf(row.created_at)].incidencias += 1;
+    for (const row of justifications) weekly[bucketOf(row.created_at)].justificantes += 1;
+    for (const row of absences) weekly[bucketOf(row.recorded_at)].inasistencias += 1;
+
+    // Quien concentra las senales: ayuda a pasar del semaforo al seguimiento individual.
+    const perStudent = new Map<string, number>();
+    for (const row of incidents) perStudent.set(row.reported_by, (perStudent.get(row.reported_by) ?? 0) + 2);
+    for (const row of justifications) perStudent.set(row.student_id, (perStudent.get(row.student_id) ?? 0) + 1);
+    for (const row of absences) perStudent.set(studentOf(row), (perStudent.get(studentOf(row)) ?? 0) + 2);
+    const byStudent = activeMembers
+      .map((member) => ({
+        id: member.student_id,
+        name: member.student?.profile?.full_name ?? member.student?.profile?.email ?? member.student_id,
+        score: perStudent.get(member.student_id) ?? 0,
+      }))
+      .filter((entry) => entry.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5);
+
+    return [team.id, {
+      level, score, weekly, byStudent,
+      incidents: incidents.length, highOpen: highOpen.length, justifications: justifications.length, absences: absences.length,
+    }] as const;
   }));
+  type TeamHealth = NonNullable<ReturnType<typeof teamHealth.get>>;
+  const emptyHealth: TeamHealth = { level: 'green', score: 0, weekly: [], byStudent: [], incidents: 0, highOpen: 0, justifications: 0, absences: 0 };
+  const healthCopy = { red: 'Requiere atención', yellow: 'En observación', green: 'Estable' } as const;
+  const healthComposition = (health: TeamHealth) => [
+    { label: 'Incidencias', value: health.incidents * 2, color: 'var(--error)', hint: `${health.incidents} ×2` },
+    { label: 'Alta prioridad abiertas', value: health.highOpen * 2, color: 'var(--chart-amber)', hint: `${health.highOpen} ×2` },
+    { label: 'Justificantes', value: health.justifications, color: 'var(--primary)', hint: `${health.justifications} ×1` },
+    { label: 'Inasistencias a tutoría', value: health.absences * 2, color: 'var(--chart-sky)', hint: `${health.absences} ×2` },
+  ];
+  const activeHealth = activeTeam ? teamHealth.get(activeTeam.id) ?? emptyHealth : emptyHealth;
 
   const { data: teacherDirectoryData } = canSendTeacherMessages
     ? await supabase.rpc("get_teacher_directory")
     : { data: [] };
   const teacherDirectory = (teacherDirectoryData ?? []) as TeacherDirectoryRow[];
   const activeStudentIds=(activeTeam?.tutor_team_members??[]).filter((member)=>member.status==='active').map((member)=>member.student_id);
+  const activeMembersCount = activeStudentIds.length;
   const [{data:linkedTeacherData},{data:approvedData}]=activeTeam&&canManageTeam?await Promise.all([
     supabase.from("tutor_team_teachers" as "notifications").select("teacher_id,teacher:profiles!tutor_team_teachers_teacher_id_fkey(full_name,email)").eq("team_id" as "id",activeTeam.id),
     activeStudentIds.length?supabase.from("justifications").select("id,folio,title,student_id,student:profiles!justifications_student_id_fkey(full_name,email)").in("student_id",activeStudentIds).eq("status","approved") : Promise.resolve({data:[]}),
@@ -332,7 +382,7 @@ export default async function EquipoTutorialPage({
         </div>
       ) : <>
 
-      <section className="grid gap-4 md:grid-cols-3">
+      <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <div className="rounded-lg border border-outline-variant bg-surface-container p-5">
           <p className="text-xs uppercase text-on-surface-variant">Rol actual</p>
           <p className="mt-2 text-lg font-bold text-on-surface">{ROLE_LABELS[profile.role]}</p>
@@ -411,8 +461,9 @@ export default async function EquipoTutorialPage({
           ) : null}
 
           {teams.map((team) => {
-            const health = teamHealth.get(team.id) ?? { level: 'green', score: 0, incidents: 0, justifications: 0, absences: 0 };
-            const healthStyle = health.level === 'red' ? 'border-red-500 bg-red-500/10 text-red-300' : health.level === 'yellow' ? 'border-amber-500 bg-amber-500/10 text-amber-300' : 'border-emerald-500 bg-emerald-500/10 text-emerald-300';
+            const health = teamHealth.get(team.id) ?? emptyHealth;
+            const healthStyle = health.level === 'red' ? 'border-error/40 bg-error/5' : health.level === 'yellow' ? 'border-[color:var(--chart-amber)]/40 bg-[color:var(--chart-amber)]/5' : 'border-tertiary/40 bg-tertiary/5';
+            const healthText = health.level === 'red' ? 'text-error' : health.level === 'yellow' ? 'text-[color:var(--chart-amber)]' : 'text-tertiary';
             return (
             <article key={team.id} className="rounded border border-outline-variant bg-surface p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
@@ -427,10 +478,17 @@ export default async function EquipoTutorialPage({
                   <p className="font-mono text-lg font-black tracking-widest text-on-primary-container">{team.join_code}</p>
                 </div>
               </div>
-              {canManageTeam ? <div className={`mt-4 rounded border p-3 ${healthStyle}`}>
-                <div className="flex items-center justify-between gap-3"><p className="text-sm font-bold">Salud del grupo: {health.level === 'red' ? 'Requiere atención' : health.level === 'yellow' ? 'En observación' : 'Estable'}</p><span className="text-xl">●</span></div>
-                <p className="mt-2 text-xs">Últimos 30 días · {health.incidents} incidencias · {health.justifications} justificantes · {health.absences} inasistencias a tutoría</p>
-                <p className="mt-1 text-[11px] opacity-80">Indicador orientativo para priorizar seguimiento; revisa el contexto individual antes de intervenir.</p>
+              {canManageTeam ? <div className={`mt-4 rounded-lg border p-4 ${healthStyle}`}>
+                <div className="flex items-center gap-4">
+                  <HealthGauge score={health.score} level={health.level} className="w-32 shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-on-surface-variant">Salud del grupo</p>
+                    <p className={`text-base font-bold ${healthText}`}>{healthCopy[health.level]}</p>
+                    <p className="mt-1 text-xs text-on-surface-variant">Últimos 30 días · 0-3 estable · 4-7 observación · 8+ atención</p>
+                  </div>
+                </div>
+                <StackedBar className="mt-3" segments={healthComposition(health)} emptyLabel="Sin señales en 30 días: ninguna incidencia, justificante ni inasistencia." />
+                <p className="mt-2 text-[11px] text-on-surface-variant">Indicador orientativo para priorizar seguimiento; revisa el contexto individual antes de intervenir.</p>
               </div> : null}
               <div className="mt-4 space-y-2">
                 {(team.tutor_team_members ?? []).filter((member) => member.status === "active").length === 0 ? (
@@ -474,6 +532,46 @@ export default async function EquipoTutorialPage({
             <div className="rounded border border-outline-variant bg-surface p-3"><p className="text-[10px] uppercase text-on-surface-variant">Asignaciones</p><p className="mt-1 text-2xl font-black text-primary">{assignmentsItems.length}</p></div>
             <div className="rounded border border-outline-variant bg-surface p-3"><p className="text-[10px] uppercase text-on-surface-variant">Próximas entregas</p><p className="mt-1 text-2xl font-black text-on-surface">{assignmentsItems.filter((item) => item.due_at && new Date(item.due_at) >= new Date()).length}</p></div>
           </div>
+          {canManageTeam ? (
+            <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-[1.4fr_1fr]">
+              <div className="min-w-0 rounded border border-outline-variant bg-surface p-4">
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <div><p className="text-[10px] font-semibold uppercase tracking-wide text-primary">Señales del grupo</p><h3 className="text-sm font-bold text-on-surface">Últimos 30 días por tramo</h3></div>
+                  <ul className="flex flex-wrap gap-3 text-[11px] text-on-surface-variant">
+                    {[['Incidencias', 'var(--error)'], ['Justificantes', 'var(--primary)'], ['Inasistencias', 'var(--chart-sky)']].map(([label, color]) => <li key={label} className="flex items-center gap-1.5"><span className="inline-block size-2 rounded-full" style={{ backgroundColor: color }} aria-hidden />{label}</li>)}
+                  </ul>
+                </div>
+                <div className="mt-3">
+                  <SignalTrend
+                    data={activeHealth.weekly}
+                    emptyLabel="Sin señales registradas en los últimos 30 días."
+                    series={[
+                      { key: 'incidencias', label: 'Incidencias', color: 'var(--error)' },
+                      { key: 'justificantes', label: 'Justificantes', color: 'var(--primary)' },
+                      { key: 'inasistencias', label: 'Inasistencias', color: 'var(--chart-sky)' },
+                    ]}
+                  />
+                </div>
+              </div>
+              <div className="min-w-0 rounded border border-outline-variant bg-surface p-4">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-primary">Seguimiento individual</p>
+                <h3 className="text-sm font-bold text-on-surface">Integrantes con más señales</h3>
+                {activeHealth.byStudent.length === 0 ? (
+                  <p className="mt-3 rounded border border-dashed border-outline-variant p-3 text-xs text-on-surface-variant">Ningún integrante acumula señales en el periodo.</p>
+                ) : (
+                  <ol className="mt-3 space-y-2.5">
+                    {activeHealth.byStudent.map((entry) => (
+                      <li key={entry.id}>
+                        <div className="flex items-center justify-between gap-3 text-xs"><span className="min-w-0 truncate font-semibold text-on-surface">{entry.name}</span><span className="shrink-0 text-on-surface-variant">{entry.score} pts</span></div>
+                        <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-outline-variant/40"><div className="chart-grow h-full rounded-full bg-primary" style={{ width: `${Math.round((entry.score / Math.max(1, activeHealth.byStudent[0].score)) * 100)}%` }} /></div>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+                <p className="mt-3 text-[11px] text-on-surface-variant">Misma ponderación que el score: incidencia ×2, justificante ×1, inasistencia ×2.</p>
+              </div>
+            </div>
+          ) : null}
           <form id="general" action={publishChannelItem} className="mt-5 scroll-mt-20 rounded border border-outline-variant bg-surface p-4">
             <input type="hidden" name="team_id" value={activeTeam.id} />
             <select name="kind" className="rounded border border-outline-variant bg-surface-container px-3 py-2 text-sm text-on-surface">
@@ -498,7 +596,7 @@ export default async function EquipoTutorialPage({
               const completedByMe = itemProgress.some((progress) => progress.item_id === item.id && progress.student_id === profile.id);
               const completedCount = itemProgress.filter((progress) => progress.item_id === item.id).length;
               const overdue = item.due_at && new Date(item.due_at) < new Date();
-              return <article key={item.id} className="rounded border border-outline-variant bg-surface p-4"><div className="flex items-start justify-between gap-2"><h4 className="font-bold text-on-surface">{item.title}</h4>{overdue ? <span className="rounded bg-error-container px-2 py-1 text-[10px] font-bold text-on-error-container">Vencida</span> : null}</div><p className="mt-2 text-sm text-on-surface-variant">{item.body}</p>{item.due_at ? <p className="mt-3 text-xs font-semibold text-primary">Entrega: {new Date(item.due_at).toLocaleString('es-MX')}</p> : null}{canManageTeam ? <p className="mt-3 text-xs text-on-surface-variant">Completada por {completedCount} alumno(s).</p> : <form action={updateAssignmentProgress} className="mt-3"><input type="hidden" name="item_id" value={item.id}/><input type="hidden" name="team_id" value={activeTeam.id}/><input type="hidden" name="completed" value={String(!completedByMe)}/><SubmitButton className={`rounded px-3 py-2 text-xs font-bold ${completedByMe ? 'border border-tertiary text-tertiary' : 'bg-primary-container text-on-primary-container'}`} pendingLabel="Guardando...">{completedByMe ? 'Marcar como pendiente' : 'Marcar como completada'}</SubmitButton></form>}</article>;
+              return <article key={item.id} className="rounded border border-outline-variant bg-surface p-4"><div className="flex items-start justify-between gap-2"><h4 className="font-bold text-on-surface">{item.title}</h4>{overdue ? <span className="rounded bg-error-container px-2 py-1 text-[10px] font-bold text-on-error-container">Vencida</span> : null}</div><p className="mt-2 text-sm text-on-surface-variant">{item.body}</p>{item.due_at ? <p className="mt-3 text-xs font-semibold text-primary">Entrega: {new Date(item.due_at).toLocaleString('es-MX')}</p> : null}{canManageTeam ? <div className="mt-3 flex items-center gap-3"><ProgressRing value={completedCount} total={activeMembersCount} size={48} color={completedCount >= activeMembersCount && activeMembersCount > 0 ? 'var(--tertiary)' : 'var(--primary)'} label={`${completedCount} de ${activeMembersCount} integrantes completaron`} /><p className="text-xs text-on-surface-variant">Completada por <span className="font-semibold text-on-surface">{completedCount}</span> de {activeMembersCount} integrante(s).</p></div> : <form action={updateAssignmentProgress} className="mt-3"><input type="hidden" name="item_id" value={item.id}/><input type="hidden" name="team_id" value={activeTeam.id}/><input type="hidden" name="completed" value={String(!completedByMe)}/><SubmitButton className={`rounded px-3 py-2 text-xs font-bold ${completedByMe ? 'border border-tertiary text-tertiary' : 'bg-primary-container text-on-primary-container'}`} pendingLabel="Guardando...">{completedByMe ? 'Marcar como pendiente' : 'Marcar como completada'}</SubmitButton></form>}</article>;
             })}</div>
           </div>
           <div id="integrantes" className="mt-8 scroll-mt-20 border-t border-outline-variant pt-5"><p className="text-xs font-semibold uppercase text-primary">Directorio</p><h3 className="mt-1 text-lg font-bold text-on-surface">Integrantes</h3><div className="mt-4 grid gap-2 sm:grid-cols-2"><div className="rounded border border-outline-variant bg-surface p-3"><p className="text-sm font-bold text-on-surface">{activeTeam.tutor?.full_name ?? activeTeam.tutor?.email}</p><p className="text-xs text-on-surface-variant">Tutor · Responsable del equipo</p></div>{(activeTeam.tutor_team_members ?? []).map((member) => <div key={member.id} className={`rounded border p-3 ${member.status === 'active' ? 'border-outline-variant bg-surface' : 'border-outline-variant bg-surface-container-high opacity-60'}`}><p className="text-sm font-bold text-on-surface">{member.student?.profile?.full_name ?? member.student?.profile?.email}</p><p className="text-xs text-on-surface-variant">Alumno · {member.student?.student_code ?? 'Sin matrícula'} · {member.status === 'active' ? 'Activo' : 'Retirado'}</p></div>)}</div></div>
