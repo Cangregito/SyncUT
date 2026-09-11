@@ -5,6 +5,9 @@ import type { Tables } from "@plataforma/types";
 import { ModalityDetailsFields } from "@/components/appointments/modality-details-fields";
 import { AppointmentSlotPicker } from "@/components/appointments/appointment-slot-picker";
 import { SubmitButton } from "@/components/forms/submit-button";
+import { DonutChart } from "@/components/charts/donut-chart";
+import { SignalTrend } from "@/components/charts/signal-trend";
+import { StackedBar } from "@/components/charts/stacked-bar";
 import { requireProfile } from "@/lib/auth/session";
 import { hasPermission, type UserRole } from "@/lib/auth/roles";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -689,6 +692,26 @@ export default async function CitasPage({
     acc.set(event.appointment_id, current);
     return acc;
   }, new Map());
+  // Panorama sobre las citas y asistencias que RLS deja ver a este usuario.
+  const attendanceSlices = [
+    { label: attendanceLabels.attended, value: attendance.filter((item) => item.status === "attended").length, color: "var(--tertiary)" },
+    { label: attendanceLabels.no_show, value: attendance.filter((item) => item.status === "no_show").length, color: "var(--error)" },
+    { label: attendanceLabels.excused_absence, value: attendance.filter((item) => item.status === "excused_absence").length, color: "var(--chart-amber)" },
+  ];
+  const statusSegments = [
+    { label: statusLabels.confirmada, value: appointments.filter((item) => item.status === "confirmada").length, color: "var(--primary)" },
+    { label: statusLabels.pendiente, value: appointments.filter((item) => item.status === "pendiente").length, color: "var(--chart-amber)" },
+    { label: statusLabels.completada, value: appointments.filter((item) => item.status === "completada").length, color: "var(--tertiary)" },
+    { label: statusLabels.no_asistio, value: appointments.filter((item) => item.status === "no_asistio").length, color: "var(--error)" },
+    { label: statusLabels.cancelada, value: appointments.filter((item) => item.status === "cancelada").length, color: "var(--secondary)" },
+  ];
+  const weekdayNames = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+  const weekdayDemand = [1, 2, 3, 4, 5, 6, 0].map((day) => ({
+    label: weekdayNames[day],
+    bloques: availability.filter((slot) => slot.day_of_week === day).length,
+    citas: appointments.filter((item) => item.status !== "cancelada" && getDayOfWeek(item.scheduled_date) === day).length,
+  }));
+
   const availabilityByTutor = availability.reduce<Map<string, AvailabilityRow[]>>((acc, slot) => {
     const current = acc.get(slot.tutor_id) ?? [];
     current.push(slot);
@@ -725,6 +748,45 @@ export default async function CitasPage({
           No se pudo consultar `appointments`. Ejecuta la migracion de citas antes de usar este modulo. Detalle: {appointmentsError.message}
         </div>
       ) : null}
+
+      <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div className="min-w-0 rounded-lg border border-outline-variant bg-surface-container p-5">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-primary">Asistencia</p>
+          <h2 className="text-sm font-bold text-on-surface">Tutorías registradas</h2>
+          <div className="mt-4">
+            <DonutChart slices={attendanceSlices} centerLabel="registros" size={130} emptyLabel="Aún no hay asistencias registradas." />
+          </div>
+        </div>
+        <div className="min-w-0 rounded-lg border border-outline-variant bg-surface-container p-5">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-primary">Estado</p>
+          <h2 className="text-sm font-bold text-on-surface">Citas por estado</h2>
+          <p className="mt-3 text-3xl font-black text-on-surface">{appointments.length}<span className="ml-1 text-sm font-semibold text-on-surface-variant">citas en total</span></p>
+          <StackedBar className="mt-4" segments={statusSegments} emptyLabel="Sin citas registradas." />
+        </div>
+        <div className="min-w-0 rounded-lg border border-outline-variant bg-surface-container p-5">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-primary">Demanda</p>
+              <h2 className="text-sm font-bold text-on-surface">Por día de la semana</h2>
+            </div>
+            <ul className="flex flex-wrap gap-3 text-[11px] text-on-surface-variant">
+              {[["Bloques", "var(--outline)"], ["Citas", "var(--primary)"]].map(([label, color]) => <li key={label} className="flex items-center gap-1.5"><span className="inline-block size-2 rounded-full" style={{ backgroundColor: color }} aria-hidden />{label}</li>)}
+            </ul>
+          </div>
+          <div className="mt-3">
+            <SignalTrend
+              data={weekdayDemand}
+              height={150}
+              stacked={false}
+              emptyLabel="Sin bloques publicados ni citas agendadas."
+              series={[
+                { key: "bloques", label: "Bloques disponibles", color: "var(--outline)" },
+                { key: "citas", label: "Citas agendadas", color: "var(--primary)" },
+              ]}
+            />
+          </div>
+        </div>
+      </section>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_1.6fr]">
         <div className="space-y-6">

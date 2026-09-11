@@ -5,6 +5,9 @@ import type { Tables } from "@plataforma/types";
 import { SubmitButton } from "@/components/forms/submit-button";
 import { FilePreviewModal } from "@/components/files/file-preview-modal";
 import { JustificationForm } from "@/components/justifications/justification-form";
+import { DonutChart } from "@/components/charts/donut-chart";
+import { SignalTrend } from "@/components/charts/signal-trend";
+import { StackedBar } from "@/components/charts/stacked-bar";
 import { requireProfile } from "@/lib/auth/session";
 import { hasPermission } from "@/lib/auth/roles";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -390,6 +393,51 @@ export default async function JustificacionesPage({
     return acc;
   }, new Map());
 
+  // Panorama de los ultimos 6 meses, independiente de los filtros y del limite
+  // de la lista. Agregado en servidor sobre lo que RLS deja ver a cada rol.
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const todayMs = new Date(todayKey).getTime();
+  const monthStarts = Array.from({ length: 6 }, (_, index) => {
+    const date = new Date(todayMs);
+    date.setUTCDate(1);
+    date.setUTCMonth(date.getUTCMonth() - (5 - index));
+    return date;
+  });
+  const { data: metricRows } = await supabase
+    .from("justifications")
+    .select("category, status, submitted_at, updated_at")
+    .gte("submitted_at", monthStarts[0].toISOString())
+    .limit(500);
+  const metrics = (metricRows ?? []) as Array<{ category: JustificationCategory; status: JustificationStatus | null; submitted_at: string; updated_at: string | null }>;
+  const categorySlices = (Object.keys(categoryLabels) as JustificationCategory[]).map((category, index) => ({
+    label: categoryLabels[category],
+    value: metrics.filter((row) => row.category === category).length,
+    color: ["var(--primary)", "var(--chart-sky)", "var(--chart-amber)"][index],
+  }));
+  const monthKey = (iso: string) => iso.slice(0, 7);
+  const monthly = monthStarts.map((start) => {
+    const key = start.toISOString().slice(0, 7);
+    const rows = metrics.filter((row) => monthKey(row.submitted_at) === key);
+    return {
+      label: start.toLocaleDateString("es-MX", { month: "short", timeZone: "UTC" }),
+      aprobadas: rows.filter((row) => row.status === "approved").length,
+      rechazadas: rows.filter((row) => row.status === "rejected").length,
+      enCurso: rows.filter((row) => row.status === "pending" || row.status === "requires_more_info").length,
+    };
+  });
+  // Tiempo de respuesta: de la solicitud a la ultima actualizacion de las ya resueltas.
+  const resolutionDays = metrics
+    .filter((row) => (row.status === "approved" || row.status === "rejected") && row.updated_at)
+    .map((row) => Math.max(0, (Date.parse(row.updated_at as string) - Date.parse(row.submitted_at)) / 86_400_000));
+  const sortedDays = [...resolutionDays].sort((a, b) => a - b);
+  const medianDays = sortedDays.length ? sortedDays[Math.floor(sortedDays.length / 2)] : null;
+  const resolutionSegments = [
+    { label: "Mismo día", value: resolutionDays.filter((days) => days < 1).length, color: "var(--tertiary)" },
+    { label: "1 a 3 días", value: resolutionDays.filter((days) => days >= 1 && days < 3).length, color: "var(--primary)" },
+    { label: "3 a 7 días", value: resolutionDays.filter((days) => days >= 3 && days < 7).length, color: "var(--chart-amber)" },
+    { label: "Más de 7 días", value: resolutionDays.filter((days) => days >= 7).length, color: "var(--error)" },
+  ];
+
   const pending = justifications.filter((item) => item.status === "pending").length;
   const needsInfo = justifications.filter((item) => item.status === "requires_more_info").length;
   const approved = justifications.filter((item) => item.status === "approved").length;
@@ -433,6 +481,49 @@ export default async function JustificacionesPage({
       ) : null}
       {params.error ? <p role="alert" className="rounded-lg border border-error/40 bg-error-container p-4 text-sm font-semibold text-on-error-container">{params.error}</p> : null}
       {params.exito ? <p role="status" className="rounded-lg border border-tertiary/40 bg-tertiary-container/30 p-4 text-sm font-semibold text-on-tertiary-container">{params.exito}</p> : null}
+
+      <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div className="min-w-0 rounded-lg border border-outline-variant bg-surface-container p-5">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-primary">Últimos 6 meses</p>
+          <h2 className="text-sm font-bold text-on-surface">Por categoría</h2>
+          <div className="mt-4">
+            <DonutChart slices={categorySlices} centerLabel="solicitudes" size={130} emptyLabel="Sin solicitudes en el periodo." />
+          </div>
+        </div>
+        <div className="min-w-0 rounded-lg border border-outline-variant bg-surface-container p-5">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-primary">Volumen</p>
+              <h2 className="text-sm font-bold text-on-surface">Solicitudes por mes</h2>
+            </div>
+            <ul className="flex flex-wrap gap-3 text-[11px] text-on-surface-variant">
+              {[["Aprobadas", "var(--tertiary)"], ["Rechazadas", "var(--error)"], ["En curso", "var(--chart-amber)"]].map(([label, color]) => <li key={label} className="flex items-center gap-1.5"><span className="inline-block size-2 rounded-full" style={{ backgroundColor: color }} aria-hidden />{label}</li>)}
+            </ul>
+          </div>
+          <div className="mt-3">
+            <SignalTrend
+              data={monthly}
+              height={170}
+              emptyLabel="Sin solicitudes en los últimos 6 meses."
+              series={[
+                { key: "aprobadas", label: "Aprobadas", color: "var(--tertiary)" },
+                { key: "rechazadas", label: "Rechazadas", color: "var(--error)" },
+                { key: "enCurso", label: "En curso", color: "var(--chart-amber)" },
+              ]}
+            />
+          </div>
+        </div>
+        <div className="min-w-0 rounded-lg border border-outline-variant bg-surface-container p-5">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-primary">Tiempo de respuesta</p>
+          <h2 className="text-sm font-bold text-on-surface">De la solicitud a la resolución</h2>
+          <p className="mt-3 text-3xl font-black text-on-surface">
+            {medianDays === null ? "—" : medianDays < 1 ? "< 1" : Math.round(medianDays)}
+            <span className="ml-1 text-sm font-semibold text-on-surface-variant">{medianDays === null ? "sin resueltas aún" : "días (mediana)"}</span>
+          </p>
+          <StackedBar className="mt-4" segments={resolutionSegments} emptyLabel="Aún no hay solicitudes resueltas en el periodo." />
+          <p className="mt-3 text-[11px] text-on-surface-variant">Cuenta aprobadas y rechazadas según su última actualización.</p>
+        </div>
+      </section>
 
       <div className="grid gap-6 xl:grid-cols-[380px_1fr]">
         <aside className="space-y-6">

@@ -35,11 +35,14 @@ export function SignalTrend({
   series,
   height = 200,
   emptyLabel = "Sin registros en el periodo.",
+  stacked = true,
 }: {
   data: SignalPoint[];
   series: SignalSeries[];
   height?: number;
   emptyLabel?: string;
+  /** Con `false` las series se dibujan lado a lado en vez de apiladas. */
+  stacked?: boolean;
 }) {
   const total = data.reduce(
     (sum, point) => sum + series.reduce((inner, item) => inner + Number(point[item.key] ?? 0), 0),
@@ -53,7 +56,7 @@ export function SignalTrend({
           {emptyLabel}
         </div>
       ) : (
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 480, height }}>
           <BarChart data={data} margin={{ top: 8, right: 8, left: -18, bottom: 0 }} barCategoryGap="28%">
             <CartesianGrid vertical={false} stroke={chartGridStroke} strokeDasharray="3 3" />
             <XAxis dataKey="label" tick={chartAxisTick} axisLine={false} tickLine={false} />
@@ -69,10 +72,10 @@ export function SignalTrend({
                 key={item.key}
                 dataKey={item.key}
                 name={item.label}
-                stackId="signals"
+                stackId={stacked ? "signals" : undefined}
                 fill={item.color}
                 maxBarSize={36}
-                radius={index === series.length - 1 ? [6, 6, 0, 0] : 0}
+                radius={!stacked || index === series.length - 1 ? [6, 6, 0, 0] : 0}
               />
             ))}
           </BarChart>

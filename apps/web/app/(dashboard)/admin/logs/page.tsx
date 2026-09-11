@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Activity, AlertTriangle, CheckCircle2, Database, Download, ShieldAlert, UserRound } from "lucide-react";
 
+import { DonutChart } from "@/components/charts/donut-chart";
+import { SignalTrend } from "@/components/charts/signal-trend";
 import { requireRole } from "@/lib/auth/session";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { LogsFilterBar } from "./logs-filter-bar";
@@ -58,6 +60,24 @@ export default async function AdminLogsPage({ searchParams }: { searchParams: Pr
   const actors = new Set(filtered.map((row) => row.user_id).filter(Boolean)).size;
   const actionCounts = actions.map((action) => ({ action, count: filtered.filter((row) => row.action === action).length })).filter((item) => item.count).sort((a,b) => b.count-a.count).slice(0,6);
   const maxCount = Math.max(1, ...actionCounts.map((item) => item.count));
+  // Serie diaria (14 dias) y severidad sobre los eventos que pasan los filtros.
+  const dayMs = 86_400_000;
+  const todayMs = new Date(new Date().toISOString().slice(0, 10)).getTime();
+  const daily = Array.from({ length: 14 }, (_, index) => {
+    const start = todayMs - (13 - index) * dayMs;
+    const inDay = filtered.filter((row) => { const t = new Date(row.created_at).getTime(); return t >= start && t < start + dayMs; });
+    return {
+      label: new Date(start).toLocaleDateString("es-MX", { day: "numeric", month: "short", timeZone: "UTC" }),
+      exitosos: inDay.filter((row) => row.result === "success").length,
+      denegados: inDay.filter((row) => row.result === "denied").length,
+      fallidos: inDay.filter((row) => row.result !== "success" && row.result !== "denied").length,
+    };
+  });
+  const severitySlices = [
+    { label: "Info", value: filtered.filter((row) => row.severity === "info").length, color: "var(--primary)" },
+    { label: "Warning", value: filtered.filter((row) => row.severity === "warning").length, color: "var(--chart-amber)" },
+    { label: "Critical", value: filtered.filter((row) => row.severity === "critical").length, color: "var(--error)" },
+  ];
   const csv = [
     ["fecha","resultado","severidad","accion","actor","tabla","registro","motivo","antes","despues"].map(csvCell).join(","),
     ...filtered.map((row) => [row.created_at,row.result,row.severity,row.action,names.get(row.user_id ?? "") ?? "Sistema",row.table_name,row.record_id,row.reason,JSON.stringify(row.old_values),JSON.stringify(row.new_values)].map(csvCell).join(",")),
@@ -74,6 +94,21 @@ export default async function AdminLogsPage({ searchParams }: { searchParams: Pr
       ["Fallidos o denegados", failed, AlertTriangle, "text-amber-300 bg-amber-400/10"],
       ["Actores únicos", actors, UserRound, "text-sky-300 bg-sky-400/10"],
     ].map(([label,value,Icon,tone]) => { const MetricIcon = Icon as typeof Activity; return <article key={String(label)} className="rounded-2xl border border-white/[.07] bg-zinc-950/60 p-5"><div className="flex justify-between"><div><p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">{String(label)}</p><p className="mt-2 text-3xl font-bold text-white">{String(value)}</p></div><div className={`grid size-10 place-items-center rounded-xl ${tone}`}><MetricIcon size={20}/></div></div></article>})}</section>
+    <section className="grid grid-cols-1 gap-4 xl:grid-cols-[1.6fr_1fr]">
+      <article className="min-w-0 rounded-2xl border border-white/[.07] bg-zinc-950/60 p-5">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <div><p className="text-[10px] font-semibold uppercase tracking-wider text-primary">Actividad</p><h2 className="text-sm font-bold text-white">Eventos por día · últimos 14 días</h2></div>
+          <ul className="flex flex-wrap gap-3 text-[11px] text-zinc-400">{[["Exitosos", "var(--primary)"], ["Denegados", "var(--chart-amber)"], ["Fallidos", "var(--error)"]].map(([label, color]) => <li key={label} className="flex items-center gap-1.5"><span className="inline-block size-2 rounded-full" style={{ backgroundColor: color }} aria-hidden />{label}</li>)}</ul>
+        </div>
+        <div className="mt-3"><SignalTrend data={daily} height={190} emptyLabel="Sin eventos en los últimos 14 días con estos filtros." series={[{ key: "exitosos", label: "Exitosos", color: "var(--primary)" }, { key: "denegados", label: "Denegados", color: "var(--chart-amber)" }, { key: "fallidos", label: "Fallidos", color: "var(--error)" }]} /></div>
+      </article>
+      <article className="min-w-0 rounded-2xl border border-white/[.07] bg-zinc-950/60 p-5">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-primary">Severidad</p>
+        <h2 className="text-sm font-bold text-white">Qué tan graves son</h2>
+        <div className="mt-4"><DonutChart slices={severitySlices} centerLabel="eventos" size={130} emptyLabel="Sin eventos con estos filtros." /></div>
+      </article>
+    </section>
+
     <section className="grid gap-6 xl:grid-cols-[1.5fr_.7fr]">
       <LogsFilterBar actions={actions}/>
       <article className="rounded-2xl border border-white/[.07] bg-zinc-950/60 p-5"><h2 className="text-sm font-bold text-white">Acciones más frecuentes</h2><div className="mt-4 space-y-3">{actionCounts.map(item=><div key={item.action}><div className="mb-1 flex justify-between text-xs"><span className="truncate text-zinc-400">{item.action}</span><span className="font-bold text-zinc-200">{item.count}</span></div><div className="h-1.5 rounded-full bg-white/[.06]"><div className="h-full rounded-full bg-primary" style={{width:`${item.count/maxCount*100}%`}}/></div></div>)}</div></article>

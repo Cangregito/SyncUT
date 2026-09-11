@@ -50,7 +50,14 @@ export default function LoginPage() {
       });
 
       if (error) {
-        setErrorMsg("Correo o contraseña incorrectos.");
+        // Un 5xx o un timeout del proveedor no es culpa del usuario: decirle
+        // "contraseña incorrecta" lo manda a cambiarla sin motivo.
+        const serviceDown = (error.status ?? 0) >= 500 || error.name === "AuthRetryableFetchError";
+        setErrorMsg(
+          serviceDown
+            ? "El servicio de acceso no responde en este momento. Intenta de nuevo en unos segundos."
+            : "Correo o contraseña incorrectos.",
+        );
         return;
       }
 
@@ -64,12 +71,8 @@ export default function LoginPage() {
 
       router.replace(safeNext);
       router.refresh();
-    } catch (error) {
-      setErrorMsg(
-        error instanceof Error
-          ? error.message
-          : "No fue posible iniciar sesión."
-      );
+    } catch {
+      setErrorMsg("No fue posible iniciar sesión. Revisa tu conexión e intenta de nuevo.");
     } finally {
       setIsSubmitting(false);
     }

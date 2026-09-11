@@ -35,7 +35,7 @@ export function DonutChart({
         {total === 0 ? (
           <div className="absolute inset-0 rounded-full border-[14px] border-outline-variant/40" aria-hidden />
         ) : (
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: size, height: size }}>
             <PieChart>
               <Pie
                 data={drawn}

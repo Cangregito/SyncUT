@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import type { Tables } from "@plataforma/types";
 
 import { hasPermission } from "@/lib/auth/roles";
+import { DonutChart } from "@/components/charts/donut-chart";
+import { StackedBar } from "@/components/charts/stacked-bar";
 import { requireProfile } from "@/lib/auth/session";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { generateAiAnswer } from "@/lib/chatbot/ai";
@@ -368,6 +370,47 @@ export default async function ChatbotPage({
 
   const pendingHandoffs = (pendingHandoffsData ?? []) as HandoffRow[];
 
+  // Lumi en numeros: solo para quien atiende escalaciones (la politica de
+  // staff ve todas las conversaciones; un alumno solo veria las suyas).
+  const thirtyDaysAgo = new Date(new Date().toISOString().slice(0, 10)).getTime() - 30 * 86_400_000;
+  const [{ data: statRows }, { data: handoffStatRows }] = canAttendHandoffs
+    ? await Promise.all([
+        supabase
+          .from("chatbot_conversations")
+          .select("status, resolution_type, confidence_score, message_count, started_at")
+          .gte("started_at", new Date(thirtyDaysAgo).toISOString())
+          .limit(500),
+        supabase
+          .from("chatbot_handoffs")
+          .select("reason, status, requested_at")
+          .gte("requested_at", new Date(thirtyDaysAgo).toISOString())
+          .limit(500),
+      ])
+    : [{ data: [] }, { data: [] }];
+  const conversationStats = (statRows ?? []) as Array<{ status: string; resolution_type: string | null; confidence_score: number | null; message_count: number; started_at: string }>;
+  const handoffStats = (handoffStatRows ?? []) as Array<{ reason: string; status: string; requested_at: string }>;
+  const resolutionSlices = [
+    { label: "Resueltas con FAQ", value: conversationStats.filter((row) => row.resolution_type === "faq").length, color: "var(--tertiary)" },
+    { label: "Resueltas por IA", value: conversationStats.filter((row) => row.resolution_type === "ai").length, color: "var(--primary)" },
+    { label: "Atendidas por tutor", value: conversationStats.filter((row) => row.resolution_type === "human").length, color: "var(--chart-sky)" },
+    { label: "Sin resolver", value: conversationStats.filter((row) => row.resolution_type === "unresolved").length, color: "var(--error)" },
+    { label: "En curso", value: conversationStats.filter((row) => !row.resolution_type).length, color: "var(--chart-amber)" },
+  ];
+  const scored = conversationStats.filter((row) => typeof row.confidence_score === "number");
+  const averageConfidence = scored.length ? scored.reduce((sum, row) => sum + (row.confidence_score as number), 0) / scored.length : null;
+  const confidenceSegments = [
+    { label: "Alta (≥ 0.7)", value: scored.filter((row) => (row.confidence_score as number) >= 0.7).length, color: "var(--tertiary)" },
+    { label: "Media (0.4 a 0.7)", value: scored.filter((row) => (row.confidence_score as number) >= 0.4 && (row.confidence_score as number) < 0.7).length, color: "var(--chart-amber)" },
+    { label: "Baja (< 0.4)", value: scored.filter((row) => (row.confidence_score as number) < 0.4).length, color: "var(--error)" },
+  ];
+  const averageMessages = conversationStats.length ? conversationStats.reduce((sum, row) => sum + row.message_count, 0) / conversationStats.length : 0;
+  const handoffReasons = [...new Set(handoffStats.map((row) => row.reason))]
+    .map((reason) => ({ reason, label: handoffReasonLabels[reason] ?? reason, value: handoffStats.filter((row) => row.reason === reason).length }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 5);
+  const handoffMax = Math.max(1, ...handoffReasons.map((item) => item.value));
+  const attendedHandoffs = handoffStats.filter((row) => row.status !== "pending").length;
+
   const { data: conversationData } = await supabase
     .from("chatbot_conversations")
     .select("id, channel, status, started_at, ended_at, language, external_user_ref, user_display_name, current_topic, resolution_type, confidence_score, message_count, last_message_at, metadata, created_at, updated_at")
@@ -531,6 +574,45 @@ export default async function ChatbotPage({
           ) : null}
           {params.exito ? (
             <p role="status" className="rounded-lg border border-tertiary/40 bg-tertiary-container/30 p-4 text-sm font-semibold text-on-tertiary-container">{params.exito}</p>
+          ) : null}
+
+          {canAttendHandoffs ? (
+            <section className="rounded-lg border border-outline-variant bg-surface-container p-5">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-primary">Lumi en números · 30 días</p>
+              <h2 className="text-sm font-bold text-on-surface">Cómo se resuelven las consultas</h2>
+              <div className="mt-4">
+                <DonutChart slices={resolutionSlices} centerLabel="conversaciones" size={120} emptyLabel="Sin conversaciones en los últimos 30 días." />
+              </div>
+              <div className="mt-5 grid grid-cols-2 gap-3">
+                <div className="rounded border border-outline-variant bg-surface p-3">
+                  <p className="text-[10px] font-semibold uppercase text-on-surface-variant">Confianza media</p>
+                  <p className="mt-1 text-2xl font-black text-on-surface">{averageConfidence === null ? "—" : averageConfidence.toFixed(2)}</p>
+                </div>
+                <div className="rounded border border-outline-variant bg-surface p-3">
+                  <p className="text-[10px] font-semibold uppercase text-on-surface-variant">Mensajes por charla</p>
+                  <p className="mt-1 text-2xl font-black text-on-surface">{conversationStats.length ? averageMessages.toFixed(1) : "—"}</p>
+                </div>
+              </div>
+              <StackedBar className="mt-4" segments={confidenceSegments} emptyLabel="Aún no hay respuestas con puntaje de confianza." />
+              <div className="mt-5 border-t border-outline-variant pt-4">
+                <div className="flex items-baseline justify-between gap-2">
+                  <h3 className="text-xs font-bold text-on-surface">Escalaciones por motivo</h3>
+                  <span className="text-[11px] text-on-surface-variant">{attendedHandoffs} atendidas de {handoffStats.length}</span>
+                </div>
+                {handoffReasons.length === 0 ? (
+                  <p className="mt-2 text-xs text-on-surface-variant">Ninguna consulta necesitó atención humana en el periodo.</p>
+                ) : (
+                  <ol className="mt-3 space-y-2.5">
+                    {handoffReasons.map((item) => (
+                      <li key={item.reason}>
+                        <div className="flex items-center justify-between gap-3 text-xs"><span className="min-w-0 truncate text-on-surface">{item.label}</span><span className="shrink-0 font-semibold text-on-surface">{item.value}</span></div>
+                        <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-outline-variant/40"><div className="chart-grow h-full rounded-full" style={{ width: `${Math.round((item.value / handoffMax) * 100)}%`, backgroundColor: "var(--chart-sky)" }} /></div>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </div>
+            </section>
           ) : null}
 
           {canAttendHandoffs ? (

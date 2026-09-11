@@ -2,6 +2,9 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { Activity, ArrowUpRight, GraduationCap, KeyRound, ShieldCheck, UserPlus, Users } from "lucide-react";
 
+import { DonutChart } from "@/components/charts/donut-chart";
+import { SignalTrend } from "@/components/charts/signal-trend";
+import { StackedBar } from "@/components/charts/stacked-bar";
 import { requireRole } from "@/lib/auth/session";
 import { ROLE_LABELS, USER_ROLES, type UserRole } from "@/lib/auth/roles";
 import { getAuthRedirectUrl } from "@/lib/auth/urls";
@@ -147,6 +150,28 @@ export default async function AdminRoutePage({ searchParams }: { searchParams: P
   const visible = profiles.filter((p) => (!q || p.full_name.toLowerCase().includes(q) || p.email.toLowerCase().includes(q)) && (roleFilter === "all" || p.role === roleFilter));
   const names = new Map(profiles.map((p) => [p.id, p.full_name]));
   const counts = Object.fromEntries(USER_ROLES.map((role) => [role, profiles.filter((p) => p.role === role).length]));
+  // Panorama de cuentas: composicion por rol, altas por mes y estado.
+  const roleColors: Record<UserRole, string> = { student: "var(--primary)", tutor: "var(--tertiary)", teacher: "var(--chart-amber)", admin: "var(--chart-sky)" };
+  const roleSlices = USER_ROLES.map((role) => ({ label: ROLE_LABELS[role], value: counts[role], color: roleColors[role] }));
+  const monthStarts = Array.from({ length: 6 }, (_, index) => {
+    const date = new Date(new Date().toISOString().slice(0, 10));
+    date.setUTCDate(1);
+    date.setUTCMonth(date.getUTCMonth() - (5 - index));
+    return date;
+  });
+  const signups = monthStarts.map((start) => {
+    const key = start.toISOString().slice(0, 7);
+    const rows = profiles.filter((p) => (p.created_at ?? "").slice(0, 7) === key);
+    return {
+      label: start.toLocaleDateString("es-MX", { month: "short", timeZone: "UTC" }),
+      ...Object.fromEntries(USER_ROLES.map((role) => [role, rows.filter((p) => p.role === role).length])),
+    };
+  });
+  const statusSegments = [
+    { label: "Activas", value: profiles.filter((p) => p.account_status === "active").length, color: "var(--tertiary)" },
+    { label: "Suspendidas", value: profiles.filter((p) => p.account_status === "suspended").length, color: "var(--chart-amber)" },
+    { label: "Dadas de baja", value: profiles.filter((p) => p.account_status === "deactivated").length, color: "var(--error)" },
+  ];
   const metrics = [
     { label: "Usuarios totales", value: profiles.length, icon: Users, tone: "text-primary bg-primary/10" },
     { label: "Docentes", value: counts.teacher, icon: GraduationCap, tone: "text-amber-300 bg-amber-400/10" },
@@ -171,6 +196,28 @@ export default async function AdminRoutePage({ searchParams }: { searchParams: P
 
     <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
       {metrics.map(({ label, value, icon: Icon, tone }) => <article key={label} className="rounded-2xl border border-white/[.07] bg-zinc-950/60 p-5"><div className="flex items-start justify-between"><div><p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">{label}</p><p className="mt-2 text-3xl font-bold text-white">{value}</p></div><div className={`grid size-10 place-items-center rounded-xl ${tone}`}><Icon size={20}/></div></div></article>)}
+    </section>
+
+    <section className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+      <article className="min-w-0 rounded-2xl border border-white/[.07] bg-zinc-950/60 p-5">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-primary">Composición</p>
+        <h2 className="text-sm font-bold text-white">Usuarios por rol</h2>
+        <div className="mt-4"><DonutChart slices={roleSlices} centerLabel="cuentas" size={130} emptyLabel="Sin cuentas registradas." /></div>
+      </article>
+      <article className="min-w-0 rounded-2xl border border-white/[.07] bg-zinc-950/60 p-5">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <div><p className="text-[10px] font-semibold uppercase tracking-wider text-primary">Crecimiento</p><h2 className="text-sm font-bold text-white">Altas por mes</h2></div>
+          <ul className="flex flex-wrap gap-3 text-[11px] text-zinc-400">{USER_ROLES.map((role) => <li key={role} className="flex items-center gap-1.5"><span className="inline-block size-2 rounded-full" style={{ backgroundColor: roleColors[role] }} aria-hidden />{ROLE_LABELS[role]}</li>)}</ul>
+        </div>
+        <div className="mt-3"><SignalTrend data={signups} height={160} emptyLabel="Sin altas en los últimos 6 meses." series={USER_ROLES.map((role) => ({ key: role, label: ROLE_LABELS[role], color: roleColors[role] }))} /></div>
+      </article>
+      <article className="min-w-0 rounded-2xl border border-white/[.07] bg-zinc-950/60 p-5">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-primary">Estado de cuenta</p>
+        <h2 className="text-sm font-bold text-white">Acceso al portal</h2>
+        <p className="mt-3 text-3xl font-black text-white">{statusSegments[0].value}<span className="ml-1 text-sm font-semibold text-zinc-400">cuentas activas</span></p>
+        <StackedBar className="mt-4" segments={statusSegments} emptyLabel="Sin cuentas registradas." />
+        <p className="mt-3 text-[11px] text-zinc-500">Las cuentas suspendidas o dadas de baja se rechazan al entrar y el motivo queda auditado.</p>
+      </article>
     </section>
 
     <section className="grid gap-6 xl:grid-cols-[.85fr_1.65fr]">
