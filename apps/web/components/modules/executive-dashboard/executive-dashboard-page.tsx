@@ -318,13 +318,14 @@ export function ExecutiveDashboardPage() {
       <ExecutiveHeader
         onExport={exportReport}
         hasLiveSource={liveStats.hasLiveSource}
+        // El distintivo de estado ya no es una bandera fija en data.ts.
         syncLabel={lastSyncLabel}
-        header={executiveHeader}
+        header={{ ...executiveHeader, online: liveStats.hasLiveSource }}
       />
 
       <KpiHero isLoading={isLoading} kpis={kpiItems} />
 
-      <section className="grid gap-4 xl:grid-cols-3">
+      <section className="grid grid-cols-1 gap-4 xl:grid-cols-3">
         <Card className="xl:col-span-2 bg-surface-container border border-outline-variant text-on-surface">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 font-headline font-bold text-on-surface">
@@ -338,7 +339,7 @@ export function ExecutiveDashboardPage() {
               <span className="font-bold">{liveStats.operationalProgress}%</span>
             </div>
             <Progress value={liveStats.operationalProgress} className="h-3" indicatorClassName="bg-primary" />
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="rounded-lg border border-outline-variant bg-surface-container-low p-4">
                 <p className="mb-2 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Progreso global</p>
                 <div className="h-[180px]">
@@ -425,7 +426,7 @@ export function ExecutiveDashboardPage() {
         </Card>
       </section>
 
-      <section className="grid gap-4 lg:grid-cols-2">
+      <section id="roadmap" className="grid grid-cols-1 gap-4 lg:grid-cols-2 scroll-mt-24">
         <Card className="bg-surface-container border border-outline-variant text-on-surface">
           <CardHeader>
             <CardTitle className="font-headline font-bold text-on-surface">Roadmap y siguientes pasos</CardTitle>
@@ -493,7 +494,7 @@ export function ExecutiveDashboardPage() {
               Evidencia de apoyo por equipo con datos reales de Git/GitHub: commits, Pull Requests, responsables y última actividad.
             </CardDescription>
           </CardHeader>
-          <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             {(gitStats.moduleEvidence ?? []).map((module) => {
               const maxInteractions = Math.max(
                 ...(gitStats.moduleEvidence ?? []).map((item) => item.totalInteractions),
@@ -605,7 +606,7 @@ export function ExecutiveDashboardPage() {
         </Card>
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-5">
+      <section className="grid grid-cols-1 gap-4 xl:grid-cols-5">
         <ActivityFeedSection
           search={search}
           onSearchChange={setSearch}
@@ -668,7 +669,7 @@ export function ExecutiveDashboardPage() {
         </Card>
       </section>
 
-      <section className="grid gap-4 lg:grid-cols-2">
+      <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card className="bg-surface-container border border-outline-variant text-on-surface">
           <CardHeader>
             <CardTitle className="font-headline font-bold text-on-surface">Áreas de mejora</CardTitle>
@@ -725,7 +726,7 @@ export function ExecutiveDashboardPage() {
             <CardTitle className="font-headline font-bold text-on-surface">Gráficas ejecutivas reales</CardTitle>
             <CardDescription className="text-on-surface-variant text-xs">Distribución de contribuciones de código por equipos y sprints.</CardDescription>
           </CardHeader>
-          <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
             <ChartCard title="Commits por Squad (Git)">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={gitStats.commitsBySquad}>

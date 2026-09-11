@@ -42,7 +42,8 @@ export async function GET() {
     .select("priority, status");
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("GET /api/incidencias/metrics", error);
+    return NextResponse.json({ error: "No fue posible calcular las metricas." }, { status: 500 });
   }
 
   const rows = (data ?? []) as IncidentMetricRow[];

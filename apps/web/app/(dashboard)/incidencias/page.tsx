@@ -406,7 +406,10 @@ export default async function IncidenciasPage({
       related_teacher:profiles!incidents_related_teacher_id_fkey(full_name,email),
       related_student:profiles!incidents_related_student_id_fkey(full_name,email)
     `)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    // A3 - la consulta no tenia limite: una bandeja grande generaba una pagina
+    // de decenas de miles de pixeles. El historial completo se consulta filtrando.
+    .limit(50);
 
   if (isPriority(params.priority)) {
     query = query.eq("priority", params.priority);
@@ -504,7 +507,7 @@ export default async function IncidenciasPage({
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-6">
       <header>
-        <p className="text-xs font-semibold uppercase tracking-wider text-primary">Squad 5</p>
+        <p className="text-xs font-semibold uppercase tracking-wider text-primary">Reportes y seguimiento</p>
         <h1 className="mt-2 text-2xl md:text-3xl font-headline font-bold text-on-surface">
           Buzon de Incidencias
         </h1>
@@ -635,7 +638,7 @@ export default async function IncidenciasPage({
                       {slaState === "overdue" ? " | Vencida" : ""}
                     </p>
                     <p className="mt-1 text-xs text-on-surface-variant">
-                      Reporta: {item.reporter?.full_name ?? item.reporter?.email ?? "Usuario visible por RLS"}
+                      Reporta: {item.reporter?.full_name ?? item.reporter?.email ?? "Personal del equipo"}
                       {item.assignee ? ` | Asignado: ${item.assignee.full_name ?? item.assignee.email}` : ""}
                     </p>
                     {item.related_teacher ? <p className="mt-1 text-xs font-semibold text-primary">Docente relacionado: {item.related_teacher.full_name ?? item.related_teacher.email}</p> : null}
@@ -712,7 +715,7 @@ export default async function IncidenciasPage({
                       <div key={comment.id} className="border-t border-outline-variant pt-2 first:border-t-0 first:pt-0">
                         <p className="text-sm text-on-surface-variant">{comment.comment}</p>
                         <p className="mt-1 text-[11px] text-on-surface-variant">
-                          {comment.author?.full_name ?? comment.author?.email ?? "Usuario visible por RLS"}
+                          {comment.author?.full_name ?? comment.author?.email ?? "Personal del equipo"}
                           {comment.created_at ? ` | ${new Date(comment.created_at).toLocaleString("es-MX")}` : ""}
                         </p>
                       </div>

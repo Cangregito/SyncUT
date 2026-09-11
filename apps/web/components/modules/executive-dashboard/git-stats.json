@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-07-14T02:45:39.482Z",
-  "headCommit": "f3e8a24ad95ac30c63d0b38af4e89fcd8e5f5253",
+  "generatedAt": "2026-07-14T02:50:10.751Z",
+  "headCommit": "b1ae4f01495936c5a488ed173a856a9bb392985f",
   "githubAvailable": true,
-  "totalCommits": 176,
+  "totalCommits": 177,
   "totalPRs": 23,
   "mergedPRs": 21,
   "openPRs": 1,
@@ -17,7 +17,7 @@
     },
     {
       "squad": "S3 (Citas)",
-      "progreso": 9
+      "progreso": 10
     },
     {
       "squad": "S4 (Notificaciones)",
@@ -88,7 +88,7 @@
     },
     {
       "week": "Actual",
-      "commits": 34
+      "commits": 35
     }
   ],
   "moduleEvidence": [
@@ -153,8 +153,8 @@
       "href": "/citas",
       "description": "Administra agenda de tutorias, disponibilidad, estados de cita, asistencia/no-show y seguimiento.",
       "evidence": "El modulo evidencia trabajo en flujo de tutorias, disponibilidad real, auditoria de cambios y notas posteriores.",
-      "totalInteractions": 11,
-      "commits": 9,
+      "totalInteractions": 12,
+      "commits": 10,
       "pullRequests": 2,
       "mergedPullRequests": 2,
       "openPullRequests": 0,
@@ -164,10 +164,10 @@
       ],
       "lastActivity": {
         "type": "commit",
-        "title": "fix: restore appointment creation and participant visibility",
-        "date": "12 jul 2026",
-        "time": "17:46",
-        "iso": "2026-07-12T23:46:33.000Z"
+        "title": "fix: restore appointment slot creation",
+        "date": "13 jul 2026",
+        "time": "20:48",
+        "iso": "2026-07-14T02:48:01.000Z"
       }
     },
     {
@@ -276,6 +276,18 @@
     }
   ],
   "recentActivities": [
+    {
+      "user": "Jassiel García",
+      "action": "hotfix",
+      "description": "fix: restore appointment slot creation",
+      "module": "Citas",
+      "squad": "Squad 3",
+      "sprint": "Sprint 3",
+      "date": "13-jul",
+      "time": "20:48",
+      "status": "Completado",
+      "impact": "Medio"
+    },
     {
       "user": "Jassiel García",
       "action": "hotfix",
@@ -445,18 +457,6 @@
       "impact": "Alto"
     },
     {
-      "user": "Jassiel García",
-      "action": "hotfix",
-      "description": "fix: consolidar fuentes reales de auditoria",
-      "module": "Dashboard Base",
-      "squad": "Admin Master",
-      "sprint": "Sprint 3",
-      "date": "12-jul",
-      "time": "16:04",
-      "status": "Completado",
-      "impact": "Medio"
-    },
-    {
       "user": "Langostin",
       "action": "approval",
       "description": "Pull Request #23: Feature/squad 2 authentication (Estado: OPEN)",
@@ -522,9 +522,9 @@
       "name": "Jassiel García",
       "squad": "Admin Master",
       "role": "Project Lead",
-      "tasks": 149,
+      "tasks": 150,
       "progress": 100,
-      "weekly": "145 commits · 4 PRs",
+      "weekly": "146 commits · 4 PRs",
       "prs": 4,
       "status": "activo"
     },

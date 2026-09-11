@@ -13,8 +13,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Centro Ejecutivo de Avance",
-  description: "Plataforma Universitaria Integral - tablero ejecutivo de progreso y gobernanza tecnica",
+  // El titulo anterior, "Centro Ejecutivo de Avance", describia un solo modulo
+  // y aparecia tambien en el acceso y en las pantallas del alumno.
+  title: {
+    default: "SyncUT · Portal Académico",
+    template: "%s · SyncUT",
+  },
+  description: "Acompañamiento tutorial: equipos, citas, justificantes e incidencias en un solo portal.",
 };
 
 export default function RootLayout({

@@ -141,12 +141,16 @@ function canControlAppointment(
   return nextStatus === "cancelada" && appointment.student_id === profileId;
 }
 
+function citasError(message: string): never {
+  redirect(`/citas?error=${encodeURIComponent(message)}`);
+}
+
 async function createAppointment(formData: FormData) {
   "use server";
 
   const profile = await requireProfile();
   if (profile.role !== "student") {
-    return;
+    citasError("Solo un estudiante puede solicitar una cita.");
   }
 
   const supabase = await createSupabaseServerClient();
@@ -155,54 +159,69 @@ async function createAppointment(formData: FormData) {
   const scheduledDate = String(formData.get("scheduled_date") ?? "");
   const startsAt = String(formData.get("starts_at") ?? "");
   const endsAt = String(formData.get("ends_at") ?? "");
-  const modalityValue = String(formData.get("modality") ?? "presencial");
-  const modality = isAppointmentModality(modalityValue) ? modalityValue : "presencial";
   const reason = String(formData.get("reason") ?? "").trim();
-  const location = String(formData.get("location") ?? "").trim();
-  const meetingUrl = String(formData.get("meeting_url") ?? "").trim();
-  const modalityDetails = getAppointmentModalityDetails(modality, location, meetingUrl);
 
-  if (!tutorId || !scheduledDate || !startsAt || !endsAt || reason.length < 10 || !modalityDetails) {
-    return;
+  if (!tutorId || !scheduledDate || !startsAt || !endsAt) {
+    citasError("Elige tutor, dia y horario antes de enviar la solicitud.");
+  }
+
+  if (reason.length < 10) {
+    citasError("Describe el motivo de la tutoria con al menos 10 caracteres.");
   }
 
   const today = new Date().toISOString().slice(0, 10);
-  const requestedDay = getDayOfWeek(scheduledDate);
-  if (scheduledDate < today || requestedDay === 0 || requestedDay === 6 || toMinutes(startsAt) >= toMinutes(endsAt)) {
-    return;
+  if (scheduledDate < today) {
+    citasError("No puedes agendar una cita en una fecha que ya paso.");
   }
 
-  if (profile.role === "student") {
-    const { data: assignment } = await supabase
-      .from("tutorship_assignments")
-      .select("id")
-      .eq("student_id", profile.id)
-      .eq("tutor_id", tutorId)
-      .eq("status", "active")
-      .maybeSingle();
+  if (toMinutes(startsAt) >= toMinutes(endsAt)) {
+    citasError("El horario seleccionado no es valido.");
+  }
 
-    if (!assignment) {
-      return;
-    }
+  const { data: assignment } = await supabase
+    .from("tutorship_assignments")
+    .select("id")
+    .eq("student_id", profile.id)
+    .eq("tutor_id", tutorId)
+    .eq("status", "active")
+    .maybeSingle();
+
+  if (!assignment) {
+    citasError("No tienes una tutoria activa con ese tutor.");
   }
 
   const { data: availability } = await supabase
     .from("tutor_availability")
-    .select("id, starts_at, ends_at, modality")
+    .select("id, starts_at, ends_at, modality, location")
     .eq("tutor_id", tutorId)
     .eq("day_of_week", getDayOfWeek(scheduledDate))
     .eq("active", true);
 
-  const hasAvailability = (availability ?? []).some((slot) => {
-    return (
-      slot.modality === modality &&
-      toMinutes(startsAt) >= toMinutes(slot.starts_at) &&
-      toMinutes(endsAt) <= toMinutes(slot.ends_at)
+  // El bloque publicado manda: la modalidad y el lugar se heredan de aqui en
+  // lugar de pedirse aparte, que era lo que producia combinaciones imposibles
+  // y un rechazo sin explicacion.
+  const slot =
+    (availability ?? []).find((item) => item.starts_at === startsAt && item.ends_at === endsAt) ??
+    (availability ?? []).find(
+      (item) =>
+        toMinutes(startsAt) >= toMinutes(item.starts_at) &&
+        toMinutes(endsAt) <= toMinutes(item.ends_at),
     );
-  });
 
-  if (!hasAvailability) {
-    return;
+  if (!slot) {
+    citasError("Ese horario ya no esta publicado por tu tutor. Actualiza la pagina y elige otro.");
+  }
+
+  const modality = isAppointmentModality(slot.modality) ? slot.modality : "presencial";
+  const slotLocation = (slot.location ?? "").trim();
+  const modalityDetails = getAppointmentModalityDetails(
+    modality,
+    modality === "presencial" ? slotLocation : "",
+    modality === "virtual" ? slotLocation : "",
+  );
+
+  if (!modalityDetails) {
+    citasError("Ese bloque de disponibilidad esta incompleto. Avisa a tu tutor para que lo corrija.");
   }
 
   const { data: existingAppointment } = await supabase
@@ -217,10 +236,10 @@ async function createAppointment(formData: FormData) {
     .maybeSingle();
 
   if (existingAppointment) {
-    return;
+    citasError("Ese horario acaba de ocuparse. Elige otro bloque disponible.");
   }
 
-  const { data: appointment } = await supabase
+  const { data: appointment, error: appointmentError } = await supabase
     .from("appointments")
     .insert({
       student_id: profile.id,
@@ -236,30 +255,36 @@ async function createAppointment(formData: FormData) {
     .select("id")
     .single();
 
-  if (appointment) {
-    await supabase.from("appointment_audit_events").insert({
-      appointment_id: appointment.id,
-      actor_id: profile.id,
-      event_type: "created",
-      to_status: "pendiente",
-      note: "Solicitud de cita creada desde el portal.",
-    });
-    await supabase.rpc("emit_notification", {
-      p_user_id: tutorId,
-      p_event_type: "appointment.created",
-      p_title: "Nueva solicitud de tutoría",
-      p_body: `${profile.fullName} solicitó una cita para el ${scheduledDate} de ${startsAt} a ${endsAt}.`,
-      p_metadata: {
-        appointment_id: appointment.id,
-        student_id: profile.id,
-        tutor_id: tutorId,
-      },
-      p_triggered_by: profile.id,
-    });
+  if (appointmentError || !appointment) {
+    // Sin esta rama un rechazo de RLS era indistinguible de un exito.
+    console.error("createAppointment", appointmentError);
+    citasError("No pudimos registrar la solicitud. Intenta de nuevo en un momento.");
   }
+
+  await supabase.from("appointment_audit_events").insert({
+    appointment_id: appointment.id,
+    actor_id: profile.id,
+    event_type: "created",
+    to_status: "pendiente",
+    note: "Solicitud de cita creada desde el portal.",
+  });
+
+  await supabase.rpc("emit_notification", {
+    p_user_id: tutorId,
+    p_event_type: "appointment.created",
+    p_title: "Nueva solicitud de tutoría",
+    p_body: `${profile.fullName} solicitó una cita para el ${scheduledDate} de ${startsAt} a ${endsAt}.`,
+    p_metadata: {
+      appointment_id: appointment.id,
+      student_id: profile.id,
+      tutor_id: tutorId,
+    },
+    p_triggered_by: profile.id,
+  });
 
   revalidatePath("/citas");
   revalidatePath("/dashboard");
+  redirect("/citas?exito=Solicitud enviada. Tu tutor recibira el aviso.");
 }
 
 async function updateAppointmentStatus(formData: FormData) {
@@ -538,7 +563,12 @@ async function recordAttendance(formData: FormData) {
   revalidatePath("/dashboard");
 }
 
-export default async function CitasPage() {
+export default async function CitasPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string; exito?: string }>;
+}) {
+  const params = await searchParams;
   const profile = await requireProfile();
   if (profile.role === "teacher") redirect("/docente");
   const supabase = await createSupabaseServerClient();
@@ -669,14 +699,26 @@ export default async function CitasPage() {
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-6">
       <header>
-        <p className="text-xs font-semibold uppercase tracking-wider text-primary">Squad 3</p>
+        <p className="text-xs font-semibold uppercase tracking-wider text-primary">Acompañamiento tutorial</p>
         <h1 className="mt-2 text-2xl md:text-3xl font-headline font-bold text-on-surface">
           Agenda de Citas
         </h1>
         <p className="mt-2 text-sm text-on-surface-variant">
-          Solicitudes de tutoria registradas en Supabase. Sin citas de ejemplo ni almacenamiento local.
+          Solicita una tutoría en los horarios que publicó tu tutor y sigue el estado de cada cita.
         </p>
       </header>
+
+      {params.error ? (
+        <p role="alert" className="rounded-lg border border-error/40 bg-error-container/20 p-4 text-sm font-medium text-on-error-container">
+          {params.error}
+        </p>
+      ) : null}
+
+      {params.exito ? (
+        <p role="status" className="rounded-lg border border-tertiary/40 bg-tertiary-container/30 p-4 text-sm font-medium text-on-tertiary-container">
+          {params.exito}
+        </p>
+      ) : null}
 
       {appointmentsError ? (
         <div className="rounded-lg border border-error/40 bg-error-container/20 p-4 text-sm text-on-error-container">
@@ -722,18 +764,17 @@ export default async function CitasPage() {
 
           {assignments.length === 0 ? (
             <p className="mt-4 rounded border border-outline-variant bg-surface p-3 text-sm text-on-surface-variant">
-              No hay tutor asignado visible para tu usuario. Crea una fila real en `tutorship_assignments` antes de agendar.
+              Aún no tienes un tutor asignado. Únete a tu equipo tutorial para poder agendar.
             </p>
           ) : null}
 
           <div className="mt-4 space-y-3">
             <AppointmentSlotPicker
               tutors={assignments.map((item) => ({ id: item.tutor_id, label: item.tutor?.full_name ?? item.tutor?.email ?? `Tutor ${item.tutor_id.slice(0, 8)}` }))}
-              availability={availability.map((slot) => ({ tutorId: slot.tutor_id, dayOfWeek: slot.day_of_week, startsAt: slot.starts_at, endsAt: slot.ends_at }))}
+              availability={availability.map((slot) => ({ tutorId: slot.tutor_id, dayOfWeek: slot.day_of_week, startsAt: slot.starts_at, endsAt: slot.ends_at, modality: slot.modality === "virtual" ? "virtual" : "presencial", location: slot.location }))}
               busySlots={privateBusySlots.map((item) => ({ tutorId: item.tutor_id, date: item.scheduled_date, startsAt: item.starts_at, endsAt: item.ends_at }))}
             />
 
-            <ModalityDetailsFields mode="appointment" />
             <label className="block text-xs font-medium text-on-surface-variant">
               Motivo
               <textarea name="reason" required minLength={10} rows={4} className="mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
@@ -846,7 +887,7 @@ export default async function CitasPage() {
                       <p className="mt-1 text-xs text-on-surface-variant">{attendanceRecord.notes}</p>
                     ) : null}
                     <p className="mt-2 text-[11px] text-on-surface-variant">
-                      Registro: {attendanceRecord.recorder?.full_name ?? attendanceRecord.recorder?.email ?? "Usuario visible por RLS"}
+                      Registro: {attendanceRecord.recorder?.full_name ?? attendanceRecord.recorder?.email ?? "Personal del equipo"}
                       {attendanceRecord.recorded_at ? ` | ${new Date(attendanceRecord.recorded_at).toLocaleString("es-MX")}` : ""}
                     </p>
                   </div>
@@ -882,7 +923,7 @@ export default async function CitasPage() {
                       <p className="mt-1 text-xs text-on-surface-variant">Recomendaciones: {sessionNote.recommendations}</p>
                     ) : null}
                     <p className="mt-2 text-[11px] text-on-surface-variant">
-                      Capturo: {sessionNote.author?.full_name ?? sessionNote.author?.email ?? "Usuario visible por RLS"}
+                      Capturo: {sessionNote.author?.full_name ?? sessionNote.author?.email ?? "Personal del equipo"}
                     </p>
                   </div>
                 ) : (canOverseeAppointments || item.tutor_id === profile.id) && item.status === "completada" ? (

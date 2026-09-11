@@ -38,7 +38,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     return NextResponse.json(
       {
         error: "No autenticado",
-        details: authError?.message ?? "No se encontro usuario en la sesion o token.",
+        details: "Inicia sesion para continuar.",
       },
       { status: 401 },
     );
@@ -61,7 +61,6 @@ export async function POST(request: NextRequest, context: RouteContext) {
     return NextResponse.json(
       {
         error: "Incidencia no encontrada o sin permiso",
-        details: incidentError?.message,
       },
       { status: 404 },
     );
@@ -81,9 +80,6 @@ export async function POST(request: NextRequest, context: RouteContext) {
     return NextResponse.json(
       {
         error: "Error creando comentario",
-        details: error.message,
-        code: error.code,
-        hint: error.hint,
       },
       { status: 500 },
     );

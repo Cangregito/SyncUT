@@ -18,7 +18,7 @@ export function FilePreviewModal({ fileName, contentType, url }: Props) {
   }, [open]);
 
   return <>
-    <button type="button" onClick={() => setOpen(true)} className="font-semibold text-primary hover:underline">Ver</button>
+    <button type="button" onClick={() => setOpen(true)} className="shrink-0 font-semibold text-primary hover:underline">Ver</button>
     <dialog ref={dialogRef} onClose={() => setOpen(false)} onCancel={() => setOpen(false)} onClick={(event) => { if (event.target === dialogRef.current) setOpen(false); }} className="m-auto h-[90vh] w-[min(94vw,1100px)] max-w-none rounded-xl border border-outline-variant bg-surface-container p-0 text-on-surface shadow-2xl backdrop:bg-black/80">
       <div className="flex h-full flex-col">
         <header className="flex items-center justify-between gap-4 border-b border-outline-variant px-4 py-3">

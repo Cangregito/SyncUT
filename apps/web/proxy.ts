@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+import { getModulesForRole, toUserRole } from "@/lib/auth/roles";
 import { getSupabasePublicConfig } from "@/lib/supabase/config";
 
 const protectedPrefixes = [
@@ -12,7 +13,13 @@ const protectedPrefixes = [
   "/incidencias",
   "/chatbot",
   "/equipo",
+  // Faltaba: la bandeja docente solo estaba protegida por la propia pagina.
+  "/docente",
 ];
+
+function matchesModule(pathname: string, href: string) {
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
 
 const authRoutes = ["/login", "/signup"];
 
@@ -60,12 +67,25 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  if (user && profile?.role === "admin" && !request.nextUrl.pathname.startsWith("/admin")) {
-    if (isProtected || isAuthRoute || request.nextUrl.pathname === "/") {
-      const adminUrl = request.nextUrl.clone();
-      adminUrl.pathname = "/admin";
-      adminUrl.search = "";
-      return NextResponse.redirect(adminUrl);
+  // Antes esto era un caso especial solo para `admin`. Ahora la tabla de
+  // permisos de lib/auth/roles decide el acceso de cualquier rol, que es la
+  // misma fuente que dibuja la navegacion.
+  if (user) {
+    const role = toUserRole(profile?.role);
+    const allowedModules = getModulesForRole(role);
+    const home = allowedModules[0]?.href ?? "/dashboard";
+    const isAllowed = allowedModules.some((item) =>
+      matchesModule(request.nextUrl.pathname, item.href),
+    );
+
+    const shouldLandOnHome =
+      isAuthRoute || request.nextUrl.pathname === "/" || (isProtected && !isAllowed);
+
+    if (shouldLandOnHome && !matchesModule(request.nextUrl.pathname, home)) {
+      const homeUrl = request.nextUrl.clone();
+      homeUrl.pathname = home;
+      homeUrl.search = "";
+      return NextResponse.redirect(homeUrl);
     }
   }
 
@@ -74,13 +94,6 @@ export async function proxy(request: NextRequest) {
     loginUrl.pathname = "/login";
     loginUrl.searchParams.set("next", request.nextUrl.pathname);
     return NextResponse.redirect(loginUrl);
-  }
-
-  if (user && isAuthRoute) {
-    const dashboardUrl = request.nextUrl.clone();
-    dashboardUrl.pathname = "/dashboard";
-    dashboardUrl.search = "";
-    return NextResponse.redirect(dashboardUrl);
   }
 
   return response;

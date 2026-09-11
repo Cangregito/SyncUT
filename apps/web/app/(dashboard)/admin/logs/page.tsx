@@ -64,7 +64,7 @@ export default async function AdminLogsPage({ searchParams }: { searchParams: Pr
   ].join("\n");
 
   return <main className="mx-auto flex max-w-[1500px] flex-col gap-6 pb-12">
-    <section className="rounded-2xl border border-violet-400/15 bg-[radial-gradient(circle_at_top_right,rgba(124,58,237,.2),transparent_40%),linear-gradient(135deg,#15131b,#0d0d10)] p-6 md:p-8">
+    <section className="rounded-2xl border border-violet-400/15 admin-hero p-6 md:p-8">
       <div className="flex flex-wrap items-end justify-between gap-5"><div><p className="text-xs font-semibold uppercase tracking-[.18em] text-violet-300">Centro de observabilidad</p><h1 className="mt-2 text-3xl font-bold tracking-tight text-white">Auditoría y análisis de eventos</h1><p className="mt-3 max-w-3xl text-sm text-zinc-400">Evidencia trazable para seguridad, cumplimiento y análisis operativo. Los registros son inmutables.</p></div><a href={`data:text/csv;charset=utf-8,${encodeURIComponent(csv)}`} download={`syncut-auditoria-${new Date().toISOString().slice(0,10)}.csv`} className="flex items-center gap-2 rounded-xl bg-violet-500 px-4 py-3 text-sm font-bold text-white"><Download size={17}/> Exportar {filtered.length} eventos</a></div>
     </section>
     {errors.length > 0 && <div className="rounded-xl border border-amber-400/20 bg-amber-400/10 p-4 text-sm text-amber-300">Algunas fuentes no pudieron consultarse: {errors.map(item=>item?.message).join(" · ")}</div>}

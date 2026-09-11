@@ -51,31 +51,14 @@ export const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
   admin: "Gobierna roles, datos, seguridad, auditoria y salud completa de la plataforma.",
 };
 
-export const DEMO_ROLE_ACCOUNTS: Record<
-  UserRole,
-  { email: string; password: string; fullName: string }
-> = {
-  student: {
-    email: "estudiante@syncut.test",
-    password: "SyncUT2026!",
-    fullName: "María López",
-  },
-  teacher: {
-    email: "docente@syncut.test",
-    password: "SyncUT2026!",
-    fullName: "Dr. Andrés Hidalgo",
-  },
-  tutor: {
-    email: "tutor@syncut.test",
-    password: "SyncUT2026!",
-    fullName: "Mtra. Fernanda Ruiz Hernandez",
-  },
-  admin: {
-    email: "admin@syncut.test",
-    password: "SyncUT2026!",
-    fullName: "Admin SyncUT",
-  },
-};
+/**
+ * Roles ofrecidos en el acceso rapido de la pantalla de login.
+ *
+ * `admin` queda fuera a proposito: un boton publico que concede gobernanza a
+ * cualquier visitante es el mismo riesgo que publicar la contrasena. Para
+ * entrar como administrador hay que escribir las credenciales.
+ */
+export const DEMO_QUICK_ACCESS_ROLES: readonly UserRole[] = ["student", "tutor", "teacher"];
 
 export const ROLE_PERMISSIONS: Record<UserRole, readonly RolePermission[]> = {
   student: [

@@ -2,6 +2,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { Tables } from "@plataforma/types";
 
+import { hasPermission } from "@/lib/auth/roles";
 import { requireProfile } from "@/lib/auth/session";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { generateAiAnswer } from "@/lib/chatbot/ai";
@@ -118,9 +119,32 @@ async function sendMessage(formData: FormData) {
       payload: { provider: "groq", model: aiAnswer.model },
     });
 
+    // La rama de IA no aplicaba el mismo tratamiento de `requires_handoff` que
+    // el fallback: si la IA respondia, un caso marcado para atencion humana
+    // nunca se escalaba.
+    if (match?.requires_handoff) {
+      await supabase.from("chatbot_handoffs").insert({
+        conversation_id: conversationId,
+        trigger_message_id: userMessage?.id ?? null,
+        reason: "policy_case",
+        priority: "medium",
+        notes: `FAQ requiere atencion humana: ${match.question}`,
+      });
+
+      await supabase.rpc("emit_notification", {
+        p_user_id: profile.id,
+        p_event_type: "chatbot.handoff_created",
+        p_title: "Consulta escalada",
+        p_body: "Tu consulta fue escalada para atención humana.",
+        p_metadata: { conversation_id: conversationId, reason: "policy_case" },
+        p_triggered_by: profile.id,
+      });
+    }
+
     await supabase.from("chatbot_conversations").update({
       current_topic: match?.category ?? "orientacion_general",
-      resolution_type: match ? "faq" : null,
+      resolution_type: match?.requires_handoff ? "human" : match ? "faq" : null,
+      status: match?.requires_handoff ? "escalated" : undefined,
       confidence_score: match ? 0.9 : 0.72,
       last_message_at: now,
       updated_at: now,
@@ -277,11 +301,70 @@ async function createFaqEntry(formData: FormData) {
   revalidatePath("/chatbot");
 }
 
-export default async function ChatbotPage() {
+const handoffReasonLabels: Record<string, string> = {
+  low_confidence: "Respuesta poco confiable",
+  user_request: "El usuario pidió atención humana",
+  policy_case: "Caso que requiere revisión",
+  no_match: "Sin respuesta publicada",
+};
+
+async function resolveHandoff(formData: FormData) {
+  "use server";
+
+  const profile = await requireProfile();
+  if (!hasPermission(profile.role, "chatbot:manage")) {
+    redirect("/chatbot?error=No tienes permiso para atender escalaciones.");
+  }
+
+  const id = String(formData.get("id") ?? "");
+  if (!id) {
+    redirect("/chatbot?error=Escalacion no valida.");
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase
+    .from("chatbot_handoffs")
+    .update({
+      status: "resolved",
+      assigned_agent_ref: profile.id,
+      resolved_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id);
+
+  if (error) {
+    console.error("resolveHandoff", error);
+    redirect("/chatbot?error=No pudimos cerrar la escalacion.");
+  }
+
+  revalidatePath("/chatbot");
+  redirect("/chatbot?exito=Escalacion marcada como atendida.");
+}
+
+export default async function ChatbotPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string; exito?: string }>;
+}) {
+  const params = await searchParams;
   const profile = await requireProfile();
   if (profile.role === "teacher") redirect("/docente");
   const supabase = await createSupabaseServerClient();
   const canManageFaq = ["admin", "tutor"].includes(profile.role);
+  const canAttendHandoffs = hasPermission(profile.role, "chatbot:manage");
+
+  // A6 - las escalaciones se escribian y nadie las leia: la consulta anterior
+  // filtraba por la conversacion propia, asi que no existia ninguna bandeja.
+  const { data: pendingHandoffsData } = canAttendHandoffs
+    ? await supabase
+        .from("chatbot_handoffs")
+        .select("id, conversation_id, reason, priority, notes, requested_at, status")
+        .eq("status", "pending")
+        .order("requested_at", { ascending: true })
+        .limit(25)
+    : { data: [] };
+
+  const pendingHandoffs = (pendingHandoffsData ?? []) as HandoffRow[];
 
   const { data: conversationData } = await supabase
     .from("chatbot_conversations")
@@ -452,6 +535,53 @@ export default async function ChatbotPage() {
                   </div>
                 ))}
               </div>
+            </section>
+          ) : null}
+
+          {params.error ? (
+            <p role="alert" className="rounded-lg border border-error/40 bg-error-container/20 p-4 text-sm font-semibold text-on-error-container">{params.error}</p>
+          ) : null}
+          {params.exito ? (
+            <p role="status" className="rounded-lg border border-tertiary/40 bg-tertiary-container/30 p-4 text-sm font-semibold text-on-tertiary-container">{params.exito}</p>
+          ) : null}
+
+          {canAttendHandoffs ? (
+            <section className="rounded-lg border border-outline-variant bg-surface-container p-5">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h2 className="text-sm font-semibold uppercase text-on-surface-variant">Escalaciones por atender</h2>
+                <span className="rounded-full bg-surface-container-highest px-2 py-0.5 text-xs font-semibold text-on-surface">
+                  {pendingHandoffs.length}
+                </span>
+              </div>
+
+              {pendingHandoffs.length === 0 ? (
+                <p className="mt-3 rounded border border-outline-variant bg-surface p-3 text-sm text-on-surface-variant">
+                  No hay consultas esperando atención humana.
+                </p>
+              ) : (
+                <ul className="mt-3 space-y-3">
+                  {pendingHandoffs.map((handoff) => (
+                    <li key={handoff.id} className="rounded border border-outline-variant bg-surface p-3">
+                      <div className="flex flex-wrap items-center gap-2 text-xs text-on-surface-variant">
+                        <span className="rounded bg-surface-container-highest px-2 py-0.5 font-semibold text-on-surface">
+                          {handoff.priority}
+                        </span>
+                        <span>{handoffReasonLabels[handoff.reason] ?? handoff.reason}</span>
+                        <span>· {new Date(handoff.requested_at).toLocaleString("es-MX")}</span>
+                      </div>
+                      {handoff.notes ? (
+                        <p className="mt-2 text-sm text-on-surface">{handoff.notes}</p>
+                      ) : null}
+                      <form action={resolveHandoff} className="mt-3">
+                        <input type="hidden" name="id" value={handoff.id} />
+                        <button className="rounded border border-outline-variant px-3 py-2 text-xs font-semibold text-on-surface-variant hover:border-primary hover:text-primary">
+                          Marcar atendida
+                        </button>
+                      </form>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </section>
           ) : null}
 

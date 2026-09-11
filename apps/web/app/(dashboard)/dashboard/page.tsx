@@ -163,8 +163,8 @@ export default async function DashboardOverviewPage() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <KpiCard label="Estudiantes" value={students.count} icon="group" detail="Registros visibles por RLS" href="/dashboard" />
-        <KpiCard label="Docentes" value={teachers.count} icon="school" detail="Registros visibles por RLS" href="/dashboard" />
+        <KpiCard label="Estudiantes" value={students.count} icon="group" detail="Registros que puedes consultar" href="/dashboard" />
+        <KpiCard label="Docentes" value={teachers.count} icon="school" detail="Registros que puedes consultar" href="/dashboard" />
         <KpiCard label="Justificaciones pendientes" value={pendingJustifications.count} icon="gavel" detail="Solicitudes por revisar" href="/justificaciones" />
         <KpiCard label="Proximas citas" value={upcomingAppointments.count} icon="event" detail="Pendientes o confirmadas" href="/citas" />
       </div>

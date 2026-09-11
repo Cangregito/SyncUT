@@ -107,7 +107,15 @@ async function updateJustificationStatus(formData: FormData) {
   } as never);
 
   if (error) {
-    redirect(`/justificaciones?error=${encodeURIComponent(error.message)}`);
+    // La funcion SQL redacta mensajes en espanol con estos codigos; cualquier
+    // otro error es interno y no debe llegar al usuario.
+    const isExplained = ["42501", "22023", "P0002"].includes(error.code ?? "");
+    if (!isExplained) console.error("resolve_justification", error);
+    redirect(
+      `/justificaciones?error=${encodeURIComponent(
+        isExplained ? error.message : "No se pudo actualizar la justificacion.",
+      )}`,
+    );
   }
 
   {
@@ -132,6 +140,100 @@ async function updateJustificationStatus(formData: FormData) {
 
   revalidatePath("/justificaciones");
   revalidatePath("/dashboard");
+}
+
+async function respondToInfoRequest(formData: FormData) {
+  "use server";
+
+  const profile = await requireProfile();
+  if (profile.role !== "student") {
+    redirect("/justificaciones?error=Solo el alumno puede responder a su solicitud.");
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const id = String(formData.get("id") ?? "");
+  const note = String(formData.get("note") ?? "").trim();
+  const evidence = formData.get("evidence");
+  const file = evidence instanceof File && evidence.size > 0 ? evidence : null;
+
+  if (!id) {
+    redirect("/justificaciones?error=Solicitud no valida.");
+  }
+
+  if (note.length < 10) {
+    redirect("/justificaciones?error=Explica en al menos 10 caracteres que informacion agregas.");
+  }
+
+  // La evidencia se adjunta antes de mover el estado: si la subida falla, la
+  // solicitud sigue esperando informacion y se puede reintentar.
+  if (file) {
+    const safeName = file.name
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "")
+      .replace(/[^a-zA-Z0-9._-]+/g, "-")
+      .slice(0, 120);
+    const filePath = `${profile.id}/${id}/${crypto.randomUUID()}-${safeName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("evidencias_justificaciones")
+      .upload(filePath, file, {
+        cacheControl: "3600",
+        contentType: file.type || "application/octet-stream",
+        upsert: false,
+      });
+
+    if (uploadError) {
+      console.error("respondToInfoRequest upload", uploadError);
+      redirect("/justificaciones?error=No pudimos subir la evidencia. Tu solicitud sigue esperando informacion.");
+    }
+
+    const { error: fileRowError } = await supabase.from("justification_files").insert({
+      justification_id: id,
+      file_name: file.name,
+      file_path: filePath,
+      content_type: file.type || "application/octet-stream",
+      file_size_bytes: file.size,
+    });
+
+    if (fileRowError) {
+      // El archivo ya esta en Storage pero no quedo registrado: se retira para
+      // no dejar un adjunto huerfano y se pide reintentar sobre el mismo folio.
+      console.error("respondToInfoRequest file row", fileRowError);
+      await supabase.storage.from("evidencias_justificaciones").remove([filePath]);
+      redirect("/justificaciones?error=No pudimos registrar la evidencia. Tu solicitud sigue esperando informacion; intentalo de nuevo.");
+    }
+  }
+
+  const { error } = await supabase.rpc(
+    "respond_to_justification_info_request" as "get_teacher_directory",
+    { p_justification_id: id, p_note: note } as never,
+  );
+
+  if (error) {
+    console.error("respondToInfoRequest", error);
+    redirect("/justificaciones?error=No pudimos enviar tu respuesta. Intenta de nuevo.");
+  }
+
+  const { data: current } = await supabase
+    .from("justifications")
+    .select("title,reviewer_id")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (current?.reviewer_id) {
+    await supabase.rpc("emit_notification", {
+      p_user_id: current.reviewer_id,
+      p_event_type: "justification.info_provided",
+      p_title: "Informacion adicional recibida",
+      p_body: `${profile.fullName} respondio a la solicitud sobre "${current.title}".`,
+      p_metadata: { justification_id: id },
+      p_triggered_by: profile.id,
+    });
+  }
+
+  revalidatePath("/justificaciones");
+  revalidatePath("/dashboard");
+  redirect("/justificaciones?exito=Respuesta enviada. Tu solicitud volvio a la cola de revision.");
 }
 
 async function addReviewNote(formData: FormData) {
@@ -168,7 +270,7 @@ async function addReviewNote(formData: FormData) {
 export default async function JustificacionesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ estado?: string; categoria?: string; q?: string; error?: string }>;
+  searchParams: Promise<{ estado?: string; categoria?: string; q?: string; error?: string; exito?: string }>;
 }) {
   const profile = await requireProfile();
   if (profile.role === "teacher") redirect("/docente");
@@ -202,7 +304,10 @@ export default async function JustificacionesPage({
       student:profiles!justifications_student_id_fkey(full_name,email),
       reviewer:profiles!justifications_reviewer_id_fkey(full_name,email)
     `)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    // A3 - la consulta no tenia limite: una bandeja grande generaba una pagina
+    // de decenas de miles de pixeles. El historial completo se consulta filtrando.
+    .limit(50);
 
   if (isStatus(params.estado ?? "")) {
     query = query.eq("status", params.estado as JustificationStatus);
@@ -213,7 +318,19 @@ export default async function JustificacionesPage({
   }
 
   if (params.q) {
-    query = query.or(`title.ilike.%${params.q}%,description.ilike.%${params.q}%`);
+    const term = params.q.trim();
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(term);
+
+    if (isUuid) {
+      // "Abrir tramite" desde notificaciones llega con el id del expediente.
+      // Buscarlo como texto en titulo/descripcion no encontraba nada.
+      query = query.eq("id", term);
+    } else {
+      // Comas y parentesis forman parte de la sintaxis de filtros de PostgREST:
+      // se retiran para que un texto de busqueda no rompa la consulta.
+      const safe = term.replace(/[,()]/g, " ").trim();
+      if (safe) query = query.or(`title.ilike.%${safe}%,description.ilike.%${safe}%`);
+    }
   }
 
   const [
@@ -285,7 +402,7 @@ export default async function JustificacionesPage({
       <header className="rounded-lg border border-outline-variant bg-surface-container p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-primary">Squad 1</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-primary">Trámites académicos</p>
             <h1 className="mt-2 text-2xl md:text-3xl font-headline font-bold text-on-surface">
               Centro de Justificaciones
             </h1>
@@ -311,10 +428,11 @@ export default async function JustificacionesPage({
 
       {justificationsError ? (
         <div className="rounded-lg border border-error/40 bg-error-container/20 p-4 text-sm text-on-error-container">
-          No se pudieron consultar justificaciones. Detalle: {justificationsError.message}
+          No se pudieron consultar las justificaciones. Actualiza la pagina en unos segundos.
         </div>
       ) : null}
-      {params.error ? <div className="rounded-lg border border-error/40 bg-error-container p-4 text-sm font-semibold text-on-error-container">No se pudo actualizar la justificación: {params.error}</div> : null}
+      {params.error ? <p role="alert" className="rounded-lg border border-error/40 bg-error-container p-4 text-sm font-semibold text-on-error-container">{params.error}</p> : null}
+      {params.exito ? <p role="status" className="rounded-lg border border-tertiary/40 bg-tertiary-container/30 p-4 text-sm font-semibold text-on-tertiary-container">{params.exito}</p> : null}
 
       <div className="grid gap-6 xl:grid-cols-[380px_1fr]">
         <aside className="space-y-6">
@@ -418,14 +536,17 @@ export default async function JustificacionesPage({
                   <div className="mt-4 flex flex-wrap gap-2">
                     {itemFiles.map((file) => {
                       const access = fileAccessById.get(file.id);
+                      // Un nombre de archivo sin espacios no se parte: su contribucion
+                      // intrinseca era 256 px (max-w-64) y forzaba el chip a ~416 px y, con
+                      // el, toda la pagina movil. El tope relativo al viewport lo evita.
                       return (
-                        <div key={file.id} className="flex items-center gap-2 rounded border border-outline-variant bg-surface px-3 py-2 text-xs text-on-surface-variant">
-                          <span className="max-w-64 truncate" title={file.file_name}>{file.file_name}</span>
+                        <div key={file.id} className="flex max-w-full min-w-0 items-center gap-2 rounded border border-outline-variant bg-surface px-3 py-2 text-xs text-on-surface-variant">
+                          <span className="min-w-0 max-w-[40vw] flex-1 truncate sm:max-w-64" title={file.file_name}>{file.file_name}</span>
                           {access?.viewUrl ? (
                             <FilePreviewModal fileName={file.file_name} contentType={file.content_type} url={access.viewUrl} />
                           ) : null}
                           {access?.downloadUrl ? (
-                            <a href={access.downloadUrl} className="font-semibold text-primary hover:underline">
+                            <a href={access.downloadUrl} className="shrink-0 font-semibold text-primary hover:underline">
                               Descargar
                             </a>
                           ) : null}
@@ -489,6 +610,36 @@ export default async function JustificacionesPage({
                             </SubmitButton>
                           ) : null}
                         </div>
+                      </form>
+                    ) : null}
+
+                    {item.student_id === profile.id && item.status === "requires_more_info" ? (
+                      <form action={respondToInfoRequest} className="rounded border border-amber-400/40 bg-amber-400/5 p-4">
+                        <input type="hidden" name="id" value={item.id} />
+                        <h3 className="text-xs font-semibold uppercase text-on-surface-variant">Tu tutor pidio mas informacion</h3>
+                        <p className="mt-2 text-xs text-on-surface-variant">
+                          Responde aqui sobre el mismo folio. No crees otra solicitud.
+                        </p>
+                        <textarea
+                          name="note"
+                          rows={3}
+                          required
+                          minLength={10}
+                          placeholder="Que informacion agregas"
+                          className="mt-3 w-full rounded border border-outline-variant bg-surface-container px-3 py-2 text-sm text-on-surface"
+                        />
+                        <label className="mt-3 block text-xs font-medium text-on-surface-variant">
+                          Evidencia adicional (opcional)
+                          <input
+                            name="evidence"
+                            type="file"
+                            accept="application/pdf,image/jpeg,image/png"
+                            className="mt-1 w-full rounded border border-outline-variant bg-surface-container px-3 py-2 text-xs text-on-surface file:mr-3 file:rounded file:border-0 file:bg-primary-container file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-on-primary-container"
+                          />
+                        </label>
+                        <SubmitButton className="mt-3 w-full rounded bg-primary-container px-3 py-2 text-xs font-semibold text-on-primary-container" pendingLabel="Enviando...">
+                          Enviar respuesta
+                        </SubmitButton>
                       </form>
                     ) : null}
 

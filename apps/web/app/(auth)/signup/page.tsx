@@ -246,15 +246,10 @@ export default function SignupPage() {
             </div>
             <div className="ml-3 text-sm">
               <label className="font-medium text-on-surface-variant cursor-pointer select-none" htmlFor="terms">
-                Acepto los{" "}
-                <a className="text-primary hover:text-primary-fixed underline decoration-primary/30 underline-offset-2 transition-colors" href="#">
-                  Términos de Servicio
-                </a>{" "}
-                y la{" "}
-                <a className="text-primary hover:text-primary-fixed underline decoration-primary/30 underline-offset-2 transition-colors" href="#">
-                  Política de Privacidad
-                </a>
-                .
+                {/* Los enlaces apuntaban a "#". Se enuncian como texto hasta que
+                    existan esas paginas, para no prometer un destino inexistente. */}
+                Acepto los Términos de Servicio y la Política de Privacidad de la
+                plataforma tutorial.
               </label>
             </div>
           </div>

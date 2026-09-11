@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createSupabaseBrowserClient } from "@plataforma/sdk/client";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 
@@ -16,10 +16,12 @@ export function DashboardShell({
   children,
   email,
   role,
+  unreadCount = 0,
 }: {
   children: React.ReactNode;
   email: string;
   role: UserRole;
+  unreadCount?: number;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -31,6 +33,34 @@ export function DashboardShell({
   const navigationLinks = getModulesForRole(role);
   const roleLabel = ROLE_LABELS[role];
   const initials = email ? email.substring(0, 2).toUpperCase() : "US";
+
+  // Los destinos del header salen de los modulos del rol. Antes estaban fijos y
+  // el proxy devolvia al administrador a /admin desde todos ellos.
+  const homeLink = navigationLinks[0];
+  const notificationsLink = navigationLinks.find((item) => item.href === "/notificaciones");
+  const helpLink = navigationLinks.find((item) => item.href === "/chatbot");
+
+  // Escape cierra el menu abierto, como espera cualquier usuario de teclado.
+  useEffect(() => {
+    if (!mobileMenuOpen && !activeHeaderMenu) return;
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key !== "Escape") return;
+      setMobileMenuOpen(false);
+      setActiveHeaderMenu(null);
+    }
+
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [mobileMenuOpen, activeHeaderMenu]);
+
+  // Con el drawer abierto el fondo ya no se desplaza detras.
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = previous; };
+  }, [mobileMenuOpen]);
 
   async function handleLogout() {
     setIsSigningOut(true);
@@ -81,7 +111,9 @@ export function DashboardShell({
                     </span>
                     <span>{item.label}</span>
                   </div>
-                  {item.squad && (
+                  {/* El reparto interno por squad es informacion del equipo de
+                      desarrollo, no del alumno: solo se muestra en gobernanza. */}
+                  {item.squad && role === "admin" && (
                     <span className="text-[9px] bg-outline-variant/50 text-on-surface-variant px-1.5 py-0.5 rounded font-mono">
                       {item.squad}
                     </span>
@@ -198,19 +230,22 @@ export function DashboardShell({
       )}
 
       {/* ==================== MAIN CONTENT WRAPPER ==================== */}
-      <div className="flex-1 md:ml-64 flex flex-col min-h-screen">
+      {/* min-w-0: sin el, la columna (flex item) no encoge por debajo del ancho
+          de su contenido y a 390 px toda la pagina crecia a 468 px. */}
+      <div className="flex-1 min-w-0 md:ml-64 flex flex-col min-h-screen">
         {/* TopAppBar Component */}
-        <header className="sticky top-0 w-full z-30 flex justify-between items-center px-6 h-16 bg-surface border-b border-outline-variant font-body text-on-surface tracking-tight">
+        <header className="sticky top-0 w-full z-30 flex justify-between items-center gap-2 px-4 md:px-6 h-16 bg-surface border-b border-outline-variant font-body text-on-surface tracking-tight">
           {/* Mobile Menu Toggle */}
           <button
             onClick={() => setMobileMenuOpen(true)}
-            className="md:hidden text-on-surface-variant hover:text-on-surface mr-4 cursor-pointer"
+            className="md:hidden text-on-surface-variant hover:text-on-surface mr-2 cursor-pointer shrink-0"
+            aria-label="Abrir menu"
           >
             <span className="material-symbols-outlined">menu</span>
           </button>
 
           {/* Brand (Mobile only) */}
-          <div className="md:hidden text-xl font-headline font-bold text-primary tracking-tighter mr-auto">
+          <div className="md:hidden min-w-0 truncate text-lg font-headline font-bold text-primary tracking-tighter mr-auto">
             SyncUT Portal
           </div>
 
@@ -218,7 +253,7 @@ export function DashboardShell({
           <div className="hidden md:block flex-1"></div>
 
           {/* Right Actions */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4 shrink-0">
             {activeHeaderMenu ? (
               <button
                 type="button"
@@ -229,29 +264,30 @@ export function DashboardShell({
               />
             ) : null}
 
-            {/* Search */}
-            <div className="relative hidden sm:block">
-              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">
-                search
-              </span>
-              <input
-                className="bg-surface-container border border-outline-variant rounded-full pl-9 pr-4 py-1.5 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-on-surface placeholder:text-on-surface-variant w-48 focus:w-64"
-                placeholder="Buscar en el portal..."
-                type="text"
-              />
-            </div>
+            {/* El buscador global se retiro: era un campo sin accion conectada.
+                Vuelve cuando exista una busqueda real por modulo. */}
 
-            {/* Notifications */}
             <ThemeToggle compact />
-            <Link
-              href="/notificaciones?estado=no-leidas"
-              aria-label="Abrir notificaciones no leidas"
-              title="Notificaciones"
-              className="text-on-surface-variant hover:text-on-surface transition-colors duration-200 cursor-pointer relative focus:outline-none focus:ring-2 focus:ring-primary rounded-full p-1"
-            >
-              <span className="material-symbols-outlined">notifications</span>
-              <span className="absolute top-0 right-0 w-2 h-2 bg-primary rounded-full"></span>
-            </Link>
+
+            {notificationsLink ? (
+              <Link
+                href="/notificaciones?estado=no-leidas"
+                aria-label={
+                  unreadCount > 0
+                    ? `Abrir ${unreadCount} notificaciones sin leer`
+                    : "Abrir notificaciones"
+                }
+                title="Notificaciones"
+                className="text-on-surface-variant hover:text-on-surface transition-colors duration-200 cursor-pointer relative focus:outline-none focus:ring-2 focus:ring-primary rounded-full p-1"
+              >
+                <span className="material-symbols-outlined">notifications</span>
+                {unreadCount > 0 ? (
+                  <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 grid place-items-center rounded-full bg-primary text-[9px] font-bold text-on-primary">
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </span>
+                ) : null}
+              </Link>
+            ) : null}
 
             {/* Settings */}
             <div className="relative">
@@ -280,30 +316,36 @@ export function DashboardShell({
                   </div>
                   <div className="p-2">
                     <ThemeToggle />
-                    <Link
-                      href="/notificaciones#preferencias"
-                      onClick={() => setActiveHeaderMenu(null)}
-                      className="flex items-center gap-3 rounded px-3 py-2 text-sm text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
-                    >
-                      <span className="material-symbols-outlined text-[18px]">tune</span>
-                      Preferencias de notificaciones
-                    </Link>
-                    <Link
-                      href="/dashboard"
-                      onClick={() => setActiveHeaderMenu(null)}
-                      className="flex items-center gap-3 rounded px-3 py-2 text-sm text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
-                    >
-                      <span className="material-symbols-outlined text-[18px]">dashboard_customize</span>
-                      Panel de mi rol
-                    </Link>
-                    <Link
-                      href="/chatbot"
-                      onClick={() => setActiveHeaderMenu(null)}
-                      className="flex items-center gap-3 rounded px-3 py-2 text-sm text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
-                    >
-                      <span className="material-symbols-outlined text-[18px]">support_agent</span>
-                      Ayuda institucional
-                    </Link>
+                    {notificationsLink ? (
+                      <Link
+                        href="/notificaciones#preferencias"
+                        onClick={() => setActiveHeaderMenu(null)}
+                        className="flex items-center gap-3 rounded px-3 py-2 text-sm text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">tune</span>
+                        Preferencias de notificaciones
+                      </Link>
+                    ) : null}
+                    {homeLink ? (
+                      <Link
+                        href={homeLink.href}
+                        onClick={() => setActiveHeaderMenu(null)}
+                        className="flex items-center gap-3 rounded px-3 py-2 text-sm text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">dashboard_customize</span>
+                        {homeLink.label}
+                      </Link>
+                    ) : null}
+                    {helpLink ? (
+                      <Link
+                        href={helpLink.href}
+                        onClick={() => setActiveHeaderMenu(null)}
+                        className="flex items-center gap-3 rounded px-3 py-2 text-sm text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">support_agent</span>
+                        Ayuda institucional
+                      </Link>
+                    ) : null}
                   </div>
                 </div>
               ) : null}
@@ -338,22 +380,26 @@ export function DashboardShell({
                     </div>
                   </div>
                   <div className="p-2">
-                    <Link
-                      href="/dashboard"
-                      onClick={() => setActiveHeaderMenu(null)}
-                      className="flex items-center gap-3 rounded px-3 py-2 text-sm text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
-                    >
-                      <span className="material-symbols-outlined text-[18px]">account_circle</span>
-                      Ver mi panel
-                    </Link>
-                    <Link
-                      href="/notificaciones"
-                      onClick={() => setActiveHeaderMenu(null)}
-                      className="flex items-center gap-3 rounded px-3 py-2 text-sm text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
-                    >
-                      <span className="material-symbols-outlined text-[18px]">notifications</span>
-                      Mis notificaciones
-                    </Link>
+                    {homeLink ? (
+                      <Link
+                        href={homeLink.href}
+                        onClick={() => setActiveHeaderMenu(null)}
+                        className="flex items-center gap-3 rounded px-3 py-2 text-sm text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">account_circle</span>
+                        {homeLink.label}
+                      </Link>
+                    ) : null}
+                    {notificationsLink ? (
+                      <Link
+                        href="/notificaciones"
+                        onClick={() => setActiveHeaderMenu(null)}
+                        className="flex items-center gap-3 rounded px-3 py-2 text-sm text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">notifications</span>
+                        Mis notificaciones
+                      </Link>
+                    ) : null}
                     <button
                       type="button"
                       onClick={handleLogout}

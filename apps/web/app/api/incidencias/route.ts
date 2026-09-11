@@ -22,6 +22,7 @@ const incidentSelect = `
   id,
   reported_by,
   assigned_to,
+  team_id,
   title,
   area,
   description,
@@ -50,7 +51,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         error: "No autenticado",
-        details: authError?.message ?? "No se encontro usuario en la sesion o token.",
+        details: "Inicia sesion para continuar.",
       },
       { status: 401 },
     );
@@ -87,9 +88,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         error: "Error consultando incidencias",
-        details: error.message,
-        code: error.code,
-        hint: error.hint,
       },
       { status: 500 },
     );
@@ -106,7 +104,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         error: "No autenticado",
-        details: authError?.message ?? "No se encontro usuario en la sesion o token.",
+        details: "Inicia sesion para continuar.",
       },
       { status: 401 },
     );
@@ -119,26 +117,44 @@ export async function POST(request: NextRequest) {
     return validationError(parsed.error);
   }
 
+  // La politica de insercion exige `team_id` y comprueba que quien reporta sea
+  // miembro activo de ese equipo. Se resuelve en el servidor: si llegara desde
+  // el cliente podria venir vacio o apuntar a un equipo ajeno.
+  const { data: membership } = await supabase
+    .from("tutor_team_members")
+    .select("team_id")
+    .eq("student_id", user.id)
+    .eq("status", "active")
+    .maybeSingle();
+
+  if (!membership?.team_id) {
+    return NextResponse.json(
+      {
+        error: "Sin equipo tutorial",
+        details: "Unete a tu equipo tutorial antes de reportar una incidencia.",
+      },
+      { status: 409 },
+    );
+  }
+
   const { data, error } = await supabase
     .from("incidents")
     .insert({
       reported_by: user.id,
+      team_id: membership.team_id,
       title: parsed.data.title,
       area: parsed.data.area,
       description: parsed.data.description,
       priority: parsed.data.priority,
-    })
+    } as never)
     .select(incidentSelect)
     .single();
 
   if (error) {
+    // El detalle de Postgres (message/code/hint) se queda en el servidor.
+    console.error("POST /api/incidencias", error);
     return NextResponse.json(
-      {
-        error: "Error creando incidencia",
-        details: error.message,
-        code: error.code,
-        hint: error.hint,
-      },
+      { error: "No fue posible registrar la incidencia." },
       { status: 500 },
     );
   }

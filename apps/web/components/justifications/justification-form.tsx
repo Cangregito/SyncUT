@@ -64,12 +64,16 @@ export function JustificationForm() {
     event.preventDefault();
     if (submissionLock.current || isSubmitting) return;
 
+    // `event.currentTarget` queda en null en cuanto termina el despacho del
+    // evento, asi que la referencia se captura antes del primer await.
+    const form = event.currentTarget;
+
     submissionLock.current = true;
     setIsSubmitting(true);
     setMessage(null);
 
     try {
-      const formData = new FormData(event.currentTarget);
+      const formData = new FormData(form);
       const categoryEntry = formData.get("category");
       const category = isCategory(categoryEntry) ? categoryEntry : "personal";
       const title = String(formData.get("title") ?? "").trim();
@@ -121,7 +125,7 @@ export function JustificationForm() {
         .maybeSingle();
 
       if (duplicate) {
-        setMessage("Esta justificacion ya fue enviada y sigue pendiente de revision.");
+        setMessage("Ya tienes una solicitud abierta con ese titulo y esas fechas. Respondela desde la lista en lugar de crear otra.");
         return;
       }
 
@@ -145,7 +149,7 @@ export function JustificationForm() {
         .single();
 
       if (justificationError || !justification) {
-        setMessage(justificationError?.code === "23505" ? "Esta justificacion ya fue enviada y sigue pendiente de revision." : justificationError?.message ?? "No se pudo crear la justificacion.");
+        setMessage(justificationError?.code === "23505" ? "Ya tienes una solicitud abierta con ese titulo y esas fechas. Respondela desde la lista en lugar de crear otra." : justificationError?.message ?? "No se pudo crear la justificacion.");
         return;
       }
 
@@ -198,10 +202,16 @@ export function JustificationForm() {
         p_triggered_by: user.id,
       });
 
-      event.currentTarget.reset();
+      form.reset();
       setStartDate("");
       setMessage("Justificacion enviada correctamente.");
       router.refresh();
+    } catch {
+      // Sin este catch cualquier fallo inesperado dejaba la promesa rota y el
+      // formulario mudo, aunque la solicitud ya se hubiera guardado.
+      setMessage(
+        "No pudimos confirmar el envio. Revisa la lista de solicitudes antes de volver a intentarlo."
+      );
     } finally {
       submissionLock.current = false;
       setIsSubmitting(false);

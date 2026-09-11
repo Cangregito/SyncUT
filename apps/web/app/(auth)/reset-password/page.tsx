@@ -54,11 +54,11 @@ export default function ResetPasswordPage() {
       const { error } = await supabase.auth.updateUser({ password });
 
       if (error) {
-        setErrorMsg(error.message);
+        setErrorMsg("No fue posible actualizar la contraseña. Solicita un nuevo enlace e inténtalo de nuevo.");
         return;
       }
 
-      setSuccessMsg("Contraseña actualizada correctamente. Redirigiendo al dashboard...");
+      setSuccessMsg("Contraseña actualizada correctamente. Entrando al portal...");
       setTimeout(() => {
         router.replace("/dashboard");
         router.refresh();

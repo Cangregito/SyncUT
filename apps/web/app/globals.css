@@ -1,5 +1,14 @@
 @import "tailwindcss";
 
+/*
+ * El tema se controla con el atributo `data-theme` en <html> (ver app/layout.tsx
+ * y components/theme/theme-toggle.tsx). Sin esta declaracion, la variante
+ * `dark:` de Tailwind 4 apunta a `prefers-color-scheme`, es decir al tema del
+ * sistema operativo, y los componentes de components/ui/ ignoraban el boton de
+ * tema de la aplicacion.
+ */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 :root, [data-theme="dark"] {
   --background: #09090b; --foreground: #fafafa; --surface: #0c0c0f;
   --surface-container: #121215; --surface-container-low: #0f0f12; --surface-container-lowest: #09090b;
@@ -103,6 +112,35 @@ html, body { transition: background-color 160ms ease, color 160ms ease; }
 [data-theme="light"] .text-zinc-200, [data-theme="light"] .text-zinc-300 { color: #27272a !important; }
 [data-theme="light"] .text-zinc-400, [data-theme="light"] .text-zinc-500, [data-theme="light"] .text-zinc-600 { color: #626570 !important; }
 [data-theme="light"] [class*="border-white/"] { border-color: var(--outline-variant) !important; }
+
+/*
+ * Portada de las vistas administrativas.
+ *
+ * Antes el degradado iba escrito como valor arbitrario en el JSX, asi que
+ * ninguna regla de compatibilidad lo alcanzaba: en tema claro el fondo seguia
+ * siendo oscuro mientras `.text-white` se forzaba a oscuro, y el titulo
+ * quedaba ilegible. Al vivir aqui, la superficie cambia con el tema y la
+ * correccion global del texto vuelve a ser correcta.
+ */
+.admin-hero {
+  background:
+    radial-gradient(circle at top right, rgb(124 58 237 / 0.2), transparent 40%),
+    linear-gradient(135deg, #15131b, #0d0d10);
+}
+
+[data-theme="light"] .admin-hero {
+  background:
+    radial-gradient(circle at top right, rgb(124 58 237 / 0.1), transparent 45%),
+    linear-gradient(135deg, #ffffff, #f0edfa);
+}
+
+/* Acentos pensados para fondo oscuro: sobre superficie clara pierden contraste. */
+[data-theme="light"] .text-violet-300 { color: #5b21b6 !important; }
+[data-theme="light"] .text-emerald-300 { color: #047857 !important; }
+[data-theme="light"] .text-amber-300 { color: #92400e !important; }
+[data-theme="light"] .text-red-300 { color: #b91c1c !important; }
+[data-theme="light"] .text-sky-300 { color: #0369a1 !important; }
+[data-theme="light"] .text-zinc-700 { color: #a1a1aa !important; }
 
 /* Las utilidades semánticas conservan el mismo contrato visual en todas las secciones. */
 [data-theme="light"] .bg-background { background-color: var(--background) !important; }

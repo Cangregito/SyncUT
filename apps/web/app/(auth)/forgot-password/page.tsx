@@ -30,7 +30,9 @@ export default function ForgotPasswordPage() {
       });
 
       if (error) {
-        setErrorMsg(error.message);
+        // El mensaje del proveedor puede revelar si el correo existe o exponer
+        // limites internos: se muestra uno neutro.
+        setErrorMsg("No fue posible enviar el enlace en este momento. Inténtalo de nuevo en unos minutos.");
         return;
       }
 

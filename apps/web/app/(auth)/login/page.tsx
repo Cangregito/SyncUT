@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import { createSupabaseBrowserClient } from "@plataforma/sdk/client";
 
-import { DEMO_ROLE_ACCOUNTS, ROLE_LABELS, USER_ROLES, type UserRole } from "@/lib/auth/roles";
+import { DEMO_QUICK_ACCESS_ROLES, ROLE_LABELS, type UserRole } from "@/lib/auth/roles";
+
+import { signInWithDemoRole } from "./actions";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -14,6 +16,19 @@ export default function LoginPage() {
   const [errorMsg, setErrorMsg] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [demoRole, setDemoRole] = useState<UserRole | null>(null);
+
+  // El proxy (cuenta inactiva) y el callback de recuperacion redirigen aqui con
+  // `?error=`. Antes ese motivo nunca se mostraba y el usuario veia un login
+  // limpio sin saber por que habia vuelto.
+  useEffect(() => {
+    const reason = new URLSearchParams(window.location.search).get("error");
+    if (!reason) return;
+    const known: Record<string, string> = {
+      account_inactive: "Tu cuenta está suspendida o desactivada. Contacta a tu tutor o a administración.",
+    };
+    setErrorMsg(known[reason] ?? reason);
+  }, []);
 
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -60,11 +75,17 @@ export default function LoginPage() {
     }
   }
 
-  function fillDemoAccount(role: UserRole) {
-    const account = DEMO_ROLE_ACCOUNTS[role];
-    setUsername(account.email);
-    setPassword(account.password);
+  async function handleDemoLogin(role: UserRole) {
     setErrorMsg("");
+    setDemoRole(role);
+
+    // Las credenciales viven solo en el servidor: aqui unicamente viaja el rol.
+    const result = await signInWithDemoRole(role);
+
+    if (result?.error) {
+      setErrorMsg(result.error);
+      setDemoRole(null);
+    }
   }
 
   return (
@@ -83,15 +104,18 @@ export default function LoginPage() {
       {/* Login Box */}
       <div className="bg-surface-container border border-outline-variant rounded-lg p-6 sm:p-8">
         <div className="mb-5 grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {USER_ROLES.map((role) => (
+          {DEMO_QUICK_ACCESS_ROLES.map((role) => (
             <button
               key={role}
               type="button"
-              onClick={() => fillDemoAccount(role)}
-              className="flex items-center justify-between rounded border border-outline-variant bg-surface px-3 py-2 text-left text-xs text-on-surface-variant hover:border-primary hover:text-on-surface focus:outline-none focus:ring-2 focus:ring-primary"
+              onClick={() => handleDemoLogin(role)}
+              disabled={demoRole !== null || isSubmitting}
+              className="flex items-center justify-between rounded border border-outline-variant bg-surface px-3 py-2 text-left text-xs text-on-surface-variant hover:border-primary hover:text-on-surface focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
             >
               <span>{ROLE_LABELS[role]}</span>
-              <span className="material-symbols-outlined text-[16px]">login</span>
+              <span className={`material-symbols-outlined text-[16px] ${demoRole === role ? "animate-spin" : ""}`}>
+                {demoRole === role ? "progress_activity" : "login"}
+              </span>
             </button>
           ))}
         </div>
@@ -99,7 +123,7 @@ export default function LoginPage() {
           {/* Username */}
           <div>
             <label className="block text-sm font-medium text-on-surface-variant mb-1.5" htmlFor="username">
-              Usuario o Correo Electrónico
+              Correo electrónico institucional
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -108,8 +132,8 @@ export default function LoginPage() {
               <input
                 className="block w-full pl-10 bg-surface border border-outline-variant rounded text-on-surface text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background transition-all py-2.5 placeholder:text-outline"
                 id="username"
-                type="text"
-                placeholder="admin@syncut.io"
+                type="email"
+                placeholder="nombre@syncut.test"
                 autoComplete="email"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
@@ -166,25 +190,12 @@ export default function LoginPage() {
             )}
           </div>
 
-          {/* Remember me checkbox */}
-          <div className="flex items-center pt-1 pb-3">
-            <input
-              className="h-4 w-4 rounded bg-surface border-outline-variant text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background cursor-pointer"
-              id="remember-me"
-              name="remember-me"
-              type="checkbox"
-            />
-            <label
-              className="ml-2 block text-sm text-on-surface-variant cursor-pointer hover:text-on-surface transition-colors select-none"
-              htmlFor="remember-me"
-            >
-              Recordar mi sesión en este dispositivo
-            </label>
-          </div>
+          {/* La casilla "Recordar mi sesion" se retiro: no alteraba la
+              autenticacion. La sesion de Supabase ya persiste en el dispositivo. */}
 
           {/* Submit Button */}
           <button
-            className="w-full flex justify-center items-center gap-2 py-2.5 px-4 border border-transparent rounded text-sm font-bold text-on-primary bg-primary hover:bg-surface-tint focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background active:scale-[0.98] transition-all duration-150"
+            className="w-full flex justify-center items-center gap-2 py-2.5 px-4 border border-transparent rounded text-sm font-bold text-on-primary bg-primary hover:bg-primary-container focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background active:scale-[0.98] transition-all duration-150"
             type="submit"
             disabled={isSubmitting}
           >
@@ -202,14 +213,11 @@ export default function LoginPage() {
         </Link>
       </div>
 
-      {/* Footer Links */}
-      <div className="mt-8 text-center text-xs text-outline flex items-center justify-center gap-4">
-        <a className="hover:text-on-surface-variant transition-colors" href="#">Ayuda</a>
-        <span className="h-3 w-px bg-outline-variant"></span>
-        <a className="hover:text-on-surface-variant transition-colors" href="#">Privacidad</a>
-        <span className="h-3 w-px bg-outline-variant"></span>
-        <a className="hover:text-on-surface-variant transition-colors" href="#">Términos</a>
-      </div>
+      {/* Ayuda, Privacidad y Terminos apuntaban a "#". Se retiran hasta que
+          existan esas paginas. */}
+      <p className="mt-8 text-center text-xs text-outline">
+        Universidad Tecnológica · Plataforma de acompañamiento tutorial
+      </p>
     </div>
   );
 }

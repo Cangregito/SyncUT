@@ -1,4 +1,6 @@
 import { revalidatePath } from "next/cache";
+import Link from "next/link";
+import { redirect } from "next/navigation";
 import type { Database, Tables } from "@plataforma/types";
 
 import { requireProfile } from "@/lib/auth/session";
@@ -87,10 +89,39 @@ async function updatePreference(formData: FormData) {
   revalidatePath("/notificaciones");
 }
 
+const PAGE_SIZE = 20;
+
+/**
+ * A4 - `metadata` ya viajaba en la consulta pero se descartaba, asi que el
+ * usuario tenia que buscar a mano el expediente cuyo identificador ya estaba
+ * cargado. Aqui se convierte en el destino del aviso.
+ */
+function notificationTarget(row: { event_type: string; metadata: unknown }): string | null {
+  const metadata = (row.metadata ?? {}) as Record<string, unknown>;
+  const asId = (value: unknown) => (typeof value === "string" && value ? value : null);
+
+  const justificationId = asId(metadata.justification_id);
+  if (justificationId) return `/justificaciones?q=${encodeURIComponent(justificationId)}`;
+
+  const appointmentId = asId(metadata.appointment_id);
+  if (appointmentId) return "/citas";
+
+  const incidentId = asId(metadata.incident_id);
+  if (incidentId) return "/incidencias";
+
+  const deliveryId = asId(metadata.delivery_id);
+  if (deliveryId) return "/docente";
+
+  if (row.event_type.startsWith("chatbot.")) return "/chatbot";
+  if (row.event_type.startsWith("team.")) return "/equipo";
+
+  return null;
+}
+
 export default async function NotificacionesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ estado?: string; evento?: string }>;
+  searchParams: Promise<{ estado?: string; evento?: string; pagina?: string }>;
 }) {
   const profile = await requireProfile();
   const params = await searchParams;
@@ -99,7 +130,7 @@ export default async function NotificacionesPage({
 
   let query = supabase
     .from("notifications")
-    .select("id, event_type, title, body, metadata, is_read, read_at, created_at")
+    .select("id, event_type, title, body, metadata, is_read, read_at, created_at", { count: "exact" })
     .eq("user_id", profile.id)
     .order("created_at", { ascending: false });
 
@@ -115,8 +146,38 @@ export default async function NotificacionesPage({
     query = query.eq("event_type", params.evento);
   }
 
-  const { data, error } = await query;
+  // A3 - sin limite, una bandeja con 199 avisos generaba un documento de unos
+  // 37 000 px de alto. La consulta se acota y se pagina.
+  const requestedPage = Math.max(1, Number.parseInt(params.pagina ?? "1", 10) || 1);
+  const { data, error, count } = await query.range(
+    (requestedPage - 1) * PAGE_SIZE,
+    requestedPage * PAGE_SIZE - 1,
+  );
+  const totalItems = count ?? 0;
+  const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+
+  // Una pagina fuera de rango devolvia una lista vacia con un contador
+  // clavado en la ultima pagina: se redirige a la ultima real.
+  if (requestedPage > totalPages) {
+    const search = new URLSearchParams();
+    if (params.estado) search.set("estado", params.estado);
+    if (params.evento) search.set("evento", params.evento);
+    if (totalPages > 1) search.set("pagina", String(totalPages));
+    const query = search.toString();
+    redirect(query ? `/notificaciones?${query}` : "/notificaciones");
+  }
+
+  const currentPage = requestedPage;
   const items = (data ?? []) as NotificationRow[];
+
+  function pageHref(page: number) {
+    const search = new URLSearchParams();
+    if (params.estado) search.set("estado", params.estado);
+    if (params.evento) search.set("evento", params.evento);
+    if (page > 1) search.set("pagina", String(page));
+    const query = search.toString();
+    return query ? `/notificaciones?${query}` : "/notificaciones";
+  }
   const unread = items.filter((item) => !item.is_read).length;
   const eventTypes = Array.from(new Set(items.map((item) => item.event_type))).sort();
   const [{ data: allEventTypesData }, { data: preferencesData }] = await Promise.all([
@@ -145,7 +206,7 @@ export default async function NotificacionesPage({
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-6">
       <header>
-        <p className="text-xs font-semibold uppercase tracking-wider text-primary">Squad 4</p>
+        <p className="text-xs font-semibold uppercase tracking-wider text-primary">Avisos del portal</p>
         <h1 className="mt-2 text-2xl md:text-3xl font-headline font-bold text-on-surface">
           Centro de Notificaciones
         </h1>
@@ -203,7 +264,7 @@ export default async function NotificacionesPage({
 
         {error ? (
           <p className="mt-4 rounded border border-error/40 bg-error-container/20 p-3 text-sm text-on-error-container">
-            {error.message}
+            No se pudieron consultar tus notificaciones. Actualiza la pagina en unos segundos.
           </p>
         ) : null}
 
@@ -228,15 +289,47 @@ export default async function NotificacionesPage({
                 </span>
               </div>
               <p className="mt-3 text-sm text-on-surface-variant">{item.body}</p>
-              <form action={toggleNotificationRead} className="mt-4">
-                <input type="hidden" name="id" value={item.id} />
-                <input type="hidden" name="is_read" value={String(!item.is_read)} />
-                <button className="rounded border border-outline-variant px-3 py-2 text-xs font-semibold text-on-surface-variant hover:border-primary hover:text-primary">
-                  {item.is_read ? "Marcar no leida" : "Marcar leida"}
-                </button>
-              </form>
+              <div className="mt-4 flex flex-wrap items-center gap-2">
+                <form action={toggleNotificationRead}>
+                  <input type="hidden" name="id" value={item.id} />
+                  <input type="hidden" name="is_read" value={String(!item.is_read)} />
+                  <button className="rounded border border-outline-variant px-3 py-2 text-xs font-semibold text-on-surface-variant hover:border-primary hover:text-primary">
+                    {item.is_read ? "Marcar no leida" : "Marcar leida"}
+                  </button>
+                </form>
+                {notificationTarget(item) ? (
+                  <Link
+                    href={notificationTarget(item)!}
+                    className="rounded bg-primary-container px-3 py-2 text-xs font-semibold text-on-primary-container hover:bg-primary"
+                  >
+                    Abrir tramite
+                  </Link>
+                ) : null}
+              </div>
             </article>
           ))}
+
+          {totalPages > 1 ? (
+            <nav aria-label="Paginacion de notificaciones" className="flex items-center justify-between gap-3 pt-2">
+              <Link
+                href={pageHref(currentPage - 1)}
+                aria-disabled={currentPage === 1}
+                className={`rounded border px-3 py-2 text-xs font-semibold ${currentPage === 1 ? "pointer-events-none border-outline-variant/40 text-on-surface-variant/40" : "border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary"}`}
+              >
+                Anteriores
+              </Link>
+              <span className="text-xs text-on-surface-variant">
+                Pagina {currentPage} de {totalPages} · {totalItems} avisos
+              </span>
+              <Link
+                href={pageHref(currentPage + 1)}
+                aria-disabled={currentPage === totalPages}
+                className={`rounded border px-3 py-2 text-xs font-semibold ${currentPage === totalPages ? "pointer-events-none border-outline-variant/40 text-on-surface-variant/40" : "border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary"}`}
+              >
+                Siguientes
+              </Link>
+            </nav>
+          ) : null}
         </div>
       </section>
 
@@ -287,7 +380,7 @@ export default async function NotificacionesPage({
             <div>
               <h2 className="text-sm font-semibold uppercase text-on-surface-variant">Cola real de correo</h2>
               <p className="mt-1 text-xs text-on-surface-variant">
-                Resumen seguro desde RPC. La cola completa permanece protegida por RLS.
+                Resumen de los correos en cola. El detalle solo es visible para su destinatario.
               </p>
             </div>
             <span className="rounded border border-outline-variant px-3 py-2 text-xs font-semibold text-on-surface-variant">

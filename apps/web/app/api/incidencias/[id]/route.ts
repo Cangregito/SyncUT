@@ -120,7 +120,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
     return NextResponse.json(
       {
         error: "No autenticado",
-        details: authError?.message ?? "No se encontro usuario en la sesion o token.",
+        details: "Inicia sesion para continuar.",
       },
       { status: 401 },
     );
@@ -136,7 +136,6 @@ export async function GET(request: NextRequest, context: RouteContext) {
     return NextResponse.json(
       {
         error: "Incidencia no encontrada o sin permiso",
-        details: incidentError?.message,
       },
       { status: 404 },
     );
@@ -152,7 +151,6 @@ export async function GET(request: NextRequest, context: RouteContext) {
     return NextResponse.json(
       {
         error: "Error consultando comentarios",
-        details: commentsError.message,
       },
       { status: 500 },
     );
@@ -176,7 +174,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     return NextResponse.json(
       {
         error: "No autenticado",
-        details: authError?.message ?? "No se encontro usuario en la sesion o token.",
+        details: "Inicia sesion para continuar.",
       },
       { status: 401 },
     );
@@ -225,9 +223,6 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     return NextResponse.json(
       {
         error: "Error actualizando incidencia",
-        details: error.message,
-        code: error.code,
-        hint: error.hint,
       },
       { status: 500 },
     );
