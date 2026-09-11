@@ -74,20 +74,26 @@ export default function ResetPasswordPage() {
     <div className="w-full max-w-[420px]">
       <div className="mb-8 flex flex-col items-center justify-center gap-2">
         <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-outline-variant bg-surface-container">
-          <span className="material-symbols-outlined text-3xl text-primary">password</span>
+          <span aria-hidden="true" className="material-symbols-outlined text-3xl text-primary">password</span>
         </div>
         <h1 className="mt-2 font-headline text-2xl font-black tracking-tighter text-on-surface">
           Nueva contraseña
         </h1>
-        <p className="text-center text-xs uppercase tracking-wider text-on-surface-variant">
-          Sesión de recuperación verificada
+        <p className="text-center text-sm text-on-surface-variant" role="status">
+          {hasSession === null
+            ? "Comprobando tu enlace de recuperación…"
+            : hasSession
+              ? "Elige una nueva contraseña para tu cuenta."
+              : "Necesitas un enlace vigente para continuar."}
         </p>
       </div>
 
       <div className="rounded-lg border border-outline-variant bg-surface-container p-6 sm:p-8">
-        {hasSession === false ? (
+        {hasSession === null ? (
+          <p className="text-sm text-on-surface-variant">Espera un momento mientras comprobamos el enlace.</p>
+        ) : hasSession === false ? (
           <div className="space-y-4">
-            <div className="rounded border border-error/40 bg-error-container/20 p-3 text-xs font-medium text-on-error-container">
+            <div role="alert" className="rounded border border-error/40 bg-error-container/20 p-3 text-sm font-medium text-on-error-container">
               El enlace no tiene una sesión válida o ya expiró. Solicita uno nuevo.
             </div>
             <Link
@@ -105,12 +111,15 @@ export default function ResetPasswordPage() {
               </label>
               <div className="relative">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                  <span className="material-symbols-outlined text-[20px] text-outline">lock</span>
+                  <span aria-hidden="true" className="material-symbols-outlined text-[20px] text-outline">lock</span>
                 </div>
                 <input
                   id="password"
                   type={showPassword ? "text" : "password"}
                   autoComplete="new-password"
+                  required
+                  minLength={8}
+                  aria-describedby="password-help"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   className="block w-full rounded border border-outline-variant bg-surface py-2.5 pl-10 pr-10 text-sm text-on-surface transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
@@ -121,7 +130,7 @@ export default function ResetPasswordPage() {
                   className="absolute inset-y-0 right-0 flex items-center pr-3 text-outline transition-colors hover:text-on-surface-variant"
                   aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
                 >
-                  <span className="material-symbols-outlined text-[20px]">
+                  <span aria-hidden="true" className="material-symbols-outlined text-[20px]">
                     {showPassword ? "visibility" : "visibility_off"}
                   </span>
                 </button>
@@ -136,23 +145,25 @@ export default function ResetPasswordPage() {
                 id="confirm-password"
                 type="password"
                 autoComplete="new-password"
+                required
+                minLength={8}
                 value={confirmPassword}
                 onChange={(event) => setConfirmPassword(event.target.value)}
                 className="block w-full rounded border border-outline-variant bg-surface px-3 py-2.5 text-sm text-on-surface transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
               />
             </div>
 
-            <p className="text-xs text-on-surface-variant">Usa al menos 8 caracteres. No reutilices contraseñas de otros servicios.</p>
+            <p id="password-help" className="text-sm text-on-surface-variant">Usa al menos 8 caracteres. No reutilices contraseñas de otros servicios.</p>
 
             {errorMsg ? (
-              <div className="flex items-center gap-1.5 text-error">
-                <span className="material-symbols-outlined text-[16px]">error</span>
+              <div role="alert" className="flex items-center gap-1.5 text-error">
+                <span aria-hidden="true" className="material-symbols-outlined text-[16px]">error</span>
                 <p className="text-xs font-medium">{errorMsg}</p>
               </div>
             ) : null}
 
             {successMsg ? (
-              <div className="rounded border border-tertiary/40 bg-tertiary-container/20 p-3 text-xs font-medium text-on-tertiary-container">
+              <div role="status" className="rounded border border-tertiary/40 bg-tertiary-container/20 p-3 text-sm font-medium text-on-tertiary-container">
                 {successMsg}
               </div>
             ) : null}
@@ -163,11 +174,12 @@ export default function ResetPasswordPage() {
               disabled={isSubmitting || hasSession === null}
             >
               {isSubmitting ? "Actualizando..." : "Actualizar contraseña"}
-              <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[18px]">arrow_forward</span>
             </button>
           </form>
         )}
       </div>
+      <p className="mt-6 text-center text-sm"><Link href="/login" className="text-primary underline underline-offset-4">Volver al inicio de sesión</Link></p>
     </div>
   );
 }

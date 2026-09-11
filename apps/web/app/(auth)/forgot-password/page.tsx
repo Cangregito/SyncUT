@@ -48,7 +48,7 @@ export default function ForgotPasswordPage() {
     <div className="w-full max-w-[420px]">
       <div className="mb-8 flex flex-col items-center justify-center gap-2">
         <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-outline-variant bg-surface-container">
-          <span className="material-symbols-outlined text-3xl text-primary">lock_reset</span>
+          <span aria-hidden="true" className="material-symbols-outlined text-3xl text-primary">lock_reset</span>
         </div>
         <h1 className="mt-2 font-headline text-2xl font-black tracking-tighter text-on-surface">
           Recuperar contraseña
@@ -66,7 +66,7 @@ export default function ForgotPasswordPage() {
             </label>
             <div className="relative">
               <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                <span className="material-symbols-outlined text-[20px] text-outline">mail</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-[20px] text-outline">mail</span>
               </div>
               <input
                 id="email"
@@ -80,14 +80,14 @@ export default function ForgotPasswordPage() {
           </div>
 
           {errorMsg ? (
-            <div className="flex items-center gap-1.5 text-error">
-              <span className="material-symbols-outlined text-[16px]">error</span>
+            <div role="alert" className="flex items-center gap-1.5 text-error">
+              <span aria-hidden="true" className="material-symbols-outlined text-[16px]">error</span>
               <p className="text-xs font-medium">{errorMsg}</p>
             </div>
           ) : null}
 
           {successMsg ? (
-            <div className="rounded border border-tertiary/40 bg-tertiary-container/20 p-3 text-xs font-medium text-on-tertiary-container">
+            <div role="status" className="rounded border border-tertiary/40 bg-tertiary-container/20 p-3 text-sm font-medium text-on-tertiary-container">
               {successMsg}
             </div>
           ) : null}
@@ -96,9 +96,10 @@ export default function ForgotPasswordPage() {
             className="flex w-full items-center justify-center gap-2 rounded border border-transparent bg-primary px-4 py-2.5 text-sm font-bold text-on-primary transition-all duration-150 hover:bg-surface-tint focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background active:scale-[0.98]"
             type="submit"
             disabled={isSubmitting}
+            aria-busy={isSubmitting}
           >
             {isSubmitting ? "Enviando..." : "Enviar enlace"}
-            <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+            <span aria-hidden="true" className="material-symbols-outlined text-[18px]">arrow_forward</span>
           </button>
         </form>
       </div>

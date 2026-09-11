@@ -94,7 +94,7 @@ export default function SignupPage() {
       {/* Brand / Header */}
       <div className="text-center mb-8">
         <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-surface-container border border-outline-variant mb-4 shadow-lg shadow-black/50">
-          <span className="material-symbols-outlined text-primary text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>
+          <span aria-hidden="true" className="material-symbols-outlined text-primary text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>
             security
           </span>
         </div>
@@ -112,7 +112,7 @@ export default function SignupPage() {
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <span className="material-symbols-outlined text-on-surface-variant text-[20px]">person</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-on-surface-variant text-[20px]">person</span>
               </div>
               <input
                 className="block w-full pl-10 pr-3 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg text-on-surface placeholder:text-on-surface-variant/30 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all sm:text-sm"
@@ -132,7 +132,7 @@ export default function SignupPage() {
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <span className="material-symbols-outlined text-on-surface-variant text-[20px]">mail</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-on-surface-variant text-[20px]">mail</span>
               </div>
               <input
                 className="block w-full pl-10 pr-3 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg text-on-surface placeholder:text-on-surface-variant/30 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all sm:text-sm"
@@ -153,7 +153,7 @@ export default function SignupPage() {
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <span className="material-symbols-outlined text-on-surface-variant text-[20px]">lock</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-on-surface-variant text-[20px]">lock</span>
               </div>
               <input
                 className="block w-full pl-10 pr-10 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg text-on-surface placeholder:text-on-surface-variant/30 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all sm:text-sm"
@@ -168,8 +168,10 @@ export default function SignupPage() {
                 className="absolute inset-y-0 right-0 pr-3 flex items-center text-on-surface-variant hover:text-on-surface transition-colors"
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                aria-pressed={showPassword}
               >
-                <span className="material-symbols-outlined text-[20px]">
+                <span aria-hidden="true" className="material-symbols-outlined text-[20px]">
                   {showPassword ? "visibility" : "visibility_off"}
                 </span>
               </button>
@@ -206,7 +208,7 @@ export default function SignupPage() {
                     isPasswordStrong ? "text-tertiary" : "text-on-surface-variant"
                   }`}
                 >
-                  {isPasswordStrong ? "Fuerte" : "Débil"}
+                  {isPasswordStrong ? "Longitud suficiente" : "Añade más caracteres"}
                 </span>
               </div>
             </div>
@@ -219,7 +221,7 @@ export default function SignupPage() {
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <span className="material-symbols-outlined text-on-surface-variant text-[20px]">lock_reset</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-on-surface-variant text-[20px]">lock_reset</span>
               </div>
               <input
                 className="block w-full pl-10 pr-3 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg text-on-surface placeholder:text-on-surface-variant/30 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all sm:text-sm"
@@ -256,15 +258,15 @@ export default function SignupPage() {
 
           {/* Notifications and Errors */}
           {errorMsg && (
-            <div className="flex items-center gap-1.5 text-error">
-              <span className="material-symbols-outlined text-[18px]">error</span>
+            <div role="alert" className="flex items-center gap-1.5 text-error">
+              <span aria-hidden="true" className="material-symbols-outlined text-[18px]">error</span>
               <p className="text-xs font-semibold">{errorMsg}</p>
             </div>
           )}
 
           {successMsg && (
-            <div className="flex items-center gap-1.5 text-tertiary">
-              <span className="material-symbols-outlined text-[18px]">check_circle</span>
+            <div role="status" className="flex items-center gap-1.5 text-tertiary">
+              <span aria-hidden="true" className="material-symbols-outlined text-[18px]">check_circle</span>
               <p className="text-xs font-semibold">{successMsg}</p>
             </div>
           )}
@@ -274,6 +276,7 @@ export default function SignupPage() {
             className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-on-primary bg-primary hover:bg-primary-fixed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-background focus:ring-primary transition-all active:scale-[0.98]"
             type="submit"
             disabled={isSubmitting}
+            aria-busy={isSubmitting}
           >
             {isSubmitting ? "Creando cuenta..." : "Crear Cuenta"}
           </button>

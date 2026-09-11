@@ -1,0 +1,66 @@
+.root :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+}
+
+.root :where(input, select, textarea) {
+  scroll-margin-top: 6rem;
+}
+
+.root :where(button:not([data-calendar-day]), summary) {
+  min-height: 44px;
+}
+
+.root :where(button[aria-label]:not([data-calendar-day])) {
+  min-width: 44px;
+}
+
+.root label:has(input:is([type="checkbox"], [type="radio"])) {
+  min-height: 44px;
+}
+
+.root :where(button, summary, a) {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.root :where(button:disabled, [aria-disabled="true"]) {
+  cursor: not-allowed;
+}
+
+.root :where(input, textarea)::placeholder {
+  color: var(--on-surface-variant);
+  opacity: 1;
+}
+
+.skipLink {
+  position: fixed;
+  top: 0.5rem;
+  left: 0.5rem;
+  z-index: 100;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  background: var(--primary);
+  color: var(--on-primary);
+  transform: translateY(-160%);
+}
+
+.skipLink:focus {
+  transform: translateY(0);
+}
+
+@media (max-width: 639px) {
+  .root :where(input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]), select, textarea) {
+    font-size: 1rem;
+    min-width: 0;
+    max-width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root *, .root *::before, .root *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

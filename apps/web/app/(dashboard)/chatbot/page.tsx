@@ -1,3 +1,5 @@
+import { FaqBrowser } from "@/components/chatbot/faq-browser";
+import { SubmitButton } from "@/components/forms/submit-button";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { Tables } from "@plataforma/types";
@@ -419,14 +421,14 @@ export default async function ChatbotPage({
         </p>
       </header>
 
-      <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
+      <div className="grid items-start gap-6 lg:grid-cols-[1.5fr_1fr]">
         <section className="overflow-hidden rounded-2xl border border-outline-variant bg-surface-container shadow-sm">
           <div className="border-b border-outline-variant bg-gradient-to-r from-primary-container/70 to-tertiary-container/40 p-5">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="text-sm font-semibold text-on-surface">Lumi está disponible</h2>
+            <h2 className="text-sm font-semibold text-on-surface">Tu conversación con Lumi</h2>
             {conversation ? (
               <span className="rounded bg-surface-container-highest px-2 py-1 text-[10px] font-semibold uppercase text-primary">
-                {conversation.status}
+                {conversation.status === "escalated" ? "Atención solicitada" : conversation.status === "closed" ? "Finalizada" : "En curso"}
               </span>
             ) : null}
           </div>
@@ -439,13 +441,13 @@ export default async function ChatbotPage({
               <p className="rounded border border-outline-variant bg-surface p-4 text-sm text-on-surface-variant">
                 Inicia una conversación para recibir orientación personalizada.
               </p>
-              <button className="mt-4 rounded bg-primary-container px-4 py-2 text-sm font-semibold text-on-primary-container">
-                Iniciar conversacion
-              </button>
+              <SubmitButton pendingLabel="Iniciando…" className="mt-4 rounded bg-primary-container px-4 py-2 text-sm font-semibold text-on-primary-container">
+                Iniciar conversación
+              </SubmitButton>
             </form>
           ) : (
             <>
-              <div className="mt-4 flex max-h-[560px] flex-col gap-4 overflow-y-auto pr-1">
+              <div role="region" aria-label="Historial de la conversación" tabIndex={0} className="mt-4 flex max-h-[560px] flex-col gap-4 overflow-y-auto pr-1">
                 {messages.map((message) => (
                   <div
                     key={message.id}
@@ -466,29 +468,30 @@ export default async function ChatbotPage({
                   <input type="hidden" name="conversation_id" value={conversation.id} />
                   <input
                     name="content"
+                    aria-label="Tu pregunta para Lumi"
                     required
                     placeholder="Pregúntale algo a Lumi…"
                     maxLength={1200}
                     className="min-w-0 flex-1 rounded-2xl border border-outline-variant bg-surface px-4 py-3 text-sm text-on-surface shadow-inner"
                   />
-                  <button className="rounded-2xl bg-primary px-5 py-3 text-sm font-semibold text-on-primary">
-                    Enviar ↑
-                  </button>
+                  <SubmitButton pendingLabel="Lumi está respondiendo…" className="rounded-2xl bg-primary px-5 py-3 text-sm font-semibold text-on-primary">
+                    Enviar pregunta
+                  </SubmitButton>
                 </form>
               ) : null}
 
               <form action={closeConversation} className="mt-4 rounded border border-outline-variant bg-surface p-3">
                 <input type="hidden" name="conversation_id" value={conversation.id} />
                 <p className="text-xs font-semibold uppercase text-on-surface-variant">Cerrar y evaluar</p>
-                <div className="mt-3 grid gap-2 sm:grid-cols-[120px_1fr]">
-                  <select name="rating" className="rounded border border-outline-variant bg-surface-container px-3 py-2 text-sm text-on-surface" defaultValue="5">
-                    <option value="5">5</option>
-                    <option value="4">4</option>
-                    <option value="3">3</option>
-                    <option value="2">2</option>
-                    <option value="1">1</option>
+                <div className="mt-3 grid gap-2 sm:grid-cols-[180px_1fr]">
+                  <select aria-label="Calificación de la respuesta" name="rating" className="rounded border border-outline-variant bg-surface-container px-3 py-2 text-sm text-on-surface" defaultValue="5">
+                    <option value="5">5 · Muy útil</option>
+                    <option value="4">4 · Útil</option>
+                    <option value="3">3 · Regular</option>
+                    <option value="2">2 · Poco útil</option>
+                    <option value="1">1 · No me ayudó</option>
                   </select>
-                  <input name="comment" placeholder="Comentario opcional" className="rounded border border-outline-variant bg-surface-container px-3 py-2 text-sm text-on-surface" />
+                  <input aria-label="Comentario sobre la respuesta (opcional)" name="comment" placeholder="Comentario opcional" className="rounded border border-outline-variant bg-surface-container px-3 py-2 text-sm text-on-surface" />
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <button name="resolved" value="true" className="rounded border border-primary px-3 py-2 text-xs font-semibold text-primary">
@@ -505,22 +508,7 @@ export default async function ChatbotPage({
         </section>
 
         <aside className="space-y-6">
-          <section className="rounded-lg border border-outline-variant bg-surface-container p-5">
-            <h2 className="text-sm font-semibold uppercase text-on-surface-variant">Temas que conozco</h2>
-            <div className="mt-4 space-y-3">
-              {faqs.length === 0 ? (
-                <p className="rounded border border-outline-variant bg-surface p-3 text-sm text-on-surface-variant">
-                  No hay FAQ publicadas. El asistente registrara escalamiento cuando reciba preguntas.
-                </p>
-              ) : null}
-              {faqs.map((faq) => (
-                <div key={faq.id} className="rounded border border-outline-variant bg-surface p-3">
-                  <p className="text-xs font-semibold uppercase text-primary">{faq.category}</p>
-                  <p className="mt-1 text-sm font-medium text-on-surface">{faq.question}</p>
-                </div>
-              ))}
-            </div>
-          </section>
+          <FaqBrowser faqs={faqs.map(({ id, category, question, answer }) => ({ id, category, question, answer }))} />
 
           {handoffs.length > 0 ? (
             <section className="rounded-lg border border-outline-variant bg-surface-container p-5">
@@ -589,10 +577,10 @@ export default async function ChatbotPage({
             <form action={createFaqEntry} className="rounded-lg border border-outline-variant bg-surface-container p-5">
               <h2 className="text-sm font-semibold uppercase text-on-surface-variant">Publicar FAQ</h2>
               <div className="mt-4 space-y-3">
-                <input name="category" required placeholder="Categoria" className="w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
-                <input name="question" required placeholder="Pregunta oficial" className="w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
-                <textarea name="answer" required rows={3} placeholder="Respuesta oficial" className="w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
-                <input name="keywords" placeholder="Palabras clave separadas por coma" className="w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
+                <input aria-label="Categoría de la pregunta" name="category" required placeholder="Categoría" className="w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
+                <input aria-label="Pregunta oficial" name="question" required placeholder="Pregunta oficial" className="w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
+                <textarea aria-label="Respuesta oficial" name="answer" required rows={3} placeholder="Respuesta oficial" className="w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
+                <input aria-label="Palabras clave separadas por coma" name="keywords" placeholder="Palabras clave separadas por coma" className="w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
               </div>
               <button className="mt-4 w-full rounded bg-primary-container px-4 py-2 text-sm font-semibold text-on-primary-container">
                 Publicar FAQ

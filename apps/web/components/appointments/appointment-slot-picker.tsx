@@ -24,7 +24,7 @@ function slotLabel(slot: Availability) {
   const time = `${slot.startsAt.slice(0, 5)}-${slot.endsAt.slice(0, 5)}`;
   return slot.modality === "presencial"
     ? `${time} · Presencial${slot.location ? ` · ${slot.location}` : ""}`
-    : `${time} · En linea`;
+    : `${time} · En línea`;
 }
 
 export function AppointmentSlotPicker({ tutors, availability, busySlots }: { tutors: Tutor[]; availability: Availability[]; busySlots: BusySlot[] }) {
@@ -46,7 +46,7 @@ export function AppointmentSlotPicker({ tutors, availability, busySlots }: { tut
   }
 
   return <div className="space-y-3">
-    <label className="block text-xs font-medium text-on-surface-variant">Tutor asignado
+    <label className="block text-xs font-medium text-on-surface-variant">1. Elige a tu tutor
       <select name="tutor_id" value={tutorId} onChange={(event) => selectTutor(event.target.value)} required disabled={tutors.length === 0} className="mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface disabled:opacity-50">
         <option value="">Selecciona tutor</option>{tutors.map((tutor) => <option key={tutor.id} value={tutor.id}>{tutor.label}</option>)}
       </select>
@@ -56,9 +56,11 @@ export function AppointmentSlotPicker({ tutors, availability, busySlots }: { tut
     <input type="hidden" name="scheduled_date" value={selectedDate} />
     <input type="hidden" name="starts_at" value={selectedSlot?.startsAt ?? ""} />
     <input type="hidden" name="ends_at" value={selectedSlot?.endsAt ?? ""} />
-    {tutorId ? <div className="rounded border border-outline-variant bg-surface p-3">
-      <div className="flex items-center justify-between"><button type="button" disabled={monthOffset === 0} onClick={() => setMonthOffset((value) => value - 1)} className="rounded px-3 py-1 text-on-surface disabled:opacity-30">‹</button><p className="text-sm font-bold capitalize text-on-surface">{monthLabel}</p><button type="button" disabled={monthOffset >= 2} onClick={() => setMonthOffset((value) => value + 1)} className="rounded px-3 py-1 text-on-surface disabled:opacity-30">›</button></div>
-      <div className="mt-3 grid grid-cols-7 gap-1 text-center text-[10px] text-on-surface-variant">{["Do","Lu","Ma","Mi","Ju","Vi","Sa"].map((day) => <span key={day}>{day}</span>)}</div>
+    {tutorId && slots.length === 0 ? <p role="status" className="rounded border border-outline-variant bg-surface p-3 text-sm text-on-surface-variant">Tu tutor todavía no tiene horarios publicados. Consúltalo desde Equipo Tutorial.</p> : null}
+    {tutorId && slots.length > 0 ? <div className="rounded border border-outline-variant bg-surface p-3">
+      <p className="mb-2 text-sm font-medium text-on-surface">2. Elige un día disponible</p>
+      <div className="flex items-center justify-between"><button type="button" disabled={monthOffset === 0} onClick={() => setMonthOffset((value) => value - 1)} aria-label="Mes anterior" className="min-w-11 rounded px-3 py-1 text-on-surface disabled:opacity-30">‹</button><p aria-live="polite" className="text-sm font-bold capitalize text-on-surface">{monthLabel}</p><button type="button" disabled={monthOffset >= 2} onClick={() => setMonthOffset((value) => value + 1)} aria-label="Mes siguiente" className="min-w-11 rounded px-3 py-1 text-on-surface disabled:opacity-30">›</button></div>
+      <div className="mt-3 grid grid-cols-7 gap-1 text-center text-xs text-on-surface-variant">{["Do","Lu","Ma","Mi","Ju","Vi","Sa"].map((day) => <span key={day}>{day}</span>)}</div>
       <div className="mt-1 grid grid-cols-7 gap-1">{days.map((date) => {
         const value = dateValue(date); const weekday = date.getDay(); const sameMonth = date.getMonth() === month.getMonth();
         const daySlots = slots.filter((slot) => slot.dayOfWeek === weekday);
@@ -66,21 +68,21 @@ export function AppointmentSlotPicker({ tutors, availability, busySlots }: { tut
         // Los dias habiles salen de la disponibilidad publicada por el tutor.
         // Bloquear sabado y domingo en duro dejaba huecos imposibles de reservar.
         const unavailable = date < today || daySlots.length === 0 || allSlotsBusy;
-        return <button key={value} type="button" disabled={unavailable || !sameMonth} onClick={() => { setSelectedDate(value); setSelectedSlotIndex(""); }} title={allSlotsBusy ? "Todos los horarios estan ocupados" : unavailable ? "Sin disponibilidad" : "Disponible"} className={`aspect-square rounded text-xs ${selectedDate === value ? "bg-primary text-on-primary" : unavailable || !sameMonth ? "text-on-surface-variant opacity-25" : "bg-surface-container text-on-surface hover:bg-primary-container"}`}>{date.getDate()}</button>;
+        return <button key={value} type="button" data-calendar-day aria-pressed={selectedDate === value} aria-label={new Intl.DateTimeFormat("es-MX", { dateStyle: "full" }).format(date)} aria-current={value === dateValue(today) ? "date" : undefined} disabled={unavailable || !sameMonth} onClick={() => { setSelectedDate(value); setSelectedSlotIndex(""); }} title={allSlotsBusy ? "Todos los horarios están ocupados" : unavailable ? "Sin disponibilidad" : "Disponible"} className={`min-h-7 aspect-square rounded text-xs ${selectedDate === value ? "bg-primary text-on-primary" : unavailable || !sameMonth ? "text-on-surface-variant opacity-25" : "bg-surface-container text-on-surface hover:bg-primary-container"}`}>{date.getDate()}</button>;
       })}</div>
-      <p className="mt-3 text-[11px] text-on-surface-variant">Solo se pueden elegir los dias con horarios publicados por tu tutor. Los dias con todos sus horarios ocupados aparecen deshabilitados.</p>
+      <p className="mt-3 text-xs text-on-surface-variant">Los días habilitados tienen horarios disponibles. Selecciona uno para ver las horas y el lugar.</p>
     </div> : null}
-    {selectedDate ? <label className="block text-xs font-medium text-on-surface-variant">Horario disponible
+    {selectedDate ? <label className="block text-xs font-medium text-on-surface-variant">3. Elige el horario
       <select value={selectedSlotIndex} onChange={(event) => setSelectedSlotIndex(event.target.value)} required className="mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface"><option value="">Selecciona horario</option>{selectedDaySlots.map((slot, index) => {
         const slotBusy = busy.has(`${selectedDate}|${slot.startsAt}|${slot.endsAt}`);
         return <option key={`${slot.startsAt}-${slot.endsAt}-${slot.modality}`} value={String(index)} disabled={slotBusy}>{slotLabel(slot)}{slotBusy ? " · ocupado" : ""}</option>;
       })}</select>
     </label> : null}
-    {selectedSlot ? <p className="rounded border border-outline-variant bg-surface px-3 py-2 text-xs text-on-surface-variant">
-      <span className="font-semibold text-on-surface">{selectedSlot.modality === "presencial" ? "Presencial" : "En linea"}</span>
+    {selectedSlot ? <p role="status" className="rounded border border-primary/30 bg-primary/5 px-3 py-2 text-sm text-on-surface-variant">
+      <span className="font-semibold text-on-surface">{selectedSlot.modality === "presencial" ? "Presencial" : "En línea"}</span>
       {selectedSlot.modality === "presencial"
-        ? selectedSlot.location ? ` · ${selectedSlot.location}` : " · tu tutor confirmara el aula"
-        : " · recibiras el enlace al confirmarse la cita"}
+        ? selectedSlot.location ? ` · ${selectedSlot.location}` : " · tu tutor confirmará el aula"
+        : " · recibirás el enlace al confirmarse la cita"}
     </p> : null}
   </div>;
 }

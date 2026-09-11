@@ -93,7 +93,7 @@ export default function LoginPage() {
       {/* Brand Header */}
       <div className="flex flex-col items-center justify-center mb-8 gap-2">
         <div className="h-12 w-12 bg-surface-container border border-outline-variant rounded-lg flex items-center justify-center shadow-[0_0_15px_rgba(167,139,250,0.1)]">
-          <span className="material-symbols-outlined text-primary text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>
+          <span aria-hidden="true" className="material-symbols-outlined text-primary text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>
             security
           </span>
         </div>
@@ -103,6 +103,10 @@ export default function LoginPage() {
 
       {/* Login Box */}
       <div className="bg-surface-container border border-outline-variant rounded-lg p-6 sm:p-8">
+        <div className="mb-3">
+          <h2 className="text-sm font-semibold text-on-surface">Explorar la demostración</h2>
+          <p className="mt-1 text-xs leading-relaxed text-on-surface-variant">Prueba una cuenta de ejemplo o inicia sesión con tu cuenta más abajo.</p>
+        </div>
         <div className="mb-5 grid grid-cols-1 sm:grid-cols-2 gap-2">
           {DEMO_QUICK_ACCESS_ROLES.map((role) => (
             <button
@@ -127,7 +131,7 @@ export default function LoginPage() {
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <span className="material-symbols-outlined text-outline text-[20px]">person</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-outline text-[20px]">person</span>
               </div>
               <input
                 className="block w-full pl-10 bg-surface border border-outline-variant rounded text-on-surface text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background transition-all py-2.5 placeholder:text-outline"
@@ -135,6 +139,7 @@ export default function LoginPage() {
                 type="email"
                 placeholder="nombre@syncut.test"
                 autoComplete="email"
+                required
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
               />
@@ -156,7 +161,7 @@ export default function LoginPage() {
             </div>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <span className="material-symbols-outlined text-outline text-[20px]">lock</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-outline text-[20px]">lock</span>
               </div>
               <input
                 className={`block w-full pl-10 pr-10 bg-surface border rounded text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-background transition-all py-2.5 ${
@@ -165,15 +170,19 @@ export default function LoginPage() {
                 id="password"
                 type={showPassword ? "text" : "password"}
                 autoComplete="current-password"
+                required
+                aria-describedby={errorMsg ? "login-error" : undefined}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                aria-pressed={showPassword}
                 className="absolute inset-y-0 right-0 pr-3 flex items-center text-outline hover:text-on-surface-variant transition-colors"
               >
-                <span className="material-symbols-outlined text-[20px]">
+                <span aria-hidden="true" className="material-symbols-outlined text-[20px]">
                   {showPassword ? "visibility" : "visibility_off"}
                 </span>
               </button>
@@ -181,8 +190,8 @@ export default function LoginPage() {
 
             {/* Error Message */}
             {errorMsg && (
-              <div className="flex items-center gap-1.5 mt-2 text-error">
-                <span className="material-symbols-outlined text-[16px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+              <div id="login-error" role="alert" className="flex items-center gap-1.5 mt-2 text-error">
+                <span aria-hidden="true" className="material-symbols-outlined text-[16px]" style={{ fontVariationSettings: "'FILL' 1" }}>
                   error
                 </span>
                 <p className="text-xs font-medium">{errorMsg}</p>
@@ -197,10 +206,11 @@ export default function LoginPage() {
           <button
             className="w-full flex justify-center items-center gap-2 py-2.5 px-4 border border-transparent rounded text-sm font-bold text-on-primary bg-primary hover:bg-primary-container focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background active:scale-[0.98] transition-all duration-150"
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || demoRole !== null}
+            aria-busy={isSubmitting || demoRole !== null}
           >
             {isSubmitting ? "Iniciando..." : "Iniciar Sesión"}
-            <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+            <span aria-hidden="true" className="material-symbols-outlined text-[18px]">arrow_forward</span>
           </button>
         </form>
       </div>

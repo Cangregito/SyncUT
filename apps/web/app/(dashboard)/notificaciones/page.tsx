@@ -1,5 +1,7 @@
 import { revalidatePath } from "next/cache";
 import Link from "next/link";
+import { DisclosurePanel } from "@/components/ui/disclosure-panel";
+import { SubmitButton } from "@/components/forms/submit-button";
 import { redirect } from "next/navigation";
 import type { Database, Tables } from "@plataforma/types";
 
@@ -179,7 +181,6 @@ export default async function NotificacionesPage({
     return query ? `/notificaciones?${query}` : "/notificaciones";
   }
   const unread = items.filter((item) => !item.is_read).length;
-  const eventTypes = Array.from(new Set(items.map((item) => item.event_type))).sort();
   const [{ data: allEventTypesData }, { data: preferencesData }] = await Promise.all([
     supabase
       .from("notification_event_types")
@@ -211,59 +212,59 @@ export default async function NotificacionesPage({
           Centro de Notificaciones
         </h1>
         <p className="mt-2 text-sm text-on-surface-variant">
-          Bandeja real de eventos para {profile.email}. No se generan avisos simulados.
+          Consulta las novedades de tus trámites y elige qué avisos quieres recibir.
         </p>
+        <a href="#preferencias" className="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-primary underline underline-offset-4">Configurar mis avisos</a>
       </header>
 
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="rounded-lg border border-outline-variant bg-surface-container p-5">
-          <p className="text-xs uppercase text-on-surface-variant">Total visibles</p>
-          <p className="mt-2 text-3xl font-bold text-on-surface">{items.length}</p>
+          <p className="text-xs uppercase text-on-surface-variant">Avisos con estos filtros</p>
+          <p className="mt-2 text-3xl font-bold text-on-surface">{totalItems}</p>
         </div>
         <div className="rounded-lg border border-outline-variant bg-surface-container p-5">
-          <p className="text-xs uppercase text-on-surface-variant">No leidas</p>
+          <p className="text-xs uppercase text-on-surface-variant">Sin leer en esta página</p>
           <p className="mt-2 text-3xl font-bold text-primary">{unread}</p>
         </div>
         <div className="rounded-lg border border-outline-variant bg-surface-container p-5">
-          <p className="text-xs uppercase text-on-surface-variant">Usuario</p>
-          <p className="mt-2 truncate text-sm font-semibold text-on-surface">{profile.email}</p>
+          <p className="text-xs uppercase text-on-surface-variant">Página actual</p>
+          <p className="mt-2 truncate text-sm font-semibold text-on-surface">{currentPage} de {totalPages}</p>
         </div>
       </section>
 
-      <section id="preferencias" className="rounded-lg border border-outline-variant bg-surface-container p-5 scroll-mt-24">
+      <section id="bandeja" className="rounded-lg border border-outline-variant bg-surface-container p-5 scroll-mt-24">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-sm font-semibold uppercase text-on-surface-variant">Bandeja</h2>
           <div className="flex flex-wrap gap-2">
-            <a href="/notificaciones" className="rounded border border-outline-variant px-3 py-2 text-xs font-semibold text-on-surface-variant">
+            <a href={params.evento ? `/notificaciones?evento=${encodeURIComponent(params.evento)}` : "/notificaciones"} aria-current={params.estado !== "no-leidas" ? "page" : undefined} className={`inline-flex min-h-11 items-center rounded-lg border px-3 py-2 text-sm font-semibold ${params.estado !== "no-leidas" ? "border-primary bg-primary-container text-on-primary-container" : "border-outline-variant text-on-surface-variant"}`}>
               Todas
             </a>
-            <a href="/notificaciones?estado=no-leidas" className="rounded border border-primary px-3 py-2 text-xs font-semibold text-primary">
-              No leidas
+            <a href={`/notificaciones?estado=no-leidas${params.evento ? `&evento=${encodeURIComponent(params.evento)}` : ""}`} aria-current={params.estado === "no-leidas" ? "page" : undefined} className={`inline-flex min-h-11 items-center rounded-lg border px-3 py-2 text-sm font-semibold ${params.estado === "no-leidas" ? "border-primary bg-primary-container text-on-primary-container" : "border-outline-variant text-on-surface-variant"}`}>
+              Sin leer
             </a>
             <form action={markAllNotificationsRead}>
-              <button className="rounded bg-primary-container px-3 py-2 text-xs font-semibold text-on-primary-container">
-                Marcar todas leidas
-              </button>
+              <SubmitButton pendingLabel="Marcando…" className="rounded-lg border border-outline-variant px-3 py-2 text-sm font-semibold text-on-surface-variant">
+                Marcar todas como leídas
+              </SubmitButton>
             </form>
           </div>
         </div>
 
-        {eventTypes.length > 0 ? (
-          <div className="mt-3 flex flex-wrap gap-2">
-            {eventTypes.map((eventType) => (
-              <a
-                key={eventType}
-                href={`/notificaciones?evento=${encodeURIComponent(eventType)}`}
-                className="rounded border border-outline-variant px-2 py-1 text-[11px] font-semibold text-on-surface-variant hover:border-primary hover:text-primary"
-              >
-                {eventLabels.get(eventType) ?? fallbackEventLabels[eventType] ?? "Notificación institucional"}
-              </a>
-            ))}
-          </div>
-        ) : null}
+        <form className="mt-4 flex flex-wrap items-end gap-3">
+          {params.estado && <input type="hidden" name="estado" value={params.estado} />}
+          <label className="min-w-0 flex-1 text-sm font-medium text-on-surface">
+            Tipo de aviso
+            <select name="evento" defaultValue={params.evento ?? ""} className="mt-2 min-h-11 w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface">
+              <option value="">Todos los tipos</option>
+              {allEventTypes.map((eventType) => <option key={eventType.slug} value={eventType.slug}>{eventType.label}</option>)}
+            </select>
+          </label>
+          <button className="rounded-lg border border-primary px-4 py-2 text-sm font-semibold text-primary">Filtrar avisos</button>
+          {params.evento && <Link href={params.estado === "no-leidas" ? "/notificaciones?estado=no-leidas" : "/notificaciones"} className="inline-flex min-h-11 items-center px-2 text-sm text-primary underline underline-offset-4">Quitar filtro</Link>}
+        </form>
 
         {error ? (
-          <p className="mt-4 rounded border border-error/40 bg-error-container/20 p-3 text-sm text-on-error-container">
+          <p role="alert" className="mt-4 rounded border border-error/40 bg-error-container/20 p-3 text-sm text-on-error-container">
             No se pudieron consultar tus notificaciones. Actualiza la pagina en unos segundos.
           </p>
         ) : null}
@@ -271,7 +272,7 @@ export default async function NotificacionesPage({
         <div className="mt-4 space-y-3">
           {items.length === 0 && !error ? (
             <p className="rounded border border-outline-variant bg-surface p-4 text-sm text-on-surface-variant">
-              No hay notificaciones para tu usuario.
+              {params.estado === "no-leidas" ? "No tienes avisos sin leer con estos filtros." : "No hay avisos con estos filtros. Puedes seleccionar otro tipo o consultar todos."}
             </p>
           ) : null}
 
@@ -284,8 +285,8 @@ export default async function NotificacionesPage({
                     {eventLabels.get(item.event_type) ?? fallbackEventLabels[item.event_type] ?? "Notificación institucional"} · {new Date(item.created_at).toLocaleString("es-MX")}
                   </p>
                 </div>
-                <span className={`rounded px-2 py-1 text-[10px] font-semibold uppercase ${item.is_read ? "bg-surface-container-highest text-on-surface-variant" : "bg-primary-container text-on-primary-container"}`}>
-                  {item.is_read ? "Leida" : "Nueva"}
+                <span className={`rounded px-2 py-1 text-xs font-semibold uppercase ${item.is_read ? "bg-surface-container-highest text-on-surface-variant" : "bg-primary-container text-on-primary-container"}`}>
+                  {item.is_read ? "Leída" : "Nueva"}
                 </span>
               </div>
               <p className="mt-3 text-sm text-on-surface-variant">{item.body}</p>
@@ -294,7 +295,7 @@ export default async function NotificacionesPage({
                   <input type="hidden" name="id" value={item.id} />
                   <input type="hidden" name="is_read" value={String(!item.is_read)} />
                   <button className="rounded border border-outline-variant px-3 py-2 text-xs font-semibold text-on-surface-variant hover:border-primary hover:text-primary">
-                    {item.is_read ? "Marcar no leida" : "Marcar leida"}
+                    {item.is_read ? "Marcar como no leída" : "Marcar como leída"}
                   </button>
                 </form>
                 {notificationTarget(item) ? (
@@ -310,20 +311,22 @@ export default async function NotificacionesPage({
           ))}
 
           {totalPages > 1 ? (
-            <nav aria-label="Paginacion de notificaciones" className="flex items-center justify-between gap-3 pt-2">
+            <nav aria-label="Paginación de notificaciones" className="flex flex-wrap items-center justify-between gap-3 pt-2">
               <Link
-                href={pageHref(currentPage - 1)}
+                href={pageHref(Math.max(1, currentPage - 1))}
                 aria-disabled={currentPage === 1}
+                tabIndex={currentPage === 1 ? -1 : undefined}
                 className={`rounded border px-3 py-2 text-xs font-semibold ${currentPage === 1 ? "pointer-events-none border-outline-variant/40 text-on-surface-variant/40" : "border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary"}`}
               >
                 Anteriores
               </Link>
               <span className="text-xs text-on-surface-variant">
-                Pagina {currentPage} de {totalPages} · {totalItems} avisos
+                Página {currentPage} de {totalPages} · {totalItems} avisos
               </span>
               <Link
-                href={pageHref(currentPage + 1)}
+                href={pageHref(Math.min(totalPages, currentPage + 1))}
                 aria-disabled={currentPage === totalPages}
+                tabIndex={currentPage === totalPages ? -1 : undefined}
                 className={`rounded border px-3 py-2 text-xs font-semibold ${currentPage === totalPages ? "pointer-events-none border-outline-variant/40 text-on-surface-variant/40" : "border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary"}`}
               >
                 Siguientes
@@ -333,9 +336,9 @@ export default async function NotificacionesPage({
         </div>
       </section>
 
-      <section className="rounded-lg border border-outline-variant bg-surface-container p-5">
+      <DisclosurePanel id="preferencias" title="Preferencias de notificaciones" description="Elige qué avisos recibir en el portal y por correo. Abre esta sección para configurarlos.">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-sm font-semibold uppercase text-on-surface-variant">Preferencias por evento</h2>
+          <h2 className="text-sm font-semibold uppercase text-on-surface-variant">Personalizar avisos</h2>
           <span className="text-xs text-on-surface-variant">{allEventTypes.length} tipos disponibles</span>
         </div>
         <div className="mt-4 grid gap-3 md:grid-cols-2">
@@ -349,7 +352,7 @@ export default async function NotificacionesPage({
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold text-on-surface">{eventType.label}</p>
-                    <p className="mt-1 text-xs text-on-surface-variant">Entrega en plataforma{eventType.channel === "both" ? " y correo" : ""}</p>
+                    <p className="mt-1 text-xs text-on-surface-variant">Canal disponible: {eventType.channel === "both" ? "portal y correo" : eventType.channel === "email" ? "correo electrónico" : "portal"}</p>
                     {eventType.description ? (
                       <p className="mt-2 text-xs text-on-surface-variant">{eventType.description}</p>
                     ) : null}
@@ -358,21 +361,21 @@ export default async function NotificacionesPage({
                 <div className="mt-3 flex flex-wrap gap-4 text-xs text-on-surface-variant">
                   <label className="inline-flex items-center gap-2">
                     <input name="in_app" type="checkbox" defaultChecked={preference?.in_app ?? defaultInApp} />
-                    In-app
+                    En el portal
                   </label>
                   <label className="inline-flex items-center gap-2">
                     <input name="email" type="checkbox" defaultChecked={preference?.email ?? defaultEmail} />
-                    Email
+                    Correo electrónico
                   </label>
                 </div>
-                <button className="mt-3 rounded border border-primary px-3 py-2 text-xs font-semibold text-primary">
+                <SubmitButton pendingLabel="Guardando…" className="mt-3 rounded border border-primary px-3 py-2 text-sm font-semibold text-primary">
                   Guardar preferencia
-                </button>
+                </SubmitButton>
               </form>
             );
           })}
         </div>
-      </section>
+      </DisclosurePanel>
 
       {canInspectEmailQueue ? (
         <section className="rounded-lg border border-outline-variant bg-surface-container p-5">
@@ -389,7 +392,7 @@ export default async function NotificacionesPage({
           </div>
 
           {queueSummaryError ? (
-            <p className="mt-4 rounded border border-error/40 bg-error-container/20 p-3 text-sm text-on-error-container">
+            <p role="alert" className="mt-4 rounded border border-error/40 bg-error-container/20 p-3 text-sm text-on-error-container">
               {queueSummaryError}
             </p>
           ) : null}

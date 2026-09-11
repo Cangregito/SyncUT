@@ -221,36 +221,43 @@ export function JustificationForm() {
   return (
     <form onSubmit={handleSubmit} className="rounded-lg border border-outline-variant bg-surface-container p-5">
       <h2 className="text-sm font-semibold uppercase text-on-surface-variant">Nueva solicitud</h2>
-      <div className="mt-4 space-y-3">
-        <input name="title" required minLength={5} maxLength={120} placeholder="Titulo de la justificacion" className="w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
-        <select name="category" className="w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface">
+      <p className="mt-2 text-sm leading-relaxed text-on-surface-variant">Cuéntale a tu tutor por qué faltaste y adjunta un comprobante si lo tienes.</p>
+      <div className="mt-4 space-y-4">
+        <label htmlFor="justification-title" className="block text-sm font-medium text-on-surface">Título de la solicitud <span className="text-on-surface-variant">(obligatorio)</span></label>
+        <input id="justification-title" name="title" required minLength={5} maxLength={120} placeholder="Ej. Inasistencia por consulta médica" className="w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
+        <label htmlFor="justification-category" className="block text-sm font-medium text-on-surface">Tipo de justificación</label>
+        <select id="justification-category" name="category" className="w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface">
           {Object.entries(categoryLabels).map(([value, label]) => (
             <option key={value} value={value}>{label}</option>
           ))}
         </select>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 min-[400px]:grid-cols-2 gap-3">
           <label className="text-xs font-medium text-on-surface-variant">
-            Inicio
+            Primer día de ausencia
             <input name="start_date" required type="date" min={minimumAllowedDate} max={maximumAllowedDate} value={startDate} onChange={(event) => setStartDate(event.target.value)} className="date-input-dark mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
           </label>
           <label className="text-xs font-medium text-on-surface-variant">
-            Fin
-            <input name="end_date" required type="date" min={startDate || minimumAllowedDate} max={startDate ? addCalendarDays(startDate, 2) : maximumAllowedDate} className="date-input-dark mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
+            Último día de ausencia
+            <input name="end_date" required type="date" min={startDate || minimumAllowedDate} max={startDate ? [addCalendarDays(startDate, 2), maximumAllowedDate].sort()[0] : maximumAllowedDate} className="date-input-dark mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
           </label>
         </div>
-        <p className="text-[11px] text-on-surface-variant">Solo puedes seleccionar fechas entre 3 dias antes y 3 dias despues de hoy. Maximo 3 dias naturales por solicitud.</p>
-        <textarea name="description" required minLength={15} rows={4} placeholder="Describe el motivo y el impacto academico" className="w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
+        <p className="text-xs leading-relaxed text-on-surface-variant">Puedes elegir desde 3 días antes hasta 3 días después de hoy. Cada solicitud cubre como máximo 3 días naturales.</p>
+        <label htmlFor="justification-description" className="block text-sm font-medium text-on-surface">Motivo de la ausencia <span className="text-on-surface-variant">(obligatorio)</span></label>
+        <textarea id="justification-description" name="description" required minLength={15} aria-describedby="justification-description-help" rows={4} placeholder="Explica qué ocurrió y cómo afectó tu asistencia." className="w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface" />
+        <p id="justification-description-help" className="text-xs text-on-surface-variant">Escribe al menos 15 caracteres para que tu tutor pueda revisar el caso.</p>
         <label className="block text-xs font-medium text-on-surface-variant">
-          Evidencia
+          Comprobante (opcional)
           <input
             name="evidence"
             type="file"
             accept="application/pdf,image/jpeg,image/png"
+            aria-describedby="justification-file-help"
             className="mt-1 w-full rounded border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface file:mr-3 file:rounded file:border-0 file:bg-primary-container file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-on-primary-container"
           />
         </label>
+        <p id="justification-file-help" className="text-xs text-on-surface-variant">PDF, JPG o PNG de hasta 10 MB.</p>
         {message ? (
-          <p role="status" aria-live="polite" className={`rounded border px-3 py-2 text-xs font-semibold ${message === "Justificacion enviada correctamente." ? "fixed right-5 top-20 z-50 max-w-sm border-tertiary bg-tertiary-container p-4 text-on-tertiary-container shadow-2xl" : "border-outline-variant bg-surface text-on-surface-variant"}`}>
+          <p role="status" aria-live="polite" className={`rounded border px-3 py-3 text-sm font-medium ${message === "Justificacion enviada correctamente." ? "border-tertiary bg-tertiary-container text-on-tertiary-container" : "border-outline-variant bg-surface text-on-surface-variant"}`}>
             {message}
           </p>
         ) : null}
