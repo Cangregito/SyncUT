@@ -35,3 +35,4 @@ test-results/
 .vercel
 .env*.local
 .turbo/
+supabase/.branches/
